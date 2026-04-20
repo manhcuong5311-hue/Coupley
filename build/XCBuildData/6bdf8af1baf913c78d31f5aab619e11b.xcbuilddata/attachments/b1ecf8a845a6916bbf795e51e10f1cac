@@ -1,0 +1,4 @@
+module GoogleAppMeasurementTarget {
+umbrella "/tmp/coupley-spm/checkouts/GoogleAppMeasurement/GoogleAppMeasurementWrapper/include"
+export *
+}

@@ -1,0 +1,4 @@
+module leveldb {
+umbrella "/tmp/coupley-spm/checkouts/leveldb/include"
+export *
+}

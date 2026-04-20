@@ -1,0 +1,4 @@
+module GoogleAdsOnDeviceConversionTarget {
+umbrella "/tmp/coupley-spm/checkouts/google-ads-on-device-conversion-ios-sdk/GoogleAdsOnDeviceConversionWrapper/include"
+export *
+}

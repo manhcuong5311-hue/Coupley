@@ -1,0 +1,4 @@
+module FirebaseMessaging {
+umbrella header "/tmp/coupley-spm/checkouts/firebase-ios-sdk/FirebaseMessaging/Sources/Public/FirebaseMessaging/FirebaseMessaging.h"
+export *
+}

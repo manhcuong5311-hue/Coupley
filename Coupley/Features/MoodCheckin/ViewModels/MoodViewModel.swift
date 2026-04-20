@@ -1,0 +1,113 @@
+//
+//  MoodViewModel.swift
+//  Coupley
+//
+//  Created by Sam Manh Cuong on 1/4/26.
+//
+
+import Foundation
+import Combine
+// MARK: - Submission State
+
+enum SubmissionState: Equatable {
+    case idle
+    case loading
+    case success
+    case queued        // saved locally, will sync when online
+    case error(String)
+}
+
+// MARK: - Mood ViewModel
+
+@MainActor
+final class MoodViewModel: ObservableObject {
+
+    // MARK: - Published Properties
+
+    @Published var selectedMood: Mood?
+    @Published var selectedEnergy: EnergyLevel = .medium
+    @Published var noteText: String = ""
+    @Published var submissionState: SubmissionState = .idle
+    @Published var showSuggestions: Bool = false
+    @Published var lastMoodContext: MoodContext?
+
+    // MARK: - Computed Properties
+
+    var isSubmitEnabled: Bool {
+        selectedMood != nil && submissionState != .loading
+    }
+
+    // MARK: - Dependencies
+
+    private let moodService: MoodService
+    private let aiService: AIService
+    private let notificationService: NotificationServiceProtocol
+    private let session: UserSession
+
+    // MARK: - Init
+
+    init(
+        moodService: MoodService,
+        aiService: (any AIService)? = nil,
+        notificationService: (any NotificationServiceProtocol)? = nil,
+        session: UserSession? = nil
+    ) {
+        self.moodService = moodService
+        self.aiService = aiService ?? PlaceholderAIService()
+        self.notificationService = notificationService ?? NotificationService.shared
+        self.session = session ?? .demo
+    }
+
+    // MARK: - Actions
+
+    func submitMood() {
+        guard let mood = selectedMood else { return }
+
+        let entry = MoodEntry(
+            mood: mood,
+            energy: selectedEnergy,
+            note: noteText.trimmingCharacters(in: .whitespacesAndNewlines)
+        )
+
+        submissionState = .loading
+
+        Task {
+            do {
+                try await moodService.save(entry: entry)
+                submissionState = .success
+            } catch let writeError as MoodWriteError where writeError.isQueued {
+                // Treat as success from the user's perspective — it's stored and will sync.
+                submissionState = .queued
+            } catch {
+                submissionState = .error("Failed to save. Please try again.")
+                return
+            }
+
+            // Update activity timestamps for nudge system
+            try? await notificationService.updateLastActive(userId: session.userId)
+
+            let context = MoodContext(from: entry)
+            resetForm()
+
+            // Trigger AI suggestions for low moods
+            if context.isLowMood {
+                lastMoodContext = context
+                try? await Task.sleep(nanoseconds: 800_000_000)
+                showSuggestions = true
+            }
+
+            try? await Task.sleep(nanoseconds: 1_500_000_000)
+            if submissionState == .success || submissionState == .queued {
+                submissionState = .idle
+            }
+        }
+    }
+
+    // MARK: - Private
+
+    private func resetForm() {
+        selectedMood = nil
+        selectedEnergy = .medium
+        noteText = ""
+    }
+}

@@ -1,0 +1,29 @@
+{
+  "" : {
+    "diagnostics" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseSharedSwift.build/Objects-normal/arm64/FirebaseSharedSwift-primary.dia",
+    "emit-module-dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseSharedSwift.build/Objects-normal/arm64/FirebaseSharedSwift-primary-emit-module.d",
+    "emit-module-diagnostics" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseSharedSwift.build/Objects-normal/arm64/FirebaseSharedSwift-primary-emit-module.dia",
+    "pch" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseSharedSwift.build/Objects-normal/arm64/FirebaseSharedSwift-primary-Bridging-header.pch",
+    "swift-dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseSharedSwift.build/Objects-normal/arm64/FirebaseSharedSwift-primary.swiftdeps"
+  },
+  "/tmp/coupley-spm/checkouts/firebase-ios-sdk/FirebaseSharedSwift/Sources/FirebaseRemoteConfigValueDecoding.swift" : {
+    "const-values" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseSharedSwift.build/Objects-normal/arm64/FirebaseRemoteConfigValueDecoding.swiftconstvalues",
+    "dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseSharedSwift.build/Objects-normal/arm64/FirebaseRemoteConfigValueDecoding.d",
+    "diagnostics" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseSharedSwift.build/Objects-normal/arm64/FirebaseRemoteConfigValueDecoding.dia",
+    "index-unit-output-path" : "/Firebase.build/Debug-iphonesimulator/FirebaseSharedSwift.build/Objects-normal/arm64/FirebaseRemoteConfigValueDecoding.o",
+    "llvm-bc" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseSharedSwift.build/Objects-normal/arm64/FirebaseRemoteConfigValueDecoding.bc",
+    "object" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseSharedSwift.build/Objects-normal/arm64/FirebaseRemoteConfigValueDecoding.o",
+    "swift-dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseSharedSwift.build/Objects-normal/arm64/FirebaseRemoteConfigValueDecoding.swiftdeps",
+    "swiftmodule" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseSharedSwift.build/Objects-normal/arm64/FirebaseRemoteConfigValueDecoding~partial.swiftmodule"
+  },
+  "/tmp/coupley-spm/checkouts/firebase-ios-sdk/FirebaseSharedSwift/Sources/third_party/FirebaseDataEncoder/FirebaseDataEncoder.swift" : {
+    "const-values" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseSharedSwift.build/Objects-normal/arm64/FirebaseDataEncoder.swiftconstvalues",
+    "dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseSharedSwift.build/Objects-normal/arm64/FirebaseDataEncoder.d",
+    "diagnostics" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseSharedSwift.build/Objects-normal/arm64/FirebaseDataEncoder.dia",
+    "index-unit-output-path" : "/Firebase.build/Debug-iphonesimulator/FirebaseSharedSwift.build/Objects-normal/arm64/FirebaseDataEncoder.o",
+    "llvm-bc" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseSharedSwift.build/Objects-normal/arm64/FirebaseDataEncoder.bc",
+    "object" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseSharedSwift.build/Objects-normal/arm64/FirebaseDataEncoder.o",
+    "swift-dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseSharedSwift.build/Objects-normal/arm64/FirebaseDataEncoder.swiftdeps",
+    "swiftmodule" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseSharedSwift.build/Objects-normal/arm64/FirebaseDataEncoder~partial.swiftmodule"
+  }
+}

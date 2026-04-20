@@ -1,0 +1,4 @@
+module FirebaseAuthInternal {
+umbrella "/tmp/coupley-spm/checkouts/firebase-ios-sdk/FirebaseAuth/Sources/Public"
+export *
+}

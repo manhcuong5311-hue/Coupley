@@ -1,0 +1,4 @@
+module GoogleUtilities_MethodSwizzler {
+umbrella "/tmp/coupley-spm/checkouts/GoogleUtilities/GoogleUtilities/MethodSwizzler/Public"
+export *
+}

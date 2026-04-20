@@ -1,0 +1,4 @@
+module GoogleUtilities_NSData {
+umbrella "/tmp/coupley-spm/checkouts/GoogleUtilities/GoogleUtilities/NSData+zlib/Public"
+export *
+}

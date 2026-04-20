@@ -1,0 +1,4 @@
+module GoogleUtilities_Environment {
+umbrella "/tmp/coupley-spm/checkouts/GoogleUtilities/GoogleUtilities/Environment/Public"
+export *
+}

@@ -1,0 +1,4 @@
+module grpcWrapper {
+umbrella "/tmp/coupley-spm/checkouts/grpc-binary/grpc-Wrapper/include"
+export *
+}

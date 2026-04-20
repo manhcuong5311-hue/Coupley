@@ -1,0 +1,599 @@
+{
+  "" : {
+    "diagnostics" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/FirebaseFirestore-primary.dia",
+    "emit-module-dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/FirebaseFirestore-primary-emit-module.d",
+    "emit-module-diagnostics" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/FirebaseFirestore-primary-emit-module.dia",
+    "pch" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/FirebaseFirestore-primary-Bridging-header.pch",
+    "swift-dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/FirebaseFirestore-primary.swiftdeps"
+  },
+  "/tmp/coupley-spm/checkouts/firebase-ios-sdk/Firestore/Swift/Source/AsyncAwait/CollectionReference+AsyncAwait.swift" : {
+    "const-values" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/CollectionReference+AsyncAwait.swiftconstvalues",
+    "dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/CollectionReference+AsyncAwait.d",
+    "diagnostics" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/CollectionReference+AsyncAwait.dia",
+    "index-unit-output-path" : "/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/CollectionReference+AsyncAwait.o",
+    "llvm-bc" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/CollectionReference+AsyncAwait.bc",
+    "object" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/CollectionReference+AsyncAwait.o",
+    "swift-dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/CollectionReference+AsyncAwait.swiftdeps",
+    "swiftmodule" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/CollectionReference+AsyncAwait~partial.swiftmodule"
+  },
+  "/tmp/coupley-spm/checkouts/firebase-ios-sdk/Firestore/Swift/Source/AsyncAwait/Firestore+AsyncAwait.swift" : {
+    "const-values" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Firestore+AsyncAwait.swiftconstvalues",
+    "dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Firestore+AsyncAwait.d",
+    "diagnostics" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Firestore+AsyncAwait.dia",
+    "index-unit-output-path" : "/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Firestore+AsyncAwait.o",
+    "llvm-bc" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Firestore+AsyncAwait.bc",
+    "object" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Firestore+AsyncAwait.o",
+    "swift-dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Firestore+AsyncAwait.swiftdeps",
+    "swiftmodule" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Firestore+AsyncAwait~partial.swiftmodule"
+  },
+  "/tmp/coupley-spm/checkouts/firebase-ios-sdk/Firestore/Swift/Source/Codable/CodableErrors.swift" : {
+    "const-values" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/CodableErrors.swiftconstvalues",
+    "dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/CodableErrors.d",
+    "diagnostics" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/CodableErrors.dia",
+    "index-unit-output-path" : "/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/CodableErrors.o",
+    "llvm-bc" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/CodableErrors.bc",
+    "object" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/CodableErrors.o",
+    "swift-dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/CodableErrors.swiftdeps",
+    "swiftmodule" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/CodableErrors~partial.swiftmodule"
+  },
+  "/tmp/coupley-spm/checkouts/firebase-ios-sdk/Firestore/Swift/Source/Codable/CodablePassThroughTypes.swift" : {
+    "const-values" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/CodablePassThroughTypes.swiftconstvalues",
+    "dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/CodablePassThroughTypes.d",
+    "diagnostics" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/CodablePassThroughTypes.dia",
+    "index-unit-output-path" : "/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/CodablePassThroughTypes.o",
+    "llvm-bc" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/CodablePassThroughTypes.bc",
+    "object" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/CodablePassThroughTypes.o",
+    "swift-dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/CodablePassThroughTypes.swiftdeps",
+    "swiftmodule" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/CodablePassThroughTypes~partial.swiftmodule"
+  },
+  "/tmp/coupley-spm/checkouts/firebase-ios-sdk/Firestore/Swift/Source/Codable/CollectionReference+WriteEncodable.swift" : {
+    "const-values" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/CollectionReference+WriteEncodable.swiftconstvalues",
+    "dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/CollectionReference+WriteEncodable.d",
+    "diagnostics" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/CollectionReference+WriteEncodable.dia",
+    "index-unit-output-path" : "/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/CollectionReference+WriteEncodable.o",
+    "llvm-bc" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/CollectionReference+WriteEncodable.bc",
+    "object" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/CollectionReference+WriteEncodable.o",
+    "swift-dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/CollectionReference+WriteEncodable.swiftdeps",
+    "swiftmodule" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/CollectionReference+WriteEncodable~partial.swiftmodule"
+  },
+  "/tmp/coupley-spm/checkouts/firebase-ios-sdk/Firestore/Swift/Source/Codable/DocumentID.swift" : {
+    "const-values" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/DocumentID.swiftconstvalues",
+    "dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/DocumentID.d",
+    "diagnostics" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/DocumentID.dia",
+    "index-unit-output-path" : "/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/DocumentID.o",
+    "llvm-bc" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/DocumentID.bc",
+    "object" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/DocumentID.o",
+    "swift-dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/DocumentID.swiftdeps",
+    "swiftmodule" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/DocumentID~partial.swiftmodule"
+  },
+  "/tmp/coupley-spm/checkouts/firebase-ios-sdk/Firestore/Swift/Source/Codable/DocumentReference+Codable.swift" : {
+    "const-values" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/DocumentReference+Codable.swiftconstvalues",
+    "dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/DocumentReference+Codable.d",
+    "diagnostics" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/DocumentReference+Codable.dia",
+    "index-unit-output-path" : "/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/DocumentReference+Codable.o",
+    "llvm-bc" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/DocumentReference+Codable.bc",
+    "object" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/DocumentReference+Codable.o",
+    "swift-dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/DocumentReference+Codable.swiftdeps",
+    "swiftmodule" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/DocumentReference+Codable~partial.swiftmodule"
+  },
+  "/tmp/coupley-spm/checkouts/firebase-ios-sdk/Firestore/Swift/Source/Codable/DocumentReference+ReadDecodable.swift" : {
+    "const-values" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/DocumentReference+ReadDecodable.swiftconstvalues",
+    "dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/DocumentReference+ReadDecodable.d",
+    "diagnostics" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/DocumentReference+ReadDecodable.dia",
+    "index-unit-output-path" : "/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/DocumentReference+ReadDecodable.o",
+    "llvm-bc" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/DocumentReference+ReadDecodable.bc",
+    "object" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/DocumentReference+ReadDecodable.o",
+    "swift-dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/DocumentReference+ReadDecodable.swiftdeps",
+    "swiftmodule" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/DocumentReference+ReadDecodable~partial.swiftmodule"
+  },
+  "/tmp/coupley-spm/checkouts/firebase-ios-sdk/Firestore/Swift/Source/Codable/DocumentReference+WriteEncodable.swift" : {
+    "const-values" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/DocumentReference+WriteEncodable.swiftconstvalues",
+    "dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/DocumentReference+WriteEncodable.d",
+    "diagnostics" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/DocumentReference+WriteEncodable.dia",
+    "index-unit-output-path" : "/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/DocumentReference+WriteEncodable.o",
+    "llvm-bc" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/DocumentReference+WriteEncodable.bc",
+    "object" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/DocumentReference+WriteEncodable.o",
+    "swift-dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/DocumentReference+WriteEncodable.swiftdeps",
+    "swiftmodule" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/DocumentReference+WriteEncodable~partial.swiftmodule"
+  },
+  "/tmp/coupley-spm/checkouts/firebase-ios-sdk/Firestore/Swift/Source/Codable/DocumentSnapshot+ReadDecodable.swift" : {
+    "const-values" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/DocumentSnapshot+ReadDecodable.swiftconstvalues",
+    "dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/DocumentSnapshot+ReadDecodable.d",
+    "diagnostics" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/DocumentSnapshot+ReadDecodable.dia",
+    "index-unit-output-path" : "/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/DocumentSnapshot+ReadDecodable.o",
+    "llvm-bc" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/DocumentSnapshot+ReadDecodable.bc",
+    "object" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/DocumentSnapshot+ReadDecodable.o",
+    "swift-dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/DocumentSnapshot+ReadDecodable.swiftdeps",
+    "swiftmodule" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/DocumentSnapshot+ReadDecodable~partial.swiftmodule"
+  },
+  "/tmp/coupley-spm/checkouts/firebase-ios-sdk/Firestore/Swift/Source/Codable/EncoderDecoder.swift" : {
+    "const-values" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/EncoderDecoder.swiftconstvalues",
+    "dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/EncoderDecoder.d",
+    "diagnostics" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/EncoderDecoder.dia",
+    "index-unit-output-path" : "/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/EncoderDecoder.o",
+    "llvm-bc" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/EncoderDecoder.bc",
+    "object" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/EncoderDecoder.o",
+    "swift-dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/EncoderDecoder.swiftdeps",
+    "swiftmodule" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/EncoderDecoder~partial.swiftmodule"
+  },
+  "/tmp/coupley-spm/checkouts/firebase-ios-sdk/Firestore/Swift/Source/Codable/ExplicitNull.swift" : {
+    "const-values" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/ExplicitNull.swiftconstvalues",
+    "dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/ExplicitNull.d",
+    "diagnostics" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/ExplicitNull.dia",
+    "index-unit-output-path" : "/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/ExplicitNull.o",
+    "llvm-bc" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/ExplicitNull.bc",
+    "object" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/ExplicitNull.o",
+    "swift-dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/ExplicitNull.swiftdeps",
+    "swiftmodule" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/ExplicitNull~partial.swiftmodule"
+  },
+  "/tmp/coupley-spm/checkouts/firebase-ios-sdk/Firestore/Swift/Source/Codable/FieldValue+Encodable.swift" : {
+    "const-values" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/FieldValue+Encodable.swiftconstvalues",
+    "dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/FieldValue+Encodable.d",
+    "diagnostics" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/FieldValue+Encodable.dia",
+    "index-unit-output-path" : "/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/FieldValue+Encodable.o",
+    "llvm-bc" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/FieldValue+Encodable.bc",
+    "object" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/FieldValue+Encodable.o",
+    "swift-dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/FieldValue+Encodable.swiftdeps",
+    "swiftmodule" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/FieldValue+Encodable~partial.swiftmodule"
+  },
+  "/tmp/coupley-spm/checkouts/firebase-ios-sdk/Firestore/Swift/Source/Codable/GeoPoint+Codable.swift" : {
+    "const-values" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/GeoPoint+Codable.swiftconstvalues",
+    "dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/GeoPoint+Codable.d",
+    "diagnostics" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/GeoPoint+Codable.dia",
+    "index-unit-output-path" : "/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/GeoPoint+Codable.o",
+    "llvm-bc" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/GeoPoint+Codable.bc",
+    "object" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/GeoPoint+Codable.o",
+    "swift-dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/GeoPoint+Codable.swiftdeps",
+    "swiftmodule" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/GeoPoint+Codable~partial.swiftmodule"
+  },
+  "/tmp/coupley-spm/checkouts/firebase-ios-sdk/Firestore/Swift/Source/Codable/ServerTimestamp.swift" : {
+    "const-values" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/ServerTimestamp.swiftconstvalues",
+    "dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/ServerTimestamp.d",
+    "diagnostics" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/ServerTimestamp.dia",
+    "index-unit-output-path" : "/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/ServerTimestamp.o",
+    "llvm-bc" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/ServerTimestamp.bc",
+    "object" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/ServerTimestamp.o",
+    "swift-dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/ServerTimestamp.swiftdeps",
+    "swiftmodule" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/ServerTimestamp~partial.swiftmodule"
+  },
+  "/tmp/coupley-spm/checkouts/firebase-ios-sdk/Firestore/Swift/Source/Codable/Timestamp+Codable.swift" : {
+    "const-values" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Timestamp+Codable.swiftconstvalues",
+    "dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Timestamp+Codable.d",
+    "diagnostics" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Timestamp+Codable.dia",
+    "index-unit-output-path" : "/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Timestamp+Codable.o",
+    "llvm-bc" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Timestamp+Codable.bc",
+    "object" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Timestamp+Codable.o",
+    "swift-dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Timestamp+Codable.swiftdeps",
+    "swiftmodule" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Timestamp+Codable~partial.swiftmodule"
+  },
+  "/tmp/coupley-spm/checkouts/firebase-ios-sdk/Firestore/Swift/Source/Codable/TimestampDecodingStrategy.swift" : {
+    "const-values" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/TimestampDecodingStrategy.swiftconstvalues",
+    "dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/TimestampDecodingStrategy.d",
+    "diagnostics" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/TimestampDecodingStrategy.dia",
+    "index-unit-output-path" : "/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/TimestampDecodingStrategy.o",
+    "llvm-bc" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/TimestampDecodingStrategy.bc",
+    "object" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/TimestampDecodingStrategy.o",
+    "swift-dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/TimestampDecodingStrategy.swiftdeps",
+    "swiftmodule" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/TimestampDecodingStrategy~partial.swiftmodule"
+  },
+  "/tmp/coupley-spm/checkouts/firebase-ios-sdk/Firestore/Swift/Source/Codable/TimestampEncodingStrategy.swift" : {
+    "const-values" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/TimestampEncodingStrategy.swiftconstvalues",
+    "dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/TimestampEncodingStrategy.d",
+    "diagnostics" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/TimestampEncodingStrategy.dia",
+    "index-unit-output-path" : "/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/TimestampEncodingStrategy.o",
+    "llvm-bc" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/TimestampEncodingStrategy.bc",
+    "object" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/TimestampEncodingStrategy.o",
+    "swift-dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/TimestampEncodingStrategy.swiftdeps",
+    "swiftmodule" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/TimestampEncodingStrategy~partial.swiftmodule"
+  },
+  "/tmp/coupley-spm/checkouts/firebase-ios-sdk/Firestore/Swift/Source/Codable/Transaction+WriteEncodable.swift" : {
+    "const-values" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Transaction+WriteEncodable.swiftconstvalues",
+    "dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Transaction+WriteEncodable.d",
+    "diagnostics" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Transaction+WriteEncodable.dia",
+    "index-unit-output-path" : "/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Transaction+WriteEncodable.o",
+    "llvm-bc" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Transaction+WriteEncodable.bc",
+    "object" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Transaction+WriteEncodable.o",
+    "swift-dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Transaction+WriteEncodable.swiftdeps",
+    "swiftmodule" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Transaction+WriteEncodable~partial.swiftmodule"
+  },
+  "/tmp/coupley-spm/checkouts/firebase-ios-sdk/Firestore/Swift/Source/Codable/VectorValue+Codable.swift" : {
+    "const-values" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/VectorValue+Codable.swiftconstvalues",
+    "dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/VectorValue+Codable.d",
+    "diagnostics" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/VectorValue+Codable.dia",
+    "index-unit-output-path" : "/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/VectorValue+Codable.o",
+    "llvm-bc" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/VectorValue+Codable.bc",
+    "object" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/VectorValue+Codable.o",
+    "swift-dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/VectorValue+Codable.swiftdeps",
+    "swiftmodule" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/VectorValue+Codable~partial.swiftmodule"
+  },
+  "/tmp/coupley-spm/checkouts/firebase-ios-sdk/Firestore/Swift/Source/Codable/WriteBatch+WriteEncodable.swift" : {
+    "const-values" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/WriteBatch+WriteEncodable.swiftconstvalues",
+    "dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/WriteBatch+WriteEncodable.d",
+    "diagnostics" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/WriteBatch+WriteEncodable.dia",
+    "index-unit-output-path" : "/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/WriteBatch+WriteEncodable.o",
+    "llvm-bc" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/WriteBatch+WriteEncodable.bc",
+    "object" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/WriteBatch+WriteEncodable.o",
+    "swift-dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/WriteBatch+WriteEncodable.swiftdeps",
+    "swiftmodule" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/WriteBatch+WriteEncodable~partial.swiftmodule"
+  },
+  "/tmp/coupley-spm/checkouts/firebase-ios-sdk/Firestore/Swift/Source/ExpressionImplementation.swift" : {
+    "const-values" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/ExpressionImplementation.swiftconstvalues",
+    "dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/ExpressionImplementation.d",
+    "diagnostics" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/ExpressionImplementation.dia",
+    "index-unit-output-path" : "/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/ExpressionImplementation.o",
+    "llvm-bc" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/ExpressionImplementation.bc",
+    "object" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/ExpressionImplementation.o",
+    "swift-dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/ExpressionImplementation.swiftdeps",
+    "swiftmodule" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/ExpressionImplementation~partial.swiftmodule"
+  },
+  "/tmp/coupley-spm/checkouts/firebase-ios-sdk/Firestore/Swift/Source/Helper/PipelineHelper.swift" : {
+    "const-values" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/PipelineHelper.swiftconstvalues",
+    "dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/PipelineHelper.d",
+    "diagnostics" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/PipelineHelper.dia",
+    "index-unit-output-path" : "/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/PipelineHelper.o",
+    "llvm-bc" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/PipelineHelper.bc",
+    "object" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/PipelineHelper.o",
+    "swift-dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/PipelineHelper.swiftdeps",
+    "swiftmodule" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/PipelineHelper~partial.swiftmodule"
+  },
+  "/tmp/coupley-spm/checkouts/firebase-ios-sdk/Firestore/Swift/Source/PipelineResultChange.swift" : {
+    "const-values" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/PipelineResultChange.swiftconstvalues",
+    "dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/PipelineResultChange.d",
+    "diagnostics" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/PipelineResultChange.dia",
+    "index-unit-output-path" : "/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/PipelineResultChange.o",
+    "llvm-bc" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/PipelineResultChange.bc",
+    "object" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/PipelineResultChange.o",
+    "swift-dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/PipelineResultChange.swiftdeps",
+    "swiftmodule" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/PipelineResultChange~partial.swiftmodule"
+  },
+  "/tmp/coupley-spm/checkouts/firebase-ios-sdk/Firestore/Swift/Source/PipelineWrapper.swift" : {
+    "const-values" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/PipelineWrapper.swiftconstvalues",
+    "dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/PipelineWrapper.d",
+    "diagnostics" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/PipelineWrapper.dia",
+    "index-unit-output-path" : "/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/PipelineWrapper.o",
+    "llvm-bc" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/PipelineWrapper.bc",
+    "object" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/PipelineWrapper.o",
+    "swift-dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/PipelineWrapper.swiftdeps",
+    "swiftmodule" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/PipelineWrapper~partial.swiftmodule"
+  },
+  "/tmp/coupley-spm/checkouts/firebase-ios-sdk/Firestore/Swift/Source/PropertyWrapper/FirestoreQuery.swift" : {
+    "const-values" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/FirestoreQuery.swiftconstvalues",
+    "dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/FirestoreQuery.d",
+    "diagnostics" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/FirestoreQuery.dia",
+    "index-unit-output-path" : "/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/FirestoreQuery.o",
+    "llvm-bc" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/FirestoreQuery.bc",
+    "object" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/FirestoreQuery.o",
+    "swift-dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/FirestoreQuery.swiftdeps",
+    "swiftmodule" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/FirestoreQuery~partial.swiftmodule"
+  },
+  "/tmp/coupley-spm/checkouts/firebase-ios-sdk/Firestore/Swift/Source/PropertyWrapper/FirestoreQueryObservable.swift" : {
+    "const-values" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/FirestoreQueryObservable.swiftconstvalues",
+    "dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/FirestoreQueryObservable.d",
+    "diagnostics" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/FirestoreQueryObservable.dia",
+    "index-unit-output-path" : "/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/FirestoreQueryObservable.o",
+    "llvm-bc" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/FirestoreQueryObservable.bc",
+    "object" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/FirestoreQueryObservable.o",
+    "swift-dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/FirestoreQueryObservable.swiftdeps",
+    "swiftmodule" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/FirestoreQueryObservable~partial.swiftmodule"
+  },
+  "/tmp/coupley-spm/checkouts/firebase-ios-sdk/Firestore/Swift/Source/PropertyWrapper/QueryPredicate.swift" : {
+    "const-values" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/QueryPredicate.swiftconstvalues",
+    "dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/QueryPredicate.d",
+    "diagnostics" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/QueryPredicate.dia",
+    "index-unit-output-path" : "/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/QueryPredicate.o",
+    "llvm-bc" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/QueryPredicate.bc",
+    "object" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/QueryPredicate.o",
+    "swift-dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/QueryPredicate.swiftdeps",
+    "swiftmodule" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/QueryPredicate~partial.swiftmodule"
+  },
+  "/tmp/coupley-spm/checkouts/firebase-ios-sdk/Firestore/Swift/Source/Stages.swift" : {
+    "const-values" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Stages.swiftconstvalues",
+    "dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Stages.d",
+    "diagnostics" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Stages.dia",
+    "index-unit-output-path" : "/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Stages.o",
+    "llvm-bc" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Stages.bc",
+    "object" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Stages.o",
+    "swift-dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Stages.swiftdeps",
+    "swiftmodule" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Stages~partial.swiftmodule"
+  },
+  "/tmp/coupley-spm/checkouts/firebase-ios-sdk/Firestore/Swift/Source/SwiftAPI/FieldValue+Swift.swift" : {
+    "const-values" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/FieldValue+Swift.swiftconstvalues",
+    "dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/FieldValue+Swift.d",
+    "diagnostics" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/FieldValue+Swift.dia",
+    "index-unit-output-path" : "/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/FieldValue+Swift.o",
+    "llvm-bc" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/FieldValue+Swift.bc",
+    "object" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/FieldValue+Swift.o",
+    "swift-dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/FieldValue+Swift.swiftdeps",
+    "swiftmodule" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/FieldValue+Swift~partial.swiftmodule"
+  },
+  "/tmp/coupley-spm/checkouts/firebase-ios-sdk/Firestore/Swift/Source/SwiftAPI/Firestore+Pipeline.swift" : {
+    "const-values" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Firestore+Pipeline.swiftconstvalues",
+    "dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Firestore+Pipeline.d",
+    "diagnostics" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Firestore+Pipeline.dia",
+    "index-unit-output-path" : "/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Firestore+Pipeline.o",
+    "llvm-bc" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Firestore+Pipeline.bc",
+    "object" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Firestore+Pipeline.o",
+    "swift-dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Firestore+Pipeline.swiftdeps",
+    "swiftmodule" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Firestore+Pipeline~partial.swiftmodule"
+  },
+  "/tmp/coupley-spm/checkouts/firebase-ios-sdk/Firestore/Swift/Source/SwiftAPI/Pipeline/Aggregates/AggregateFunction.swift" : {
+    "const-values" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/AggregateFunction.swiftconstvalues",
+    "dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/AggregateFunction.d",
+    "diagnostics" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/AggregateFunction.dia",
+    "index-unit-output-path" : "/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/AggregateFunction.o",
+    "llvm-bc" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/AggregateFunction.bc",
+    "object" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/AggregateFunction.o",
+    "swift-dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/AggregateFunction.swiftdeps",
+    "swiftmodule" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/AggregateFunction~partial.swiftmodule"
+  },
+  "/tmp/coupley-spm/checkouts/firebase-ios-sdk/Firestore/Swift/Source/SwiftAPI/Pipeline/Aggregates/AliasedAggregate.swift" : {
+    "const-values" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/AliasedAggregate.swiftconstvalues",
+    "dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/AliasedAggregate.d",
+    "diagnostics" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/AliasedAggregate.dia",
+    "index-unit-output-path" : "/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/AliasedAggregate.o",
+    "llvm-bc" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/AliasedAggregate.bc",
+    "object" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/AliasedAggregate.o",
+    "swift-dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/AliasedAggregate.swiftdeps",
+    "swiftmodule" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/AliasedAggregate~partial.swiftmodule"
+  },
+  "/tmp/coupley-spm/checkouts/firebase-ios-sdk/Firestore/Swift/Source/SwiftAPI/Pipeline/Aggregates/CountAll.swift" : {
+    "const-values" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/CountAll.swiftconstvalues",
+    "dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/CountAll.d",
+    "diagnostics" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/CountAll.dia",
+    "index-unit-output-path" : "/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/CountAll.o",
+    "llvm-bc" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/CountAll.bc",
+    "object" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/CountAll.o",
+    "swift-dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/CountAll.swiftdeps",
+    "swiftmodule" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/CountAll~partial.swiftmodule"
+  },
+  "/tmp/coupley-spm/checkouts/firebase-ios-sdk/Firestore/Swift/Source/SwiftAPI/Pipeline/DistanceMeasure.swift" : {
+    "const-values" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/DistanceMeasure.swiftconstvalues",
+    "dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/DistanceMeasure.d",
+    "diagnostics" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/DistanceMeasure.dia",
+    "index-unit-output-path" : "/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/DistanceMeasure.o",
+    "llvm-bc" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/DistanceMeasure.bc",
+    "object" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/DistanceMeasure.o",
+    "swift-dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/DistanceMeasure.swiftdeps",
+    "swiftmodule" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/DistanceMeasure~partial.swiftmodule"
+  },
+  "/tmp/coupley-spm/checkouts/firebase-ios-sdk/Firestore/Swift/Source/SwiftAPI/Pipeline/Expressions/AliasedExpression.swift" : {
+    "const-values" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/AliasedExpression.swiftconstvalues",
+    "dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/AliasedExpression.d",
+    "diagnostics" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/AliasedExpression.dia",
+    "index-unit-output-path" : "/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/AliasedExpression.o",
+    "llvm-bc" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/AliasedExpression.bc",
+    "object" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/AliasedExpression.o",
+    "swift-dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/AliasedExpression.swiftdeps",
+    "swiftmodule" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/AliasedExpression~partial.swiftmodule"
+  },
+  "/tmp/coupley-spm/checkouts/firebase-ios-sdk/Firestore/Swift/Source/SwiftAPI/Pipeline/Expressions/Constant.swift" : {
+    "const-values" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Constant.swiftconstvalues",
+    "dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Constant.d",
+    "diagnostics" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Constant.dia",
+    "index-unit-output-path" : "/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Constant.o",
+    "llvm-bc" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Constant.bc",
+    "object" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Constant.o",
+    "swift-dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Constant.swiftdeps",
+    "swiftmodule" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Constant~partial.swiftmodule"
+  },
+  "/tmp/coupley-spm/checkouts/firebase-ios-sdk/Firestore/Swift/Source/SwiftAPI/Pipeline/Expressions/Expression.swift" : {
+    "const-values" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Expression.swiftconstvalues",
+    "dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Expression.d",
+    "diagnostics" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Expression.dia",
+    "index-unit-output-path" : "/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Expression.o",
+    "llvm-bc" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Expression.bc",
+    "object" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Expression.o",
+    "swift-dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Expression.swiftdeps",
+    "swiftmodule" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Expression~partial.swiftmodule"
+  },
+  "/tmp/coupley-spm/checkouts/firebase-ios-sdk/Firestore/Swift/Source/SwiftAPI/Pipeline/Expressions/Field.swift" : {
+    "const-values" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Field.swiftconstvalues",
+    "dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Field.d",
+    "diagnostics" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Field.dia",
+    "index-unit-output-path" : "/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Field.o",
+    "llvm-bc" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Field.bc",
+    "object" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Field.o",
+    "swift-dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Field.swiftdeps",
+    "swiftmodule" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Field~partial.swiftmodule"
+  },
+  "/tmp/coupley-spm/checkouts/firebase-ios-sdk/Firestore/Swift/Source/SwiftAPI/Pipeline/Expressions/FunctionExpressions/ArrayExpression.swift" : {
+    "const-values" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/ArrayExpression.swiftconstvalues",
+    "dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/ArrayExpression.d",
+    "diagnostics" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/ArrayExpression.dia",
+    "index-unit-output-path" : "/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/ArrayExpression.o",
+    "llvm-bc" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/ArrayExpression.bc",
+    "object" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/ArrayExpression.o",
+    "swift-dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/ArrayExpression.swiftdeps",
+    "swiftmodule" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/ArrayExpression~partial.swiftmodule"
+  },
+  "/tmp/coupley-spm/checkouts/firebase-ios-sdk/Firestore/Swift/Source/SwiftAPI/Pipeline/Expressions/FunctionExpressions/BooleanExpression.swift" : {
+    "const-values" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/BooleanExpression.swiftconstvalues",
+    "dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/BooleanExpression.d",
+    "diagnostics" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/BooleanExpression.dia",
+    "index-unit-output-path" : "/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/BooleanExpression.o",
+    "llvm-bc" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/BooleanExpression.bc",
+    "object" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/BooleanExpression.o",
+    "swift-dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/BooleanExpression.swiftdeps",
+    "swiftmodule" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/BooleanExpression~partial.swiftmodule"
+  },
+  "/tmp/coupley-spm/checkouts/firebase-ios-sdk/Firestore/Swift/Source/SwiftAPI/Pipeline/Expressions/FunctionExpressions/ConditionalExpression.swift" : {
+    "const-values" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/ConditionalExpression.swiftconstvalues",
+    "dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/ConditionalExpression.d",
+    "diagnostics" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/ConditionalExpression.dia",
+    "index-unit-output-path" : "/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/ConditionalExpression.o",
+    "llvm-bc" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/ConditionalExpression.bc",
+    "object" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/ConditionalExpression.o",
+    "swift-dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/ConditionalExpression.swiftdeps",
+    "swiftmodule" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/ConditionalExpression~partial.swiftmodule"
+  },
+  "/tmp/coupley-spm/checkouts/firebase-ios-sdk/Firestore/Swift/Source/SwiftAPI/Pipeline/Expressions/FunctionExpressions/CurrentTimestamp.swift" : {
+    "const-values" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/CurrentTimestamp.swiftconstvalues",
+    "dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/CurrentTimestamp.d",
+    "diagnostics" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/CurrentTimestamp.dia",
+    "index-unit-output-path" : "/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/CurrentTimestamp.o",
+    "llvm-bc" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/CurrentTimestamp.bc",
+    "object" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/CurrentTimestamp.o",
+    "swift-dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/CurrentTimestamp.swiftdeps",
+    "swiftmodule" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/CurrentTimestamp~partial.swiftmodule"
+  },
+  "/tmp/coupley-spm/checkouts/firebase-ios-sdk/Firestore/Swift/Source/SwiftAPI/Pipeline/Expressions/FunctionExpressions/ErrorExpression.swift" : {
+    "const-values" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/ErrorExpression.swiftconstvalues",
+    "dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/ErrorExpression.d",
+    "diagnostics" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/ErrorExpression.dia",
+    "index-unit-output-path" : "/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/ErrorExpression.o",
+    "llvm-bc" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/ErrorExpression.bc",
+    "object" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/ErrorExpression.o",
+    "swift-dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/ErrorExpression.swiftdeps",
+    "swiftmodule" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/ErrorExpression~partial.swiftmodule"
+  },
+  "/tmp/coupley-spm/checkouts/firebase-ios-sdk/Firestore/Swift/Source/SwiftAPI/Pipeline/Expressions/FunctionExpressions/FunctionExpression.swift" : {
+    "const-values" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/FunctionExpression.swiftconstvalues",
+    "dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/FunctionExpression.d",
+    "diagnostics" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/FunctionExpression.dia",
+    "index-unit-output-path" : "/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/FunctionExpression.o",
+    "llvm-bc" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/FunctionExpression.bc",
+    "object" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/FunctionExpression.o",
+    "swift-dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/FunctionExpression.swiftdeps",
+    "swiftmodule" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/FunctionExpression~partial.swiftmodule"
+  },
+  "/tmp/coupley-spm/checkouts/firebase-ios-sdk/Firestore/Swift/Source/SwiftAPI/Pipeline/Expressions/FunctionExpressions/MapExpression.swift" : {
+    "const-values" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/MapExpression.swiftconstvalues",
+    "dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/MapExpression.d",
+    "diagnostics" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/MapExpression.dia",
+    "index-unit-output-path" : "/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/MapExpression.o",
+    "llvm-bc" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/MapExpression.bc",
+    "object" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/MapExpression.o",
+    "swift-dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/MapExpression.swiftdeps",
+    "swiftmodule" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/MapExpression~partial.swiftmodule"
+  },
+  "/tmp/coupley-spm/checkouts/firebase-ios-sdk/Firestore/Swift/Source/SwiftAPI/Pipeline/Expressions/FunctionExpressions/RandomExpression.swift" : {
+    "const-values" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/RandomExpression.swiftconstvalues",
+    "dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/RandomExpression.d",
+    "diagnostics" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/RandomExpression.dia",
+    "index-unit-output-path" : "/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/RandomExpression.o",
+    "llvm-bc" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/RandomExpression.bc",
+    "object" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/RandomExpression.o",
+    "swift-dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/RandomExpression.swiftdeps",
+    "swiftmodule" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/RandomExpression~partial.swiftmodule"
+  },
+  "/tmp/coupley-spm/checkouts/firebase-ios-sdk/Firestore/Swift/Source/SwiftAPI/Pipeline/Ordering.swift" : {
+    "const-values" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Ordering.swiftconstvalues",
+    "dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Ordering.d",
+    "diagnostics" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Ordering.dia",
+    "index-unit-output-path" : "/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Ordering.o",
+    "llvm-bc" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Ordering.bc",
+    "object" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Ordering.o",
+    "swift-dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Ordering.swiftdeps",
+    "swiftmodule" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Ordering~partial.swiftmodule"
+  },
+  "/tmp/coupley-spm/checkouts/firebase-ios-sdk/Firestore/Swift/Source/SwiftAPI/Pipeline/Pipeline.swift" : {
+    "const-values" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Pipeline.swiftconstvalues",
+    "dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Pipeline.d",
+    "diagnostics" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Pipeline.dia",
+    "index-unit-output-path" : "/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Pipeline.o",
+    "llvm-bc" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Pipeline.bc",
+    "object" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Pipeline.o",
+    "swift-dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Pipeline.swiftdeps",
+    "swiftmodule" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Pipeline~partial.swiftmodule"
+  },
+  "/tmp/coupley-spm/checkouts/firebase-ios-sdk/Firestore/Swift/Source/SwiftAPI/Pipeline/PipelineResult.swift" : {
+    "const-values" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/PipelineResult.swiftconstvalues",
+    "dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/PipelineResult.d",
+    "diagnostics" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/PipelineResult.dia",
+    "index-unit-output-path" : "/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/PipelineResult.o",
+    "llvm-bc" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/PipelineResult.bc",
+    "object" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/PipelineResult.o",
+    "swift-dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/PipelineResult.swiftdeps",
+    "swiftmodule" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/PipelineResult~partial.swiftmodule"
+  },
+  "/tmp/coupley-spm/checkouts/firebase-ios-sdk/Firestore/Swift/Source/SwiftAPI/Pipeline/PipelineSource.swift" : {
+    "const-values" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/PipelineSource.swiftconstvalues",
+    "dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/PipelineSource.d",
+    "diagnostics" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/PipelineSource.dia",
+    "index-unit-output-path" : "/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/PipelineSource.o",
+    "llvm-bc" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/PipelineSource.bc",
+    "object" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/PipelineSource.o",
+    "swift-dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/PipelineSource.swiftdeps",
+    "swiftmodule" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/PipelineSource~partial.swiftmodule"
+  },
+  "/tmp/coupley-spm/checkouts/firebase-ios-sdk/Firestore/Swift/Source/SwiftAPI/Pipeline/RealtimePipeline.swift" : {
+    "const-values" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/RealtimePipeline.swiftconstvalues",
+    "dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/RealtimePipeline.d",
+    "diagnostics" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/RealtimePipeline.dia",
+    "index-unit-output-path" : "/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/RealtimePipeline.o",
+    "llvm-bc" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/RealtimePipeline.bc",
+    "object" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/RealtimePipeline.o",
+    "swift-dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/RealtimePipeline.swiftdeps",
+    "swiftmodule" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/RealtimePipeline~partial.swiftmodule"
+  },
+  "/tmp/coupley-spm/checkouts/firebase-ios-sdk/Firestore/Swift/Source/SwiftAPI/Pipeline/RealtimePipelineSource.swift" : {
+    "const-values" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/RealtimePipelineSource.swiftconstvalues",
+    "dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/RealtimePipelineSource.d",
+    "diagnostics" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/RealtimePipelineSource.dia",
+    "index-unit-output-path" : "/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/RealtimePipelineSource.o",
+    "llvm-bc" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/RealtimePipelineSource.bc",
+    "object" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/RealtimePipelineSource.o",
+    "swift-dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/RealtimePipelineSource.swiftdeps",
+    "swiftmodule" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/RealtimePipelineSource~partial.swiftmodule"
+  },
+  "/tmp/coupley-spm/checkouts/firebase-ios-sdk/Firestore/Swift/Source/SwiftAPI/Pipeline/Selectable.swift" : {
+    "const-values" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Selectable.swiftconstvalues",
+    "dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Selectable.d",
+    "diagnostics" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Selectable.dia",
+    "index-unit-output-path" : "/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Selectable.o",
+    "llvm-bc" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Selectable.bc",
+    "object" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Selectable.o",
+    "swift-dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Selectable.swiftdeps",
+    "swiftmodule" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/Selectable~partial.swiftmodule"
+  },
+  "/tmp/coupley-spm/checkouts/firebase-ios-sdk/Firestore/Swift/Source/SwiftAPI/Pipeline/TimeGranularity.swift" : {
+    "const-values" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/TimeGranularity.swiftconstvalues",
+    "dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/TimeGranularity.d",
+    "diagnostics" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/TimeGranularity.dia",
+    "index-unit-output-path" : "/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/TimeGranularity.o",
+    "llvm-bc" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/TimeGranularity.bc",
+    "object" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/TimeGranularity.o",
+    "swift-dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/TimeGranularity.swiftdeps",
+    "swiftmodule" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/TimeGranularity~partial.swiftmodule"
+  },
+  "/tmp/coupley-spm/checkouts/firebase-ios-sdk/Firestore/Swift/Source/SwiftAPI/Pipeline/TimeUnit.swift" : {
+    "const-values" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/TimeUnit.swiftconstvalues",
+    "dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/TimeUnit.d",
+    "diagnostics" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/TimeUnit.dia",
+    "index-unit-output-path" : "/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/TimeUnit.o",
+    "llvm-bc" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/TimeUnit.bc",
+    "object" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/TimeUnit.o",
+    "swift-dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/TimeUnit.swiftdeps",
+    "swiftmodule" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/TimeUnit~partial.swiftmodule"
+  },
+  "/tmp/coupley-spm/checkouts/firebase-ios-sdk/Firestore/Swift/Source/SwiftAPI/VectorValue+Swift.swift" : {
+    "const-values" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/VectorValue+Swift.swiftconstvalues",
+    "dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/VectorValue+Swift.d",
+    "diagnostics" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/VectorValue+Swift.dia",
+    "index-unit-output-path" : "/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/VectorValue+Swift.o",
+    "llvm-bc" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/VectorValue+Swift.bc",
+    "object" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/VectorValue+Swift.o",
+    "swift-dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/VectorValue+Swift.swiftdeps",
+    "swiftmodule" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/VectorValue+Swift~partial.swiftmodule"
+  },
+  "/tmp/coupley-spm/checkouts/firebase-ios-sdk/Firestore/Swift/Source/SwiftHeaderWorkaround.swift" : {
+    "const-values" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/SwiftHeaderWorkaround.swiftconstvalues",
+    "dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/SwiftHeaderWorkaround.d",
+    "diagnostics" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/SwiftHeaderWorkaround.dia",
+    "index-unit-output-path" : "/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/SwiftHeaderWorkaround.o",
+    "llvm-bc" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/SwiftHeaderWorkaround.bc",
+    "object" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/SwiftHeaderWorkaround.o",
+    "swift-dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/SwiftHeaderWorkaround.swiftdeps",
+    "swiftmodule" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/SwiftHeaderWorkaround~partial.swiftmodule"
+  },
+  "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/DerivedSources/resource_bundle_accessor.swift" : {
+    "const-values" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/resource_bundle_accessor.swiftconstvalues",
+    "dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/resource_bundle_accessor.d",
+    "diagnostics" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/resource_bundle_accessor.dia",
+    "index-unit-output-path" : "/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/resource_bundle_accessor.o",
+    "llvm-bc" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/resource_bundle_accessor.bc",
+    "object" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/resource_bundle_accessor.o",
+    "swift-dependencies" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/resource_bundle_accessor.swiftdeps",
+    "swiftmodule" : "/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseFirestore.build/Objects-normal/x86_64/resource_bundle_accessor~partial.swiftmodule"
+  }
+}

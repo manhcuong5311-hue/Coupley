@@ -1,0 +1,4 @@
+module FirebaseFirestoreTarget {
+umbrella "/tmp/coupley-spm/checkouts/firebase-ios-sdk/SwiftPM-PlatformExclude/FirebaseFirestoreWrap/include"
+export *
+}

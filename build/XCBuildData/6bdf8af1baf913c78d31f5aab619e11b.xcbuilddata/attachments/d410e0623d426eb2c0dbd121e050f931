@@ -1,0 +1,4 @@
+module RecaptchaInterop {
+umbrella header "/tmp/coupley-spm/checkouts/interop-ios-for-google-sdks/RecaptchaEnterprise/RecaptchaInterop/Public/RecaptchaInterop/RecaptchaInterop.h"
+export *
+}

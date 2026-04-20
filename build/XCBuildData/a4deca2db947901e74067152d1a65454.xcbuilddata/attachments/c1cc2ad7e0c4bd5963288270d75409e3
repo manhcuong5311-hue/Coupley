@@ -1,0 +1,4 @@
+module FirebaseAppCheckInterop {
+umbrella header "/tmp/coupley-spm/checkouts/firebase-ios-sdk/FirebaseAppCheck/Interop/Public/FirebaseAppCheckInterop/FirebaseAppCheckInterop.h"
+export *
+}

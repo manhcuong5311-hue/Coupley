@@ -1,0 +1,4 @@
+module FirebaseAnalyticsWrapper {
+umbrella "/tmp/coupley-spm/checkouts/firebase-ios-sdk/FirebaseAnalyticsWrapper/include"
+export *
+}

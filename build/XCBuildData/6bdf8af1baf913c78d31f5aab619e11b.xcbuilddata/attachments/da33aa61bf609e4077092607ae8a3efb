@@ -1,0 +1,499 @@
+{
+  "" : {
+    "diagnostics" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/Coupley-primary.dia",
+    "emit-module-dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/Coupley-primary-emit-module.d",
+    "emit-module-diagnostics" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/Coupley-primary-emit-module.dia",
+    "pch" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/Coupley-primary-Bridging-header.pch",
+    "swift-dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/Coupley-primary.swiftdeps"
+  },
+  "/Users/sammanhcuong/Desktop/Coupley/Coupley/ContentView.swift" : {
+    "const-values" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/ContentView.swiftconstvalues",
+    "dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/ContentView.d",
+    "diagnostics" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/ContentView.dia",
+    "index-unit-output-path" : "/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/ContentView.o",
+    "llvm-bc" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/ContentView.bc",
+    "object" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/ContentView.o",
+    "swift-dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/ContentView.swiftdeps",
+    "swiftmodule" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/ContentView~partial.swiftmodule"
+  },
+  "/Users/sammanhcuong/Desktop/Coupley/Coupley/Core/DesignSystem.swift" : {
+    "const-values" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/DesignSystem.swiftconstvalues",
+    "dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/DesignSystem.d",
+    "diagnostics" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/DesignSystem.dia",
+    "index-unit-output-path" : "/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/DesignSystem.o",
+    "llvm-bc" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/DesignSystem.bc",
+    "object" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/DesignSystem.o",
+    "swift-dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/DesignSystem.swiftdeps",
+    "swiftmodule" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/DesignSystem~partial.swiftmodule"
+  },
+  "/Users/sammanhcuong/Desktop/Coupley/Coupley/Core/SessionStore.swift" : {
+    "const-values" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/SessionStore.swiftconstvalues",
+    "dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/SessionStore.d",
+    "diagnostics" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/SessionStore.dia",
+    "index-unit-output-path" : "/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/SessionStore.o",
+    "llvm-bc" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/SessionStore.bc",
+    "object" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/SessionStore.o",
+    "swift-dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/SessionStore.swiftdeps",
+    "swiftmodule" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/SessionStore~partial.swiftmodule"
+  },
+  "/Users/sammanhcuong/Desktop/Coupley/Coupley/CoupleyApp.swift" : {
+    "const-values" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/CoupleyApp.swiftconstvalues",
+    "dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/CoupleyApp.d",
+    "diagnostics" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/CoupleyApp.dia",
+    "index-unit-output-path" : "/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/CoupleyApp.o",
+    "llvm-bc" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/CoupleyApp.bc",
+    "object" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/CoupleyApp.o",
+    "swift-dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/CoupleyApp.swiftdeps",
+    "swiftmodule" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/CoupleyApp~partial.swiftmodule"
+  },
+  "/Users/sammanhcuong/Desktop/Coupley/Coupley/Features/AISuggestion/Models/AISuggestion.swift" : {
+    "const-values" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/AISuggestion.swiftconstvalues",
+    "dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/AISuggestion.d",
+    "diagnostics" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/AISuggestion.dia",
+    "index-unit-output-path" : "/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/AISuggestion.o",
+    "llvm-bc" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/AISuggestion.bc",
+    "object" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/AISuggestion.o",
+    "swift-dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/AISuggestion.swiftdeps",
+    "swiftmodule" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/AISuggestion~partial.swiftmodule"
+  },
+  "/Users/sammanhcuong/Desktop/Coupley/Coupley/Features/AISuggestion/Models/MoodContext.swift" : {
+    "const-values" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/MoodContext.swiftconstvalues",
+    "dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/MoodContext.d",
+    "diagnostics" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/MoodContext.dia",
+    "index-unit-output-path" : "/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/MoodContext.o",
+    "llvm-bc" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/MoodContext.bc",
+    "object" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/MoodContext.o",
+    "swift-dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/MoodContext.swiftdeps",
+    "swiftmodule" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/MoodContext~partial.swiftmodule"
+  },
+  "/Users/sammanhcuong/Desktop/Coupley/Coupley/Features/AISuggestion/Models/PartnerProfile.swift" : {
+    "const-values" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/PartnerProfile.swiftconstvalues",
+    "dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/PartnerProfile.d",
+    "diagnostics" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/PartnerProfile.dia",
+    "index-unit-output-path" : "/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/PartnerProfile.o",
+    "llvm-bc" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/PartnerProfile.bc",
+    "object" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/PartnerProfile.o",
+    "swift-dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/PartnerProfile.swiftdeps",
+    "swiftmodule" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/PartnerProfile~partial.swiftmodule"
+  },
+  "/Users/sammanhcuong/Desktop/Coupley/Coupley/Features/AISuggestion/Services/AISuggestionService.swift" : {
+    "const-values" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/AISuggestionService.swiftconstvalues",
+    "dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/AISuggestionService.d",
+    "diagnostics" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/AISuggestionService.dia",
+    "index-unit-output-path" : "/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/AISuggestionService.o",
+    "llvm-bc" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/AISuggestionService.bc",
+    "object" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/AISuggestionService.o",
+    "swift-dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/AISuggestionService.swiftdeps",
+    "swiftmodule" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/AISuggestionService~partial.swiftmodule"
+  },
+  "/Users/sammanhcuong/Desktop/Coupley/Coupley/Features/AISuggestion/Services/RemoteAISuggestionService.swift" : {
+    "const-values" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/RemoteAISuggestionService.swiftconstvalues",
+    "dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/RemoteAISuggestionService.d",
+    "diagnostics" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/RemoteAISuggestionService.dia",
+    "index-unit-output-path" : "/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/RemoteAISuggestionService.o",
+    "llvm-bc" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/RemoteAISuggestionService.bc",
+    "object" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/RemoteAISuggestionService.o",
+    "swift-dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/RemoteAISuggestionService.swiftdeps",
+    "swiftmodule" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/RemoteAISuggestionService~partial.swiftmodule"
+  },
+  "/Users/sammanhcuong/Desktop/Coupley/Coupley/Features/AISuggestion/ViewModels/SuggestionViewModel.swift" : {
+    "const-values" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/SuggestionViewModel.swiftconstvalues",
+    "dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/SuggestionViewModel.d",
+    "diagnostics" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/SuggestionViewModel.dia",
+    "index-unit-output-path" : "/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/SuggestionViewModel.o",
+    "llvm-bc" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/SuggestionViewModel.bc",
+    "object" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/SuggestionViewModel.o",
+    "swift-dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/SuggestionViewModel.swiftdeps",
+    "swiftmodule" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/SuggestionViewModel~partial.swiftmodule"
+  },
+  "/Users/sammanhcuong/Desktop/Coupley/Coupley/Features/AISuggestion/Views/SuggestionView.swift" : {
+    "const-values" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/SuggestionView.swiftconstvalues",
+    "dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/SuggestionView.d",
+    "diagnostics" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/SuggestionView.dia",
+    "index-unit-output-path" : "/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/SuggestionView.o",
+    "llvm-bc" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/SuggestionView.bc",
+    "object" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/SuggestionView.o",
+    "swift-dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/SuggestionView.swiftdeps",
+    "swiftmodule" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/SuggestionView~partial.swiftmodule"
+  },
+  "/Users/sammanhcuong/Desktop/Coupley/Coupley/Features/Auth/Services/AuthService.swift" : {
+    "const-values" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/AuthService.swiftconstvalues",
+    "dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/AuthService.d",
+    "diagnostics" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/AuthService.dia",
+    "index-unit-output-path" : "/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/AuthService.o",
+    "llvm-bc" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/AuthService.bc",
+    "object" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/AuthService.o",
+    "swift-dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/AuthService.swiftdeps",
+    "swiftmodule" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/AuthService~partial.swiftmodule"
+  },
+  "/Users/sammanhcuong/Desktop/Coupley/Coupley/Features/Auth/ViewModels/AuthViewModel.swift" : {
+    "const-values" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/AuthViewModel.swiftconstvalues",
+    "dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/AuthViewModel.d",
+    "diagnostics" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/AuthViewModel.dia",
+    "index-unit-output-path" : "/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/AuthViewModel.o",
+    "llvm-bc" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/AuthViewModel.bc",
+    "object" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/AuthViewModel.o",
+    "swift-dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/AuthViewModel.swiftdeps",
+    "swiftmodule" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/AuthViewModel~partial.swiftmodule"
+  },
+  "/Users/sammanhcuong/Desktop/Coupley/Coupley/Features/Auth/Views/AuthView.swift" : {
+    "const-values" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/AuthView.swiftconstvalues",
+    "dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/AuthView.d",
+    "diagnostics" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/AuthView.dia",
+    "index-unit-output-path" : "/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/AuthView.o",
+    "llvm-bc" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/AuthView.bc",
+    "object" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/AuthView.o",
+    "swift-dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/AuthView.swiftdeps",
+    "swiftmodule" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/AuthView~partial.swiftmodule"
+  },
+  "/Users/sammanhcuong/Desktop/Coupley/Coupley/Features/CoupleStats/Models/StatsModels.swift" : {
+    "const-values" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/StatsModels.swiftconstvalues",
+    "dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/StatsModels.d",
+    "diagnostics" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/StatsModels.dia",
+    "index-unit-output-path" : "/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/StatsModels.o",
+    "llvm-bc" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/StatsModels.bc",
+    "object" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/StatsModels.o",
+    "swift-dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/StatsModels.swiftdeps",
+    "swiftmodule" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/StatsModels~partial.swiftmodule"
+  },
+  "/Users/sammanhcuong/Desktop/Coupley/Coupley/Features/CoupleStats/Services/StreakService.swift" : {
+    "const-values" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/StreakService.swiftconstvalues",
+    "dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/StreakService.d",
+    "diagnostics" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/StreakService.dia",
+    "index-unit-output-path" : "/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/StreakService.o",
+    "llvm-bc" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/StreakService.bc",
+    "object" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/StreakService.o",
+    "swift-dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/StreakService.swiftdeps",
+    "swiftmodule" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/StreakService~partial.swiftmodule"
+  },
+  "/Users/sammanhcuong/Desktop/Coupley/Coupley/Features/CoupleStats/Services/SyncService.swift" : {
+    "const-values" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/SyncService.swiftconstvalues",
+    "dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/SyncService.d",
+    "diagnostics" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/SyncService.dia",
+    "index-unit-output-path" : "/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/SyncService.o",
+    "llvm-bc" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/SyncService.bc",
+    "object" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/SyncService.o",
+    "swift-dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/SyncService.swiftdeps",
+    "swiftmodule" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/SyncService~partial.swiftmodule"
+  },
+  "/Users/sammanhcuong/Desktop/Coupley/Coupley/Features/CoupleStats/ViewModels/CoupleStatsViewModel.swift" : {
+    "const-values" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/CoupleStatsViewModel.swiftconstvalues",
+    "dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/CoupleStatsViewModel.d",
+    "diagnostics" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/CoupleStatsViewModel.dia",
+    "index-unit-output-path" : "/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/CoupleStatsViewModel.o",
+    "llvm-bc" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/CoupleStatsViewModel.bc",
+    "object" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/CoupleStatsViewModel.o",
+    "swift-dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/CoupleStatsViewModel.swiftdeps",
+    "swiftmodule" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/CoupleStatsViewModel~partial.swiftmodule"
+  },
+  "/Users/sammanhcuong/Desktop/Coupley/Coupley/Features/CoupleStats/Views/CoupleStatsView.swift" : {
+    "const-values" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/CoupleStatsView.swiftconstvalues",
+    "dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/CoupleStatsView.d",
+    "diagnostics" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/CoupleStatsView.dia",
+    "index-unit-output-path" : "/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/CoupleStatsView.o",
+    "llvm-bc" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/CoupleStatsView.bc",
+    "object" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/CoupleStatsView.o",
+    "swift-dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/CoupleStatsView.swiftdeps",
+    "swiftmodule" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/CoupleStatsView~partial.swiftmodule"
+  },
+  "/Users/sammanhcuong/Desktop/Coupley/Coupley/Features/CoupleStats/Views/StatsPreviewCard.swift" : {
+    "const-values" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/StatsPreviewCard.swiftconstvalues",
+    "dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/StatsPreviewCard.d",
+    "diagnostics" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/StatsPreviewCard.dia",
+    "index-unit-output-path" : "/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/StatsPreviewCard.o",
+    "llvm-bc" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/StatsPreviewCard.bc",
+    "object" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/StatsPreviewCard.o",
+    "swift-dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/StatsPreviewCard.swiftdeps",
+    "swiftmodule" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/StatsPreviewCard~partial.swiftmodule"
+  },
+  "/Users/sammanhcuong/Desktop/Coupley/Coupley/Features/CoupleSync/Models/CoupleModels.swift" : {
+    "const-values" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/CoupleModels.swiftconstvalues",
+    "dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/CoupleModels.d",
+    "diagnostics" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/CoupleModels.dia",
+    "index-unit-output-path" : "/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/CoupleModels.o",
+    "llvm-bc" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/CoupleModels.bc",
+    "object" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/CoupleModels.o",
+    "swift-dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/CoupleModels.swiftdeps",
+    "swiftmodule" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/CoupleModels~partial.swiftmodule"
+  },
+  "/Users/sammanhcuong/Desktop/Coupley/Coupley/Features/CoupleSync/Services/CoupleService.swift" : {
+    "const-values" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/CoupleService.swiftconstvalues",
+    "dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/CoupleService.d",
+    "diagnostics" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/CoupleService.dia",
+    "index-unit-output-path" : "/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/CoupleService.o",
+    "llvm-bc" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/CoupleService.bc",
+    "object" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/CoupleService.o",
+    "swift-dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/CoupleService.swiftdeps",
+    "swiftmodule" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/CoupleService~partial.swiftmodule"
+  },
+  "/Users/sammanhcuong/Desktop/Coupley/Coupley/Features/CoupleSync/Services/FirestoreMoodService.swift" : {
+    "const-values" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/FirestoreMoodService.swiftconstvalues",
+    "dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/FirestoreMoodService.d",
+    "diagnostics" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/FirestoreMoodService.dia",
+    "index-unit-output-path" : "/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/FirestoreMoodService.o",
+    "llvm-bc" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/FirestoreMoodService.bc",
+    "object" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/FirestoreMoodService.o",
+    "swift-dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/FirestoreMoodService.swiftdeps",
+    "swiftmodule" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/FirestoreMoodService~partial.swiftmodule"
+  },
+  "/Users/sammanhcuong/Desktop/Coupley/Coupley/Features/CoupleSync/Services/MoodListenerService.swift" : {
+    "const-values" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/MoodListenerService.swiftconstvalues",
+    "dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/MoodListenerService.d",
+    "diagnostics" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/MoodListenerService.dia",
+    "index-unit-output-path" : "/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/MoodListenerService.o",
+    "llvm-bc" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/MoodListenerService.bc",
+    "object" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/MoodListenerService.o",
+    "swift-dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/MoodListenerService.swiftdeps",
+    "swiftmodule" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/MoodListenerService~partial.swiftmodule"
+  },
+  "/Users/sammanhcuong/Desktop/Coupley/Coupley/Features/CoupleSync/Services/PresenceService.swift" : {
+    "const-values" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/PresenceService.swiftconstvalues",
+    "dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/PresenceService.d",
+    "diagnostics" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/PresenceService.dia",
+    "index-unit-output-path" : "/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/PresenceService.o",
+    "llvm-bc" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/PresenceService.bc",
+    "object" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/PresenceService.o",
+    "swift-dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/PresenceService.swiftdeps",
+    "swiftmodule" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/PresenceService~partial.swiftmodule"
+  },
+  "/Users/sammanhcuong/Desktop/Coupley/Coupley/Features/CoupleSync/Services/ReactionService.swift" : {
+    "const-values" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/ReactionService.swiftconstvalues",
+    "dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/ReactionService.d",
+    "diagnostics" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/ReactionService.dia",
+    "index-unit-output-path" : "/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/ReactionService.o",
+    "llvm-bc" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/ReactionService.bc",
+    "object" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/ReactionService.o",
+    "swift-dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/ReactionService.swiftdeps",
+    "swiftmodule" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/ReactionService~partial.swiftmodule"
+  },
+  "/Users/sammanhcuong/Desktop/Coupley/Coupley/Features/CoupleSync/ViewModels/CoupleViewModel.swift" : {
+    "const-values" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/CoupleViewModel.swiftconstvalues",
+    "dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/CoupleViewModel.d",
+    "diagnostics" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/CoupleViewModel.dia",
+    "index-unit-output-path" : "/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/CoupleViewModel.o",
+    "llvm-bc" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/CoupleViewModel.bc",
+    "object" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/CoupleViewModel.o",
+    "swift-dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/CoupleViewModel.swiftdeps",
+    "swiftmodule" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/CoupleViewModel~partial.swiftmodule"
+  },
+  "/Users/sammanhcuong/Desktop/Coupley/Coupley/Features/CoupleSync/Views/CoupleDashboardView.swift" : {
+    "const-values" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/CoupleDashboardView.swiftconstvalues",
+    "dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/CoupleDashboardView.d",
+    "diagnostics" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/CoupleDashboardView.dia",
+    "index-unit-output-path" : "/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/CoupleDashboardView.o",
+    "llvm-bc" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/CoupleDashboardView.bc",
+    "object" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/CoupleDashboardView.o",
+    "swift-dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/CoupleDashboardView.swiftdeps",
+    "swiftmodule" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/CoupleDashboardView~partial.swiftmodule"
+  },
+  "/Users/sammanhcuong/Desktop/Coupley/Coupley/Features/MoodCheckin/Models/MoodEntry.swift" : {
+    "const-values" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/MoodEntry.swiftconstvalues",
+    "dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/MoodEntry.d",
+    "diagnostics" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/MoodEntry.dia",
+    "index-unit-output-path" : "/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/MoodEntry.o",
+    "llvm-bc" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/MoodEntry.bc",
+    "object" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/MoodEntry.o",
+    "swift-dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/MoodEntry.swiftdeps",
+    "swiftmodule" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/MoodEntry~partial.swiftmodule"
+  },
+  "/Users/sammanhcuong/Desktop/Coupley/Coupley/Features/MoodCheckin/Services/AIService.swift" : {
+    "const-values" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/AIService.swiftconstvalues",
+    "dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/AIService.d",
+    "diagnostics" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/AIService.dia",
+    "index-unit-output-path" : "/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/AIService.o",
+    "llvm-bc" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/AIService.bc",
+    "object" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/AIService.o",
+    "swift-dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/AIService.swiftdeps",
+    "swiftmodule" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/AIService~partial.swiftmodule"
+  },
+  "/Users/sammanhcuong/Desktop/Coupley/Coupley/Features/MoodCheckin/Services/MoodQueueStore.swift" : {
+    "const-values" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/MoodQueueStore.swiftconstvalues",
+    "dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/MoodQueueStore.d",
+    "diagnostics" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/MoodQueueStore.dia",
+    "index-unit-output-path" : "/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/MoodQueueStore.o",
+    "llvm-bc" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/MoodQueueStore.bc",
+    "object" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/MoodQueueStore.o",
+    "swift-dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/MoodQueueStore.swiftdeps",
+    "swiftmodule" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/MoodQueueStore~partial.swiftmodule"
+  },
+  "/Users/sammanhcuong/Desktop/Coupley/Coupley/Features/MoodCheckin/Services/MoodService.swift" : {
+    "const-values" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/MoodService.swiftconstvalues",
+    "dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/MoodService.d",
+    "diagnostics" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/MoodService.dia",
+    "index-unit-output-path" : "/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/MoodService.o",
+    "llvm-bc" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/MoodService.bc",
+    "object" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/MoodService.o",
+    "swift-dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/MoodService.swiftdeps",
+    "swiftmodule" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/MoodService~partial.swiftmodule"
+  },
+  "/Users/sammanhcuong/Desktop/Coupley/Coupley/Features/MoodCheckin/ViewModels/MoodViewModel.swift" : {
+    "const-values" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/MoodViewModel.swiftconstvalues",
+    "dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/MoodViewModel.d",
+    "diagnostics" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/MoodViewModel.dia",
+    "index-unit-output-path" : "/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/MoodViewModel.o",
+    "llvm-bc" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/MoodViewModel.bc",
+    "object" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/MoodViewModel.o",
+    "swift-dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/MoodViewModel.swiftdeps",
+    "swiftmodule" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/MoodViewModel~partial.swiftmodule"
+  },
+  "/Users/sammanhcuong/Desktop/Coupley/Coupley/Features/MoodCheckin/Views/EnergySelectorView.swift" : {
+    "const-values" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/EnergySelectorView.swiftconstvalues",
+    "dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/EnergySelectorView.d",
+    "diagnostics" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/EnergySelectorView.dia",
+    "index-unit-output-path" : "/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/EnergySelectorView.o",
+    "llvm-bc" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/EnergySelectorView.bc",
+    "object" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/EnergySelectorView.o",
+    "swift-dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/EnergySelectorView.swiftdeps",
+    "swiftmodule" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/EnergySelectorView~partial.swiftmodule"
+  },
+  "/Users/sammanhcuong/Desktop/Coupley/Coupley/Features/MoodCheckin/Views/MoodCheckinView.swift" : {
+    "const-values" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/MoodCheckinView.swiftconstvalues",
+    "dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/MoodCheckinView.d",
+    "diagnostics" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/MoodCheckinView.dia",
+    "index-unit-output-path" : "/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/MoodCheckinView.o",
+    "llvm-bc" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/MoodCheckinView.bc",
+    "object" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/MoodCheckinView.o",
+    "swift-dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/MoodCheckinView.swiftdeps",
+    "swiftmodule" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/MoodCheckinView~partial.swiftmodule"
+  },
+  "/Users/sammanhcuong/Desktop/Coupley/Coupley/Features/MoodCheckin/Views/MoodSelectorView.swift" : {
+    "const-values" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/MoodSelectorView.swiftconstvalues",
+    "dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/MoodSelectorView.d",
+    "diagnostics" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/MoodSelectorView.dia",
+    "index-unit-output-path" : "/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/MoodSelectorView.o",
+    "llvm-bc" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/MoodSelectorView.bc",
+    "object" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/MoodSelectorView.o",
+    "swift-dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/MoodSelectorView.swiftdeps",
+    "swiftmodule" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/MoodSelectorView~partial.swiftmodule"
+  },
+  "/Users/sammanhcuong/Desktop/Coupley/Coupley/Features/Onboarding/OnboardingView.swift" : {
+    "const-values" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/OnboardingView.swiftconstvalues",
+    "dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/OnboardingView.d",
+    "diagnostics" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/OnboardingView.dia",
+    "index-unit-output-path" : "/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/OnboardingView.o",
+    "llvm-bc" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/OnboardingView.bc",
+    "object" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/OnboardingView.o",
+    "swift-dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/OnboardingView.swiftdeps",
+    "swiftmodule" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/OnboardingView~partial.swiftmodule"
+  },
+  "/Users/sammanhcuong/Desktop/Coupley/Coupley/Features/Pairing/Services/PairingService.swift" : {
+    "const-values" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/PairingService.swiftconstvalues",
+    "dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/PairingService.d",
+    "diagnostics" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/PairingService.dia",
+    "index-unit-output-path" : "/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/PairingService.o",
+    "llvm-bc" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/PairingService.bc",
+    "object" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/PairingService.o",
+    "swift-dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/PairingService.swiftdeps",
+    "swiftmodule" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/PairingService~partial.swiftmodule"
+  },
+  "/Users/sammanhcuong/Desktop/Coupley/Coupley/Features/Pairing/ViewModels/PairingViewModel.swift" : {
+    "const-values" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/PairingViewModel.swiftconstvalues",
+    "dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/PairingViewModel.d",
+    "diagnostics" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/PairingViewModel.dia",
+    "index-unit-output-path" : "/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/PairingViewModel.o",
+    "llvm-bc" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/PairingViewModel.bc",
+    "object" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/PairingViewModel.o",
+    "swift-dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/PairingViewModel.swiftdeps",
+    "swiftmodule" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/PairingViewModel~partial.swiftmodule"
+  },
+  "/Users/sammanhcuong/Desktop/Coupley/Coupley/Features/Pairing/Views/PairingView.swift" : {
+    "const-values" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/PairingView.swiftconstvalues",
+    "dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/PairingView.d",
+    "diagnostics" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/PairingView.dia",
+    "index-unit-output-path" : "/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/PairingView.o",
+    "llvm-bc" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/PairingView.bc",
+    "object" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/PairingView.o",
+    "swift-dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/PairingView.swiftdeps",
+    "swiftmodule" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/PairingView~partial.swiftmodule"
+  },
+  "/Users/sammanhcuong/Desktop/Coupley/Coupley/Features/PartnerQuiz/Models/QuizQuestion.swift" : {
+    "const-values" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/QuizQuestion.swiftconstvalues",
+    "dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/QuizQuestion.d",
+    "diagnostics" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/QuizQuestion.dia",
+    "index-unit-output-path" : "/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/QuizQuestion.o",
+    "llvm-bc" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/QuizQuestion.bc",
+    "object" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/QuizQuestion.o",
+    "swift-dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/QuizQuestion.swiftdeps",
+    "swiftmodule" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/QuizQuestion~partial.swiftmodule"
+  },
+  "/Users/sammanhcuong/Desktop/Coupley/Coupley/Features/PartnerQuiz/Services/ProfileService.swift" : {
+    "const-values" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/ProfileService.swiftconstvalues",
+    "dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/ProfileService.d",
+    "diagnostics" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/ProfileService.dia",
+    "index-unit-output-path" : "/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/ProfileService.o",
+    "llvm-bc" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/ProfileService.bc",
+    "object" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/ProfileService.o",
+    "swift-dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/ProfileService.swiftdeps",
+    "swiftmodule" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/ProfileService~partial.swiftmodule"
+  },
+  "/Users/sammanhcuong/Desktop/Coupley/Coupley/Features/PartnerQuiz/ViewModels/QuizViewModel.swift" : {
+    "const-values" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/QuizViewModel.swiftconstvalues",
+    "dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/QuizViewModel.d",
+    "diagnostics" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/QuizViewModel.dia",
+    "index-unit-output-path" : "/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/QuizViewModel.o",
+    "llvm-bc" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/QuizViewModel.bc",
+    "object" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/QuizViewModel.o",
+    "swift-dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/QuizViewModel.swiftdeps",
+    "swiftmodule" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/QuizViewModel~partial.swiftmodule"
+  },
+  "/Users/sammanhcuong/Desktop/Coupley/Coupley/Features/PartnerQuiz/Views/QuizView.swift" : {
+    "const-values" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/QuizView.swiftconstvalues",
+    "dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/QuizView.d",
+    "diagnostics" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/QuizView.dia",
+    "index-unit-output-path" : "/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/QuizView.o",
+    "llvm-bc" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/QuizView.bc",
+    "object" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/QuizView.o",
+    "swift-dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/QuizView.swiftdeps",
+    "swiftmodule" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/QuizView~partial.swiftmodule"
+  },
+  "/Users/sammanhcuong/Desktop/Coupley/Coupley/Features/SmartNudge/Models/NudgeModels.swift" : {
+    "const-values" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/NudgeModels.swiftconstvalues",
+    "dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/NudgeModels.d",
+    "diagnostics" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/NudgeModels.dia",
+    "index-unit-output-path" : "/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/NudgeModels.o",
+    "llvm-bc" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/NudgeModels.bc",
+    "object" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/NudgeModels.o",
+    "swift-dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/NudgeModels.swiftdeps",
+    "swiftmodule" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/NudgeModels~partial.swiftmodule"
+  },
+  "/Users/sammanhcuong/Desktop/Coupley/Coupley/Features/SmartNudge/Services/NotificationService.swift" : {
+    "const-values" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/NotificationService.swiftconstvalues",
+    "dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/NotificationService.d",
+    "diagnostics" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/NotificationService.dia",
+    "index-unit-output-path" : "/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/NotificationService.o",
+    "llvm-bc" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/NotificationService.bc",
+    "object" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/NotificationService.o",
+    "swift-dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/NotificationService.swiftdeps",
+    "swiftmodule" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/NotificationService~partial.swiftmodule"
+  },
+  "/Users/sammanhcuong/Desktop/Coupley/Coupley/Features/SmartNudge/ViewModels/NotificationViewModel.swift" : {
+    "const-values" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/NotificationViewModel.swiftconstvalues",
+    "dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/NotificationViewModel.d",
+    "diagnostics" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/NotificationViewModel.dia",
+    "index-unit-output-path" : "/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/NotificationViewModel.o",
+    "llvm-bc" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/NotificationViewModel.bc",
+    "object" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/NotificationViewModel.o",
+    "swift-dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/NotificationViewModel.swiftdeps",
+    "swiftmodule" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/NotificationViewModel~partial.swiftmodule"
+  },
+  "/Users/sammanhcuong/Desktop/Coupley/Coupley/Features/SmartNudge/Views/NotificationSettingsView.swift" : {
+    "const-values" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/NotificationSettingsView.swiftconstvalues",
+    "dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/NotificationSettingsView.d",
+    "diagnostics" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/NotificationSettingsView.dia",
+    "index-unit-output-path" : "/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/NotificationSettingsView.o",
+    "llvm-bc" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/NotificationSettingsView.bc",
+    "object" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/NotificationSettingsView.o",
+    "swift-dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/NotificationSettingsView.swiftdeps",
+    "swiftmodule" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/NotificationSettingsView~partial.swiftmodule"
+  },
+  "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/DerivedSources/GeneratedAssetSymbols.swift" : {
+    "const-values" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/GeneratedAssetSymbols.swiftconstvalues",
+    "dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/GeneratedAssetSymbols.d",
+    "diagnostics" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/GeneratedAssetSymbols.dia",
+    "index-unit-output-path" : "/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/GeneratedAssetSymbols.o",
+    "llvm-bc" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/GeneratedAssetSymbols.bc",
+    "object" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/GeneratedAssetSymbols.o",
+    "swift-dependencies" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/GeneratedAssetSymbols.swiftdeps",
+    "swiftmodule" : "/Users/sammanhcuong/Desktop/Coupley/build/Coupley.build/Debug-iphonesimulator/Coupley.build/Objects-normal/x86_64/GeneratedAssetSymbols~partial.swiftmodule"
+  }
+}

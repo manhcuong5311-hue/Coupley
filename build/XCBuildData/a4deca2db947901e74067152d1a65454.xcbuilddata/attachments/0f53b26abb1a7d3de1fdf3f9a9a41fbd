@@ -1,0 +1,4 @@
+module GoogleUtilities_UserDefaults {
+umbrella "/tmp/coupley-spm/checkouts/GoogleUtilities/GoogleUtilities/UserDefaults/Public"
+export *
+}

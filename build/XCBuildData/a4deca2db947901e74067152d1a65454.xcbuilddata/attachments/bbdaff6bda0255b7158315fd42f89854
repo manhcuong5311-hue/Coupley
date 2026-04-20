@@ -1,0 +1,4 @@
+module FirebaseAnalyticsTarget {
+umbrella "/tmp/coupley-spm/checkouts/firebase-ios-sdk/SwiftPM-PlatformExclude/FirebaseAnalyticsWrap/include"
+export *
+}

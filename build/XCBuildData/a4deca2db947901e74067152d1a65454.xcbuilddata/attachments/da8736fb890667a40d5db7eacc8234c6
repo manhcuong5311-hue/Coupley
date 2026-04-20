@@ -1,0 +1,4 @@
+module abslWrapper {
+umbrella "/tmp/coupley-spm/checkouts/abseil-cpp-binary/absl-Wrapper/include"
+export *
+}

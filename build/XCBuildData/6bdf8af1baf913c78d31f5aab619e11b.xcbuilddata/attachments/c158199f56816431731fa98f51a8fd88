@@ -1,0 +1,4 @@
+module opensslWrapper {
+umbrella "/tmp/coupley-spm/checkouts/grpc-binary/openssl-grpc-Wrapper/include"
+export *
+}

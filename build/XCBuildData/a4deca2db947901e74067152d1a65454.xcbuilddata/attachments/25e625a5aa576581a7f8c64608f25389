@@ -1,0 +1,4 @@
+module GoogleDataTransport {
+umbrella header "/tmp/coupley-spm/checkouts/GoogleDataTransport/GoogleDataTransport/GDTCORLibrary/Public/GoogleDataTransport/GoogleDataTransport.h"
+export *
+}

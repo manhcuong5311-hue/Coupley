@@ -1,0 +1,4 @@
+module FirebaseCore {
+umbrella header "/tmp/coupley-spm/checkouts/firebase-ios-sdk/FirebaseCore/Sources/Public/FirebaseCore/FirebaseCore.h"
+export *
+}

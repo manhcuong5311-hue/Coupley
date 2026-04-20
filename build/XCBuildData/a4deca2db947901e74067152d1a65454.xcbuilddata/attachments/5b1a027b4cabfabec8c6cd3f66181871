@@ -1,0 +1,14 @@
+/tmp/coupley-spm/checkouts/firebase-ios-sdk/build/Firebase.build/Debug-iphonesimulator/FirebaseCoreInternal.build/DerivedSources/resource_bundle_accessor.swift
+/tmp/coupley-spm/checkouts/firebase-ios-sdk/FirebaseCore/Internal/Sources/HeartbeatLogging/Heartbeat.swift
+/tmp/coupley-spm/checkouts/firebase-ios-sdk/FirebaseCore/Internal/Sources/HeartbeatLogging/HeartbeatController.swift
+/tmp/coupley-spm/checkouts/firebase-ios-sdk/FirebaseCore/Internal/Sources/HeartbeatLogging/HeartbeatLoggingTestUtils.swift
+/tmp/coupley-spm/checkouts/firebase-ios-sdk/FirebaseCore/Internal/Sources/HeartbeatLogging/HeartbeatStorage.swift
+/tmp/coupley-spm/checkouts/firebase-ios-sdk/FirebaseCore/Internal/Sources/HeartbeatLogging/HeartbeatsBundle.swift
+/tmp/coupley-spm/checkouts/firebase-ios-sdk/FirebaseCore/Internal/Sources/HeartbeatLogging/HeartbeatsPayload.swift
+/tmp/coupley-spm/checkouts/firebase-ios-sdk/FirebaseCore/Internal/Sources/HeartbeatLogging/RingBuffer.swift
+/tmp/coupley-spm/checkouts/firebase-ios-sdk/FirebaseCore/Internal/Sources/HeartbeatLogging/Storage.swift
+/tmp/coupley-spm/checkouts/firebase-ios-sdk/FirebaseCore/Internal/Sources/HeartbeatLogging/StorageFactory.swift
+/tmp/coupley-spm/checkouts/firebase-ios-sdk/FirebaseCore/Internal/Sources/HeartbeatLogging/WeakContainer.swift
+/tmp/coupley-spm/checkouts/firebase-ios-sdk/FirebaseCore/Internal/Sources/HeartbeatLogging/_ObjC_HeartbeatController.swift
+/tmp/coupley-spm/checkouts/firebase-ios-sdk/FirebaseCore/Internal/Sources/HeartbeatLogging/_ObjC_HeartbeatsPayload.swift
+/tmp/coupley-spm/checkouts/firebase-ios-sdk/FirebaseCore/Internal/Sources/Utilities/UnfairLock.swift

@@ -1,0 +1,4 @@
+module nanopb {
+umbrella "/tmp/coupley-spm/checkouts/nanopb/spm_headers"
+export *
+}

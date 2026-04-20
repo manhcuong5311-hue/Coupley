@@ -1,0 +1,4 @@
+module FirebaseFirestoreInternalWrapper {
+umbrella "/tmp/coupley-spm/checkouts/firebase-ios-sdk/FirebaseFirestoreInternal"
+export *
+}

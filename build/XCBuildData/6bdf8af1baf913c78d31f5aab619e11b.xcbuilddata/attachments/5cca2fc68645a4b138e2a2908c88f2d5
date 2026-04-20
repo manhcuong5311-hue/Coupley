@@ -1,0 +1,4 @@
+module GoogleUtilities_Logger {
+umbrella "/tmp/coupley-spm/checkouts/GoogleUtilities/GoogleUtilities/Logger/Public"
+export *
+}

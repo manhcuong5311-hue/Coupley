@@ -1,0 +1,4 @@
+module FirebaseCoreExtension {
+umbrella "/tmp/coupley-spm/checkouts/firebase-ios-sdk/FirebaseCore/Extension"
+export *
+}
