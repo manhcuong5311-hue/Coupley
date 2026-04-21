@@ -26,6 +26,13 @@ protocol CoupleInsightAggregating {
                    userBId: String) async throws
 }
 
+/// No-op registration returned when we can't start a real listener (e.g. solo
+/// session without a coupleId). Keeps the call site signature simple and
+/// avoids a crash from Firestore's "Paths must not contain //" check.
+private final class NoOpListenerRegistration: NSObject, ListenerRegistration {
+    func remove() {}
+}
+
 final class FirestoreCoupleInsightAggregator: CoupleInsightAggregating {
 
     private let db = Firestore.firestore()
@@ -33,7 +40,11 @@ final class FirestoreCoupleInsightAggregator: CoupleInsightAggregating {
     func listenToProfile(coupleId: String,
                          onUpdate: @escaping (CoupleInsightProfile) -> Void,
                          onError: @escaping (Error) -> Void) -> ListenerRegistration {
-        db.document(FirestorePath.coupleProfileCurrent(coupleId: coupleId))
+        guard !coupleId.isEmpty else {
+            onUpdate(.empty)
+            return NoOpListenerRegistration()
+        }
+        return db.document(FirestorePath.coupleProfileCurrent(coupleId: coupleId))
             .addSnapshotListener { snap, error in
                 if let error { onError(error); return }
                 guard let snap, snap.exists else {
@@ -52,7 +63,10 @@ final class FirestoreCoupleInsightAggregator: CoupleInsightAggregating {
                    userAId: String,
                    userBId: String) async throws {
 
-        guard quiz.status == .complete,
+        guard !coupleId.isEmpty,
+              !userAId.isEmpty,
+              !userBId.isEmpty,
+              quiz.status == .complete,
               let result = quiz.result,
               let aAnswer = quiz.answers[userAId],
               let bAnswer = quiz.answers[userBId] else { return }

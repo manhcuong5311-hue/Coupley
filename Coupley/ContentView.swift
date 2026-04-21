@@ -28,6 +28,7 @@ struct ContentView: View {
     @StateObject private var statsViewModel: CoupleStatsViewModel
     @StateObject private var moodViewModel: MoodViewModel
     @StateObject private var profileViewModel: CouplePersonProfileViewModel
+    @StateObject private var microActionViewModel: MicroActionViewModel
 
     init(session: UserSession, displayName: String?) {
         self.session = session
@@ -53,6 +54,7 @@ struct ContentView: View {
             session: session
         ))
         _profileViewModel = StateObject(wrappedValue: CouplePersonProfileViewModel(session: session))
+        _microActionViewModel = StateObject(wrappedValue: MicroActionViewModel(session: session))
     }
 
     var body: some View {
@@ -62,6 +64,7 @@ struct ContentView: View {
                     viewModel: coupleViewModel,
                     statsViewModel: statsViewModel,
                     profileViewModel: profileViewModel,
+                    microActionViewModel: microActionViewModel,
                     showPairingSheet: $showPairingSheet,
                     showStatsSheet: $showStatsSheet,
                     selectedTab: $selectedTab
@@ -117,6 +120,8 @@ struct ContentView: View {
             }
             .onAppear {
                 profileViewModel.startListening()
+                microActionViewModel.bind(to: coupleViewModel)
+                microActionViewModel.refresh(from: coupleViewModel, reason: .appOpen)
                 if session.isPaired {
                     coupleViewModel.startListening()
                     statsViewModel.loadStats()

@@ -2,92 +2,231 @@ rules_version = '2';
 
 // Firestore security rules for Coupley.
 //
-// Design notes:
-//   - Each couple doc has `memberIds: [uidA, uidB]`. Access to every
-//     sub-collection is gated by membership in that array.
-//   - Message/quiz writes are only allowed by members; read-only by members.
-//   - The aggregated profile (coupleProfile/current) is members-only.
+// Data model:
+//   /users/{uid}                                       — user profile + tokens
+//   /pairingCodes/{code}                               — ephemeral invite codes
+//   /couples/{coupleId}                                — userIds: [uidA, uidB]
+//     /moods/{moodId}                                  — author: userId
+//       /reactions/{reactionId}                        — author: userId
+//     /syncScores/{date}                               — daily rollup
+//     /messages/{msgId}                                — chat messages
+//     /chatQuizzes/{quizId}                            — chat quizzes
+//     /coupleProfile/{docId}                           — aggregated insights
+//     /anniversaries/{id}                              — anniversary events
+//     /pings/{pingId}                                  — presence heartbeats
 //
-// Assumes the couple doc lives at /couples/{coupleId} and contains at minimum:
-//   memberIds: [string]
-//   lastQuizSuggestedAt: timestamp (optional)
+// Security model:
+//   * Membership is read DIRECTLY from the doc being accessed whenever
+//     possible (`resource.data.userIds`) so the couple-doc read/update rules
+//     don't depend on a second `get()` call.
+//   * Sub-collection rules use a single cached `get()` on the parent couple
+//     doc via `isCoupleMember`.
+//   * Write paths that touch shared fields additionally check that the
+//     caller is stamping their own uid into `userId` / `senderId` / etc.
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // ---- Helpers ----
+    // ------------------------------------------------------------------
+    // Helpers
+    // ------------------------------------------------------------------
 
     function isSignedIn() {
       return request.auth != null;
     }
 
-    function coupleMembers(coupleId) {
-      return get(/databases/$(database)/documents/couples/$(coupleId)).data.memberIds;
+    function isSelf(uid) {
+      return isSignedIn() && request.auth.uid == uid;
     }
 
-    function isMemberOf(coupleId) {
-      return isSignedIn() && request.auth.uid in coupleMembers(coupleId);
+    function coupleDoc(coupleId) {
+      return get(/databases/$(database)/documents/couples/$(coupleId)).data;
     }
 
-    // ---- Users (existing) ----
+    function isCoupleMember(coupleId) {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/couples/$(coupleId))
+        && ('userIds' in coupleDoc(coupleId))
+        && request.auth.uid in coupleDoc(coupleId).userIds;
+    }
+
+    // Safely read a field from an incoming write; returns null if absent.
+    function incoming() { return request.resource.data; }
+
+    // ------------------------------------------------------------------
+    // /users/{userId}
+    // ------------------------------------------------------------------
+    //
+    // Any signed-in user may read a user doc (used for pairing preview,
+    // partner presence / lastSeen, display-name lookups). Writes are
+    // owner-only — nobody else can touch your profile, tokens, premium
+    // entitlement, coupleId, or push registration.
 
     match /users/{userId} {
-      allow read:  if isSignedIn();
-      allow write: if isSignedIn() && request.auth.uid == userId;
+      allow read:   if isSignedIn();
+      allow create: if isSelf(userId);
+      allow update: if isSelf(userId);
+      allow delete: if isSelf(userId);
     }
 
-    // ---- Couples ----
+    // ------------------------------------------------------------------
+    // /pairingCodes/{code}
+    // ------------------------------------------------------------------
+    //
+    // Short-lived invite codes. Readable by any signed-in user so the
+    // invitee can preview the creator. Only the creator may write their
+    // own code; either party may delete it on join (single-use, 24h TTL).
+
+    match /pairingCodes/{code} {
+      allow read: if isSignedIn();
+
+      allow create: if isSignedIn()
+                    && incoming().creatorId == request.auth.uid;
+
+      allow update: if isSignedIn()
+                    && resource.data.creatorId == request.auth.uid
+                    && incoming().creatorId == request.auth.uid;
+
+      // Deletion happens either when the creator revokes or when the
+      // joining user consumes the code in the pairing batch. Both are
+      // authenticated flows; codes are single-use 6-char secrets.
+      allow delete: if isSignedIn();
+    }
+
+    // ------------------------------------------------------------------
+    // /couples/{coupleId}
+    // ------------------------------------------------------------------
 
     match /couples/{coupleId} {
-      // Only members may read the couple doc. Anyone authed may create one
-      // (pairing flow) as long as they include themselves in memberIds.
-      allow read: if isMemberOf(coupleId);
+
+      // Reads: resolve membership directly from the target doc. This
+      // avoids a recursive `get()` on the same document and works even
+      // when the rules engine would otherwise race on self-reference.
+      allow get, list: if isSignedIn()
+                       && resource != null
+                       && 'userIds' in resource.data
+                       && request.auth.uid in resource.data.userIds;
+
+      // Create: any signed-in user may create the doc during pairing,
+      // but it must name exactly two participants including themself.
       allow create: if isSignedIn()
-                    && request.auth.uid in request.resource.data.memberIds;
+                    && incoming().userIds is list
+                    && incoming().userIds.size() == 2
+                    && request.auth.uid in incoming().userIds;
 
-      // Members may update metadata (lastQuizSuggestedAt, etc.) but cannot
-      // remove the other partner.
-      allow update: if isMemberOf(coupleId)
-                    && request.resource.data.memberIds == resource.data.memberIds;
+      // Update: requester must already be a member, and the incoming
+      // participant list (if present) must still contain both original
+      // members — you can never kick your partner.
+      //
+      // Using `hasAll` instead of strict equality means partial writes
+      // like `setData(..., merge: true)` still pass, and we tolerate a
+      // future rename / migration adding a third service account uid.
+      allow update: if isSignedIn()
+                    && request.auth.uid in resource.data.userIds
+                    && (
+                      !('userIds' in incoming())
+                      || (
+                        incoming().userIds is list
+                        && incoming().userIds.hasAll(resource.data.userIds)
+                      )
+                    );
 
-      // Chat messages
+      allow delete: if false;
+
+      // ----------------------------------------------------------------
+      // Sub-collections
+      // ----------------------------------------------------------------
+
+      // ---- Shared mood feed ----
+      match /moods/{moodId} {
+        allow read: if isCoupleMember(coupleId);
+
+        allow create: if isCoupleMember(coupleId)
+                      && incoming().userId == request.auth.uid;
+        allow update: if isCoupleMember(coupleId)
+                      && resource.data.userId == request.auth.uid;
+        allow delete: if isCoupleMember(coupleId)
+                      && resource.data.userId == request.auth.uid;
+
+        // ---- Reactions on a mood entry ----
+        match /reactions/{reactionId} {
+          allow read: if isCoupleMember(coupleId);
+          allow create: if isCoupleMember(coupleId)
+                        && incoming().userId == request.auth.uid;
+          allow update, delete: if isCoupleMember(coupleId)
+                                && resource.data.userId == request.auth.uid;
+        }
+      }
+
+      // ---- Daily sync score rollups ----
+      match /syncScores/{date} {
+        allow read:  if isCoupleMember(coupleId);
+        allow write: if isCoupleMember(coupleId);
+      }
+
+      // ---- Chat messages ----
       match /messages/{messageId} {
-        allow read:   if isMemberOf(coupleId);
-        // Only the sender may create a text message; system/quiz/result
-        // messages have senderId == null and are written by either member.
-        allow create: if isMemberOf(coupleId)
-                      && (request.resource.data.senderId == null
-                          || request.resource.data.senderId == request.auth.uid);
-        // Updates limited to adding your own uid to readBy.
-        allow update: if isMemberOf(coupleId);
+        allow read: if isCoupleMember(coupleId);
+
+        // User-authored messages must carry the sender's uid. System /
+        // quiz / result cards are authored with senderId == null.
+        allow create: if isCoupleMember(coupleId)
+                      && (
+                        !('senderId' in incoming())
+                        || incoming().senderId == null
+                        || incoming().senderId == request.auth.uid
+                      );
+
+        // Either partner may mark a message read (readBy updates).
+        allow update: if isCoupleMember(coupleId);
+
         allow delete: if false;
       }
 
-      // Chat quizzes
-      match /quizzes/{quizId} {
-        allow read:   if isMemberOf(coupleId);
-        allow create: if isMemberOf(coupleId);
-        // Either member may submit their answer; the transaction on the client
-        // enforces the rest of the business logic.
-        allow update: if isMemberOf(coupleId);
+      // ---- Chat quizzes (path: chatQuizzes) ----
+      match /chatQuizzes/{quizId} {
+        allow read:   if isCoupleMember(coupleId);
+        allow create: if isCoupleMember(coupleId);
+        allow update: if isCoupleMember(coupleId);
         allow delete: if false;
       }
 
-      // Aggregated couple insight profile
+      // ---- Aggregated couple insight profile ----
       match /coupleProfile/{docId} {
-        allow read:  if isMemberOf(coupleId);
-        allow write: if isMemberOf(coupleId);
+        allow read:  if isCoupleMember(coupleId);
+        allow write: if isCoupleMember(coupleId);
       }
 
-      // Anniversary countdowns — shared between both partners.
-      // Either member may create/edit/delete any event in the couple.
+      // ---- Anniversary countdowns ----
       match /anniversaries/{anniversaryId} {
-        allow read:   if isMemberOf(coupleId);
-        allow create: if isMemberOf(coupleId)
-                      && request.resource.data.createdBy == request.auth.uid;
-        allow update: if isMemberOf(coupleId);
-        allow delete: if isMemberOf(coupleId);
+        allow read:   if isCoupleMember(coupleId);
+        allow create: if isCoupleMember(coupleId)
+                      && (
+                        !('createdBy' in incoming())
+                        || incoming().createdBy == request.auth.uid
+                      );
+        allow update: if isCoupleMember(coupleId);
+        allow delete: if isCoupleMember(coupleId);
       }
+
+      // ---- Presence / ping firehose ----
+      match /pings/{pingId} {
+        allow read: if isCoupleMember(coupleId);
+        allow create: if isCoupleMember(coupleId)
+                      && (
+                        !('fromUserId' in incoming())
+                        || incoming().fromUserId == request.auth.uid
+                      );
+        allow update, delete: if false;
+      }
+    }
+
+    // ------------------------------------------------------------------
+    // Catch-all: deny everything not explicitly allowed above.
+    // ------------------------------------------------------------------
+
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

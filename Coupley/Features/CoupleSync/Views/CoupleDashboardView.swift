@@ -12,6 +12,7 @@ struct CoupleDashboardView: View {
     @ObservedObject var viewModel: CoupleViewModel
     @ObservedObject var statsViewModel: CoupleStatsViewModel
     @ObservedObject var profileViewModel: CouplePersonProfileViewModel
+    @ObservedObject var microActionViewModel: MicroActionViewModel
     @Binding var showPairingSheet: Bool
     @Binding var showStatsSheet: Bool
     @Binding var selectedTab: AppTab
@@ -40,6 +41,9 @@ struct CoupleDashboardView: View {
                     .padding(.horizontal, 20)
 
                 coupleAvatarsAndStats
+                    .padding(.horizontal, 20)
+
+                MicroActionCard(viewModel: microActionViewModel)
                     .padding(.horizontal, 20)
 
                 activitiesSection
@@ -838,6 +842,7 @@ struct CoupleDashboardView: View {
             viewModel: CoupleViewModel(),
             statsViewModel: CoupleStatsViewModel(),
             profileViewModel: CouplePersonProfileViewModel(session: .demo),
+            microActionViewModel: MicroActionViewModel(session: .demo),
             showPairingSheet: .constant(false),
             showStatsSheet: .constant(false),
             selectedTab: .constant(.home)
