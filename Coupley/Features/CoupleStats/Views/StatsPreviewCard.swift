@@ -28,8 +28,12 @@ struct StatsPreviewCard: View {
         }
         .padding(20)
         .background(
-            RoundedRectangle(cornerRadius: 20)
-                .fill(.ultraThinMaterial)
+            RoundedRectangle(cornerRadius: Brand.cardCornerRadius)
+                .fill(Brand.surfaceLight)
+                .overlay(
+                    RoundedRectangle(cornerRadius: Brand.cardCornerRadius)
+                        .strokeBorder(Brand.divider, lineWidth: 1)
+                )
                 .shadow(color: .black.opacity(0.06), radius: 12, y: 4)
         )
         .onAppear {
@@ -44,15 +48,16 @@ struct StatsPreviewCard: View {
             HStack(spacing: 4) {
                 Image(systemName: "flame.fill")
                     .font(.caption)
-                    .foregroundStyle(.orange)
+                    .foregroundStyle(Brand.accentStart)
 
                 Text("\(viewModel.streak.currentStreak)")
                     .font(.system(size: 24, weight: .bold, design: .rounded))
+                    .foregroundStyle(Brand.textPrimary)
             }
 
             Text(viewModel.streak.currentStreak == 1 ? "day streak" : "day streak")
                 .font(.caption2)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Brand.textSecondary)
         }
     }
 
@@ -67,16 +72,17 @@ struct StatsPreviewCard: View {
 
                     Text("\(score.score)%")
                         .font(.system(size: 24, weight: .bold, design: .rounded))
+                        .foregroundStyle(Brand.textPrimary)
                 } else {
                     Text("--")
                         .font(.system(size: 24, weight: .bold, design: .rounded))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Brand.textSecondary)
                 }
             }
 
             Text(viewModel.todaySyncScore != nil ? "sync score" : "check in first")
                 .font(.caption2)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Brand.textSecondary)
         }
     }
 }

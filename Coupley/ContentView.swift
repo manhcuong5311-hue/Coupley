@@ -8,7 +8,7 @@ import SwiftUI
 // MARK: - Tab Selection
 
 enum AppTab: Hashable {
-    case home, mood, stats, quiz
+    case home, mood, anniversary, chat
 }
 
 // MARK: - Content View
@@ -22,10 +22,12 @@ struct ContentView: View {
     @EnvironmentObject var notificationViewModel: NotificationViewModel
     @State private var selectedTab: AppTab = .home
     @State private var showPairingSheet = false
+    @State private var showStatsSheet = false
 
     @StateObject private var coupleViewModel: CoupleViewModel
     @StateObject private var statsViewModel: CoupleStatsViewModel
     @StateObject private var moodViewModel: MoodViewModel
+    @StateObject private var profileViewModel: CouplePersonProfileViewModel
 
     init(session: UserSession, displayName: String?) {
         self.session = session
@@ -50,6 +52,7 @@ struct ContentView: View {
             notificationService: NotificationService.shared,
             session: session
         ))
+        _profileViewModel = StateObject(wrappedValue: CouplePersonProfileViewModel(session: session))
     }
 
     var body: some View {
@@ -58,7 +61,10 @@ struct ContentView: View {
                 CoupleDashboardView(
                     viewModel: coupleViewModel,
                     statsViewModel: statsViewModel,
-                    showPairingSheet: $showPairingSheet
+                    profileViewModel: profileViewModel,
+                    showPairingSheet: $showPairingSheet,
+                    showStatsSheet: $showStatsSheet,
+                    selectedTab: $selectedTab
                 )
                 .tabItem { Label("Home", systemImage: "house.fill") }
                 .tag(AppTab.home)
@@ -67,13 +73,13 @@ struct ContentView: View {
                     .tabItem { Label("Mood", systemImage: "heart.fill") }
                     .tag(AppTab.mood)
 
-                CoupleStatsView(viewModel: statsViewModel)
-                    .tabItem { Label("Stats", systemImage: "chart.bar.fill") }
-                    .tag(AppTab.stats)
+                AnniversaryListView(session: session)
+                    .tabItem { Label("Anniversary", systemImage: "calendar.badge.clock") }
+                    .tag(AppTab.anniversary)
 
-                QuizView()
-                    .tabItem { Label("Quiz", systemImage: "sparkles") }
-                    .tag(AppTab.quiz)
+                ChatView(session: session)
+                    .tabItem { Label("Chat", systemImage: "bubble.left.and.bubble.right.fill") }
+                    .tag(AppTab.chat)
             }
             .toolbarBackground(Brand.backgroundTop.opacity(0.96), for: .tabBar)
             .toolbarBackground(.visible, for: .tabBar)
@@ -95,7 +101,22 @@ struct ContentView: View {
                 .presentationDragIndicator(.visible)
                 .presentationBackground(Brand.backgroundTop)
             }
+            .sheet(isPresented: $showStatsSheet) {
+                NavigationStack {
+                    CoupleStatsView(viewModel: statsViewModel)
+                        .toolbar {
+                            ToolbarItem(placement: .topBarTrailing) {
+                                Button("Done") { showStatsSheet = false }
+                                    .foregroundStyle(Brand.accentStart)
+                            }
+                        }
+                }
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
+                .presentationBackground(Brand.backgroundTop)
+            }
             .onAppear {
+                profileViewModel.startListening()
                 if session.isPaired {
                     coupleViewModel.startListening()
                     statsViewModel.loadStats()
@@ -109,7 +130,11 @@ struct ContentView: View {
                 if navigate { selectedTab = .home; notificationViewModel.navigateToDashboard = false }
             }
             .onChange(of: sessionStore.isPaired) { _, paired in
-                if paired { coupleViewModel.startListening(); statsViewModel.loadStats() }
+                if paired {
+                    coupleViewModel.startListening()
+                    statsViewModel.loadStats()
+                    profileViewModel.startListening()
+                }
             }
     }
 

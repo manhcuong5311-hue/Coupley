@@ -11,7 +11,10 @@ struct CoupleDashboardView: View {
 
     @ObservedObject var viewModel: CoupleViewModel
     @ObservedObject var statsViewModel: CoupleStatsViewModel
+    @ObservedObject var profileViewModel: CouplePersonProfileViewModel
     @Binding var showPairingSheet: Bool
+    @Binding var showStatsSheet: Bool
+    @Binding var selectedTab: AppTab
 
     @EnvironmentObject private var sessionStore: SessionStore
     @EnvironmentObject private var themeManager: ThemeManager
@@ -21,55 +24,43 @@ struct CoupleDashboardView: View {
     @State private var isSendingPing = false
     @State private var didSendPing = false
     @State private var showSettings = false
+    @State private var showAvatarPicker = false
 
     private let reactionService: ReactionService = FirestoreReactionService()
     private let presenceService: PresenceService = FirestorePresenceService()
 
-    private var greetingText: String {
-        let hour = Calendar.current.component(.hour, from: Date())
-        switch hour {
-        case 5..<12:  return "Good morning"
-        case 12..<17: return "Good afternoon"
-        case 17..<22: return "Good evening"
-        default:      return "Good night"
-        }
-    }
+    // MARK: - Body
 
     var body: some View {
         ScrollView(showsIndicators: false) {
-            VStack(spacing: 0) {
-                // Top safe area spacer
-                Color.clear.frame(height: 60)
+            VStack(spacing: 20) {
+                Color.clear.frame(height: 20)
 
-                headerSection
-                    .padding(.horizontal, 24)
-                    .padding(.bottom, 28)
-
-                statsRow
+                greetingHeader
                     .padding(.horizontal, 20)
-                    .padding(.bottom, 20)
+
+                coupleAvatarsAndStats
+                    .padding(.horizontal, 20)
+
+                activitiesSection
+                    .padding(.horizontal, 20)
 
                 presenceRow
                     .padding(.horizontal, 20)
-                    .padding(.bottom, 20)
 
                 partnerMoodSection
                     .padding(.horizontal, 20)
-                    .padding(.bottom, 20)
 
                 if !viewModel.weeklyHistory.isEmpty {
                     weeklyHistorySection
                         .padding(.horizontal, 20)
-                        .padding(.bottom, 20)
                 }
 
                 if viewModel.partnerNeedsAttention {
                     attentionBanner
                         .padding(.horizontal, 20)
-                        .padding(.bottom, 20)
                 }
 
-                // Bottom padding for tab bar + banner
                 Color.clear.frame(height: 120)
             }
         }
@@ -89,131 +80,289 @@ struct CoupleDashboardView: View {
             .presentationDragIndicator(.visible)
             .presentationBackground(Brand.backgroundTop)
         }
+        .sheet(isPresented: $showAvatarPicker) {
+            AvatarPickerSheet(viewModel: profileViewModel)
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
+                .presentationBackground(Brand.backgroundTop)
+        }
         .onAppear { viewModel.startListening() }
         .onDisappear { viewModel.stopListening() }
     }
 
-    // MARK: - Header
+    // MARK: - Greeting Header
 
-    private var headerSection: some View {
-        HStack(alignment: .top) {
-            VStack(alignment: .leading, spacing: 6) {
-                Text(greetingText)
-                    .font(.system(size: 15, weight: .medium, design: .rounded))
-                    .foregroundStyle(Brand.textSecondary)
-
-                Text("How are you\ntwo doing?")
-                    .font(.system(size: 30, weight: .bold, design: .rounded))
-                    .foregroundStyle(Brand.textPrimary)
-                    .lineSpacing(2)
-            }
+    private var greetingHeader: some View {
+        HStack(alignment: .center) {
+            Text(greetingTitle)
+                .font(.system(size: 22, weight: .bold, design: .rounded))
+                .foregroundStyle(Brand.textPrimary)
+                .lineLimit(2)
+                .minimumScaleFactor(0.8)
 
             Spacer()
 
-            // Live indicator + settings
-            VStack(alignment: .trailing, spacing: 10) {
-                connectionPill
-
-                Button {
-                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                    showSettings = true
-                } label: {
-                    ZStack(alignment: .topTrailing) {
-                        ZStack {
-                            Circle()
-                                .fill(Brand.surfaceLight)
-                                .frame(width: 36, height: 36)
-                                .overlay(Circle().strokeBorder(Brand.divider, lineWidth: 1))
-                            Image(systemName: "gearshape.fill")
-                                .font(.system(size: 15, weight: .semibold))
-                                .foregroundStyle(Brand.textPrimary)
-                        }
-                        if notificationViewModel.unreadCount > 0 {
-                            Circle()
-                                .fill(Brand.accentStart)
-                                .frame(width: 9, height: 9)
-                                .overlay(Circle().strokeBorder(Brand.backgroundTop, lineWidth: 1.5))
-                                .offset(x: 2, y: -2)
-                        }
+            Button {
+                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                showSettings = true
+            } label: {
+                ZStack(alignment: .topTrailing) {
+                    ZStack {
+                        Circle()
+                            .fill(Brand.surfaceLight)
+                            .frame(width: 36, height: 36)
+                            .overlay(Circle().strokeBorder(Brand.divider, lineWidth: 1))
+                        Image(systemName: "gearshape.fill")
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundStyle(Brand.textPrimary)
+                    }
+                    if notificationViewModel.unreadCount > 0 {
+                        Circle()
+                            .fill(Brand.accentStart)
+                            .frame(width: 9, height: 9)
+                            .overlay(Circle().strokeBorder(Brand.backgroundTop, lineWidth: 1.5))
+                            .offset(x: 2, y: -2)
                     }
                 }
-                .buttonStyle(BouncyButtonStyle(scale: 0.92))
             }
+            .buttonStyle(BouncyButtonStyle(scale: 0.92))
         }
     }
 
-    // MARK: - Connection Pill
-
-    private var connectionPill: some View {
-        HStack(spacing: 5) {
-            Circle()
-                .fill(viewModel.isListening ? Color(red: 0.25, green: 0.85, blue: 0.55) : Brand.textTertiary)
-                .frame(width: 7, height: 7)
-
-            Text(viewModel.isListening ? "Live" : "Offline")
-                .font(.system(size: 12, weight: .semibold, design: .rounded))
-                .foregroundStyle(viewModel.isListening ? Color(red: 0.25, green: 0.85, blue: 0.55) : Brand.textTertiary)
+    private var greetingTitle: String {
+        let me      = profileViewModel.myProfile.displayName
+        let partner = profileViewModel.partnerProfile.displayName
+        if sessionStore.isPaired {
+            return "Hello, \(me) & \(partner)"
         }
-        .padding(.horizontal, 11)
-        .padding(.vertical, 6)
-        .background(
-            Capsule()
-                .fill(viewModel.isListening
-                      ? Color(red: 0.25, green: 0.85, blue: 0.55).opacity(0.12)
-                      : Brand.surfaceLight)
-                .overlay(
-                    Capsule().strokeBorder(
-                        viewModel.isListening
-                            ? Color(red: 0.25, green: 0.85, blue: 0.55).opacity(0.30)
-                            : Brand.divider,
-                        lineWidth: 1
-                    )
-                )
-        )
+        return "Hello, \(me)"
     }
 
-    // MARK: - Stats Row
+    // MARK: - Avatars + Stats Row
 
-    private var statsRow: some View {
-        HStack(spacing: 12) {
-            statCard(
-                icon: "flame.fill",
-                iconColor: Color(red: 1.0, green: 0.55, blue: 0.20),
-                value: "\(statsViewModel.streak.currentStreak)",
-                label: "day streak"
+    private var coupleAvatarsAndStats: some View {
+        HStack(alignment: .center, spacing: 14) {
+            avatarTile(
+                profile: profileViewModel.myProfile,
+                tappable: true
+            ) {
+                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                showAvatarPicker = true
+            }
+
+            avatarTile(
+                profile: profileViewModel.partnerProfile,
+                tappable: false,
+                action: {}
             )
+            .opacity(sessionStore.isPaired ? 1 : 0.55)
 
-            statCard(
-                icon: "arrow.triangle.2.circlepath",
-                iconColor: Brand.accentStart,
-                value: statsViewModel.todaySyncScore.map { "\($0.score)%" } ?? "--",
-                label: statsViewModel.todaySyncScore != nil ? "sync today" : "check in first"
-            )
+            statsPreviewCompact
         }
-    }
-
-    private func statCard(icon: String, iconColor: Color, value: String, label: String) -> some View {
-        VStack(spacing: 10) {
-            Image(systemName: icon)
-                .font(.system(size: 18, weight: .semibold))
-                .foregroundStyle(iconColor)
-
-            Text(value)
-                .font(.system(size: 26, weight: .bold, design: .rounded))
-                .foregroundStyle(Brand.textPrimary)
-
-            Text(label)
-                .font(.system(size: 12, weight: .medium, design: .rounded))
-                .foregroundStyle(Brand.textSecondary)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 20)
+        .padding(14)
         .background(
             RoundedRectangle(cornerRadius: 20)
                 .fill(Brand.surfaceLight)
                 .overlay(RoundedRectangle(cornerRadius: 20).strokeBorder(Brand.divider, lineWidth: 1))
-                .shadow(color: .black.opacity(0.16), radius: 18, y: 5)
+                .shadow(color: .black.opacity(0.10), radius: 14, y: 4)
         )
+    }
+
+    private func avatarTile(
+        profile: CouplePersonProfile,
+        tappable: Bool,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            VStack(spacing: 8) {
+                ZStack(alignment: .bottomTrailing) {
+                    ZStack {
+                        Circle()
+                            .fill(Brand.backgroundTop)
+                            .overlay(Circle().strokeBorder(Brand.divider, lineWidth: 1))
+                        profile.avatar.image()
+                            .clipShape(Circle())
+                            .padding(3)
+                    }
+                    .frame(width: 62, height: 62)
+
+                    if tappable {
+                        Circle()
+                            .fill(Brand.accentStart)
+                            .frame(width: 20, height: 20)
+                            .overlay(
+                                Image(systemName: "pencil")
+                                    .font(.system(size: 10, weight: .bold))
+                                    .foregroundStyle(.white)
+                            )
+                            .overlay(Circle().strokeBorder(Brand.backgroundTop, lineWidth: 2))
+                    }
+                }
+
+                Text(profile.displayName)
+                    .font(.system(size: 13, weight: .semibold, design: .rounded))
+                    .foregroundStyle(Brand.textPrimary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+            }
+            .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(BouncyButtonStyle(scale: tappable ? 0.94 : 1))
+        .disabled(!tappable)
+    }
+
+    private var statsPreviewCompact: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            statsLine(
+                icon: "flame.fill",
+                iconColor: Color(red: 1.0, green: 0.55, blue: 0.20),
+                value: "\(statsViewModel.streak.currentStreak)",
+                label: "streak"
+            )
+            Divider().opacity(0.6)
+            statsLine(
+                icon: "arrow.triangle.2.circlepath",
+                iconColor: Brand.accentStart,
+                value: statsViewModel.todaySyncScore.map { "\($0.score)%" } ?? "--",
+                label: "sync"
+            )
+            Divider().opacity(0.6)
+            statsLine(
+                icon: "calendar",
+                iconColor: Color(red: 0.40, green: 0.70, blue: 1.0),
+                value: "\(viewModel.weeklyHistory.count)",
+                label: "check-ins"
+            )
+        }
+        .padding(10)
+        .frame(maxWidth: .infinity)
+        .background(
+            RoundedRectangle(cornerRadius: 14)
+                .fill(Brand.backgroundTop.opacity(0.6))
+                .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Brand.divider, lineWidth: 1))
+        )
+        .onTapGesture {
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            showStatsSheet = true
+        }
+    }
+
+    private func statsLine(icon: String, iconColor: Color, value: String, label: String) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: icon)
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(iconColor)
+                .frame(width: 14)
+
+            Text(value)
+                .font(.system(size: 14, weight: .bold, design: .rounded))
+                .foregroundStyle(Brand.textPrimary)
+
+            Text(label)
+                .font(.system(size: 11, weight: .medium, design: .rounded))
+                .foregroundStyle(Brand.textSecondary)
+                .lineLimit(1)
+
+            Spacer(minLength: 0)
+        }
+    }
+
+    // MARK: - Activities
+
+    private var activitiesSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Our Activities")
+                .font(.system(size: 13, weight: .semibold, design: .rounded))
+                .foregroundStyle(Brand.textSecondary)
+                .textCase(.uppercase)
+                .tracking(0.5)
+                .padding(.leading, 4)
+
+            HStack(spacing: 12) {
+                activityCard(
+                    icon: "heart.fill",
+                    tint: Brand.accentStart,
+                    title: "Mood Check-in",
+                    subtitle: "Share today"
+                ) { selectedTab = .mood }
+
+                activityCard(
+                    icon: "bubble.left.and.bubble.right.fill",
+                    tint: Color(red: 0.40, green: 0.70, blue: 1.0),
+                    title: "Couple Chat",
+                    subtitle: "Talk together"
+                ) { selectedTab = .chat }
+            }
+
+            HStack(spacing: 12) {
+                activityCard(
+                    icon: "sparkles",
+                    tint: Color(red: 1.0, green: 0.55, blue: 0.20),
+                    title: "Date Ideas",
+                    subtitle: "Get suggestions"
+                ) {
+                    if let mood = viewModel.partnerMood {
+                        viewModel.suggestionContext = mood.toMoodContext()
+                        viewModel.showAISuggestions = true
+                    }
+                }
+                .opacity(viewModel.partnerMood == nil ? 0.55 : 1)
+                .disabled(viewModel.partnerMood == nil)
+
+                activityCard(
+                    icon: "chart.bar.fill",
+                    tint: Color(red: 0.50, green: 0.40, blue: 1.0),
+                    title: "Our Stats",
+                    subtitle: "Track progress"
+                ) { showStatsSheet = true }
+            }
+        }
+    }
+
+    private func activityCard(
+        icon: String,
+        tint: Color,
+        title: String,
+        subtitle: String,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button {
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            action()
+        } label: {
+            HStack(spacing: 12) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(tint.opacity(0.15))
+                        .frame(width: 44, height: 44)
+                    Image(systemName: icon)
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(tint)
+                }
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                        .font(.system(size: 14, weight: .semibold, design: .rounded))
+                        .foregroundStyle(Brand.textPrimary)
+                        .lineLimit(1)
+                    Text(subtitle)
+                        .font(.system(size: 11, weight: .regular, design: .rounded))
+                        .foregroundStyle(Brand.textSecondary)
+                        .lineLimit(1)
+                }
+
+                Spacer(minLength: 0)
+            }
+            .padding(12)
+            .frame(maxWidth: .infinity)
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(Brand.surfaceLight)
+                    .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(Brand.divider, lineWidth: 1))
+                    .shadow(color: .black.opacity(0.08), radius: 10, y: 3)
+            )
+        }
+        .buttonStyle(BouncyButtonStyle(scale: 0.96))
     }
 
     // MARK: - Partner Mood
@@ -229,8 +378,6 @@ struct CoupleDashboardView: View {
         }
         .animation(.spring(response: 0.5, dampingFraction: 0.8), value: viewModel.partnerMoodState)
     }
-
-    // MARK: - Empty State
 
     private var emptyMoodCard: some View {
         VStack(spacing: 18) {
@@ -266,8 +413,6 @@ struct CoupleDashboardView: View {
         )
     }
 
-    // MARK: - Loading State
-
     private var loadingMoodCard: some View {
         VStack(spacing: 14) {
             ProgressView()
@@ -286,11 +431,8 @@ struct CoupleDashboardView: View {
         )
     }
 
-    // MARK: - Live Mood Card
-
     private func liveMoodCard(entry: SharedMoodEntry) -> some View {
         VStack(spacing: 20) {
-            // Header row
             HStack {
                 Text("Partner's mood")
                     .font(.system(size: 13, weight: .semibold, design: .rounded))
@@ -309,7 +451,6 @@ struct CoupleDashboardView: View {
                 .foregroundStyle(Brand.textTertiary)
             }
 
-            // Mood display
             VStack(spacing: 14) {
                 Text(entry.moodValue.emoji)
                     .font(.system(size: 72))
@@ -319,7 +460,6 @@ struct CoupleDashboardView: View {
                     .font(.system(size: 22, weight: .bold, design: .rounded))
                     .foregroundStyle(Brand.textPrimary)
 
-                // Energy badge
                 HStack(spacing: 6) {
                     Image(systemName: entry.energyValue.icon)
                         .font(.system(size: 12, weight: .semibold))
@@ -336,7 +476,6 @@ struct CoupleDashboardView: View {
                 )
             }
 
-            // Note
             if let note = entry.note, !note.isEmpty {
                 HStack(alignment: .top, spacing: 10) {
                     Image(systemName: "quote.opening")
@@ -359,10 +498,8 @@ struct CoupleDashboardView: View {
                 )
             }
 
-            // Reaction bar — always shown, so the partner can respond to any mood
             reactionBar(for: entry)
 
-            // Suggestion button for low moods
             if entry.needsAttention {
                 Button {
                     viewModel.openSuggestions()
@@ -398,8 +535,6 @@ struct CoupleDashboardView: View {
                 .shadow(color: .black.opacity(0.18), radius: 20, y: 6)
         )
     }
-
-    // MARK: - Error State
 
     private func errorMoodCard(message: String) -> some View {
         VStack(spacing: 16) {
@@ -650,7 +785,7 @@ struct CoupleDashboardView: View {
         }
         let dayLabel: String = {
             let f = DateFormatter()
-            f.dateFormat = "EEEEE" // one-letter weekday
+            f.dateFormat = "EEEEE"
             return f.string(from: date)
         }()
 
@@ -702,7 +837,10 @@ struct CoupleDashboardView: View {
         CoupleDashboardView(
             viewModel: CoupleViewModel(),
             statsViewModel: CoupleStatsViewModel(),
-            showPairingSheet: .constant(false)
+            profileViewModel: CouplePersonProfileViewModel(session: .demo),
+            showPairingSheet: .constant(false),
+            showStatsSheet: .constant(false),
+            selectedTab: .constant(.home)
         )
         .environmentObject(SessionStore())
     }

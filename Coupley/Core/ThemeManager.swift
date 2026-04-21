@@ -2,13 +2,16 @@
 //  ThemeManager.swift
 //  Coupley
 //
-//  User-selectable theme (system / light / dark) stored in AppStorage.
-//  Attach via `.preferredColorScheme(themeManager.colorScheme)` on the root view.
+//  User-selectable appearance (system / light / dark) + theme variant
+//  (CoupleSync / Classic). Both are stored in AppStorage.
+//  Attach via `.preferredColorScheme(themeManager.colorScheme)` on the root view,
+//  and re-key the tree with `.id(themeManager.variant)` so Brand tokens refresh.
 //
 
 import SwiftUI
 import Combine
-// MARK: - App Theme
+
+// MARK: - App Theme (light/dark/system)
 
 enum AppTheme: String, CaseIterable, Identifiable {
     case system
@@ -47,13 +50,24 @@ enum AppTheme: String, CaseIterable, Identifiable {
 @MainActor
 final class ThemeManager: ObservableObject {
 
-    @AppStorage("appTheme") private var storedTheme: String = AppTheme.dark.rawValue
+    @AppStorage("appTheme")     private var storedTheme:   String = AppTheme.dark.rawValue
+    @AppStorage("themeVariant") private var storedVariant: String = ThemeVariant.coupleSync.rawValue
 
     var theme: AppTheme {
         get { AppTheme(rawValue: storedTheme) ?? .dark }
         set {
             storedTheme = newValue.rawValue
             objectWillChange.send()
+        }
+    }
+
+    var variant: ThemeVariant {
+        get { ThemeVariant(rawValue: storedVariant) ?? .coupleSync }
+        set {
+            storedVariant = newValue.rawValue
+            objectWillChange.send()
+            // UITabBarAppearance is captured once at launch; refresh it now.
+            AppTheming.configureTabBar()
         }
     }
 

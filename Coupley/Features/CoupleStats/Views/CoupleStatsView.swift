@@ -15,16 +15,20 @@ struct CoupleStatsView: View {
 
     var body: some View {
         NavigationStack {
-            Group {
-                switch viewModel.loadState {
-                case .idle, .loading:
-                    loadingView
+            ZStack {
+                Brand.bgGradient.ignoresSafeArea()
 
-                case .loaded:
-                    statsContent
+                Group {
+                    switch viewModel.loadState {
+                    case .idle, .loading:
+                        loadingView
 
-                case .error(let message):
-                    errorView(message: message)
+                    case .loaded:
+                        statsContent
+
+                    case .error(let message):
+                        errorView(message: message)
+                    }
                 }
             }
             .navigationTitle("Your Stats")
@@ -42,9 +46,10 @@ struct CoupleStatsView: View {
             Spacer()
             ProgressView()
                 .controlSize(.large)
+                .tint(Brand.accentStart)
             Text("Loading your stats...")
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Brand.textSecondary)
             Spacer()
         }
         .frame(maxWidth: .infinity)
@@ -76,16 +81,17 @@ struct CoupleStatsView: View {
 
             Image(systemName: "chart.bar.xaxis")
                 .font(.system(size: 48))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Brand.textSecondary)
 
             Text(message)
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Brand.textSecondary)
                 .multilineTextAlignment(.center)
 
             Button("Try Again") {
                 viewModel.refresh()
             }
+            .tint(Brand.accentStart)
             .buttonStyle(.borderedProminent)
 
             Spacer()
@@ -112,12 +118,12 @@ struct CoupleStatsView: View {
                     HStack(alignment: .firstTextBaseline, spacing: 4) {
                         Text("\(viewModel.streak.currentStreak)")
                             .font(.system(size: 56, weight: .bold, design: .rounded))
-                            .foregroundStyle(.primary)
+                            .foregroundStyle(Brand.textPrimary)
 
                         Text(viewModel.streak.currentStreak == 1 ? "day" : "days")
                             .font(.title3)
                             .fontWeight(.medium)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Brand.textSecondary)
                     }
 
                     // Encouragement
@@ -126,7 +132,7 @@ struct CoupleStatsView: View {
                     } else {
                         Text("Check in together today to start your streak!")
                             .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Brand.textSecondary)
                             .multilineTextAlignment(.center)
                     }
 
@@ -140,10 +146,10 @@ struct CoupleStatsView: View {
                         HStack {
                             Image(systemName: "trophy.fill")
                                 .font(.caption)
-                                .foregroundStyle(.yellow)
+                                .foregroundStyle(Brand.accentEnd)
                             Text("Longest: \(viewModel.streak.longestStreak) days")
                                 .font(.caption)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(Brand.textSecondary)
                         }
                     }
                 }
@@ -156,21 +162,22 @@ struct CoupleStatsView: View {
             if let milestone = viewModel.streak.milestoneReached {
                 HStack(spacing: 8) {
                     Image(systemName: milestone.icon)
-                        .foregroundStyle(.orange)
+                        .foregroundStyle(Brand.accentStart)
                     Text(milestone.label)
                         .fontWeight(.semibold)
+                        .foregroundStyle(Brand.textPrimary)
                 }
                 .font(.subheadline)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
                 .background(
                     Capsule()
-                        .fill(Color.orange.opacity(0.12))
+                        .fill(Brand.accentStart.opacity(0.12))
                 )
             } else {
                 Text("Keep it going!")
                     .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Brand.textSecondary)
             }
         }
     }
@@ -180,17 +187,11 @@ struct CoupleStatsView: View {
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
                     Capsule()
-                        .fill(Color(.systemGray5))
+                        .fill(Brand.surfaceMid)
                         .frame(height: 8)
 
                     Capsule()
-                        .fill(
-                            LinearGradient(
-                                colors: [.orange, .red],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
+                        .fill(Brand.accentGradient)
                         .frame(
                             width: max(
                                 geo.size.width * viewModel.streakProgressToNextMilestone,
@@ -206,11 +207,11 @@ struct CoupleStatsView: View {
             HStack {
                 Text("\(viewModel.daysToNextMilestone) days to \(next.label)")
                     .font(.caption2)
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(Brand.textTertiary)
                 Spacer()
                 Image(systemName: next.icon)
                     .font(.caption2)
-                    .foregroundStyle(.orange.opacity(0.5))
+                    .foregroundStyle(Brand.accentStart.opacity(0.6))
             }
         }
     }
@@ -224,13 +225,13 @@ struct CoupleStatsView: View {
                     Label("Sync Score", systemImage: "waveform.path.ecg")
                         .font(.subheadline)
                         .fontWeight(.medium)
-                        .foregroundStyle(.purple)
+                        .foregroundStyle(Brand.accentStart)
                     Spacer()
 
                     if let score = viewModel.todaySyncScore {
                         Text("Today")
                             .font(.caption2)
-                            .foregroundStyle(.tertiary)
+                            .foregroundStyle(Brand.textTertiary)
                             .padding(.trailing, 2)
                         Text(score.syncLevel.emoji)
                     }
@@ -250,7 +251,7 @@ struct CoupleStatsView: View {
             // Ring gauge
             ZStack {
                 Circle()
-                    .stroke(Color(.systemGray5), lineWidth: 10)
+                    .stroke(Brand.surfaceMid, lineWidth: 10)
                     .frame(width: 120, height: 120)
 
                 Circle()
@@ -266,20 +267,21 @@ struct CoupleStatsView: View {
                 VStack(spacing: 2) {
                     Text("\(score.score)")
                         .font(.system(size: 32, weight: .bold, design: .rounded))
+                        .foregroundStyle(Brand.textPrimary)
                     Text("%")
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Brand.textSecondary)
                 }
             }
 
             // Label
             Text(score.syncLevel.label)
                 .font(.headline)
-                .foregroundStyle(.primary)
+                .foregroundStyle(Brand.textPrimary)
 
             Text(score.syncLevel.encouragement)
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Brand.textSecondary)
                 .multilineTextAlignment(.center)
 
             // Mood comparison
@@ -287,7 +289,7 @@ struct CoupleStatsView: View {
                 VStack(spacing: 4) {
                     Text("You")
                         .font(.caption2)
-                        .foregroundStyle(.tertiary)
+                        .foregroundStyle(Brand.textTertiary)
                     Text(Mood(rawValue: score.userAMood)?.emoji ?? "?")
                         .font(.title2)
                 }
@@ -306,7 +308,7 @@ struct CoupleStatsView: View {
                 VStack(spacing: 4) {
                     Text("Partner")
                         .font(.caption2)
-                        .foregroundStyle(.tertiary)
+                        .foregroundStyle(Brand.textTertiary)
                     Text(Mood(rawValue: score.userBMood)?.emoji ?? "?")
                         .font(.title2)
                 }
@@ -318,11 +320,11 @@ struct CoupleStatsView: View {
         VStack(spacing: 12) {
             Image(systemName: "heart.text.square")
                 .font(.system(size: 36))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Brand.textSecondary)
 
             Text("Both partners need to check in\nto see today's sync score")
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Brand.textSecondary)
                 .multilineTextAlignment(.center)
         }
         .padding(.vertical, 16)
@@ -337,24 +339,25 @@ struct CoupleStatsView: View {
                     Label("Weekly Trend", systemImage: "chart.line.uptrend.xyaxis")
                         .font(.subheadline)
                         .fontWeight(.medium)
-                        .foregroundStyle(.green)
+                        .foregroundStyle(Brand.accentStart)
                     Spacer()
                 }
 
                 if viewModel.weeklyScores.isEmpty {
                     Text("Keep checking in to see your weekly trend")
                         .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Brand.textSecondary)
                         .padding(.vertical, 12)
                 } else {
                     // Weekly average
                     HStack(alignment: .firstTextBaseline, spacing: 4) {
                         Text("\(viewModel.weeklyAverage)")
                             .font(.system(size: 36, weight: .bold, design: .rounded))
+                            .foregroundStyle(Brand.textPrimary)
 
                         Text("% avg")
                             .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Brand.textSecondary)
 
                         Spacer()
 
@@ -395,7 +398,7 @@ struct CoupleStatsView: View {
                     // Day label
                     Text(dayLabel(for: score.date))
                         .font(.system(size: 10))
-                        .foregroundStyle(.tertiary)
+                        .foregroundStyle(Brand.textTertiary)
                 }
                 .frame(maxWidth: .infinity)
             }
@@ -406,6 +409,11 @@ struct CoupleStatsView: View {
     // MARK: - Helpers
 
     private func syncGradient(for level: SyncLevel) -> LinearGradient {
+        // In CoupleSync variant, collapse all tiers to the brand gradient so the
+        // warm palette stays consistent. Classic keeps the vibrant semantic hues.
+        if ThemeVariant.current == .coupleSync {
+            return Brand.accentGradient
+        }
         switch level {
         case .highlyInSync:
             return LinearGradient(colors: [.green, .mint], startPoint: .leading, endPoint: .trailing)
@@ -443,14 +451,19 @@ struct StatsCard<Content: View>: View {
     @ViewBuilder let content: () -> Content
 
     var body: some View {
+        let r = Brand.cardCornerRadius
         VStack {
             content()
         }
         .frame(maxWidth: .infinity)
         .padding(24)
         .background(
-            RoundedRectangle(cornerRadius: 24)
-                .fill(.ultraThinMaterial)
+            RoundedRectangle(cornerRadius: r)
+                .fill(Brand.surfaceLight)
+                .overlay(
+                    RoundedRectangle(cornerRadius: r)
+                        .strokeBorder(Brand.divider, lineWidth: 1)
+                )
                 .shadow(color: .black.opacity(0.06), radius: 16, y: 6)
         )
     }

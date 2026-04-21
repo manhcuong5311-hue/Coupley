@@ -3,6 +3,9 @@
 //  Coupley
 //
 //  Shared design tokens, colors, and interactive components.
+//  Colors are sourced from `Palette` (which resolves the active ThemeVariant at
+//  render time). Shape tokens (corner radii, glow, gradient vs. flat) are sourced
+//  from `ThemeVariant.current`.
 //
 
 import SwiftUI
@@ -19,58 +22,37 @@ extension Color {
     }
 }
 
-// MARK: - Brand Colors
+// MARK: - Brand Tokens
 
 enum Brand {
-    // Deep backgrounds (adapt light/dark)
-    static let backgroundTop = Color.adaptive(
-        dark:  UIColor(red: 0.07, green: 0.04, blue: 0.15, alpha: 1),
-        light: UIColor(red: 0.98, green: 0.96, blue: 0.99, alpha: 1)
-    )
-    static let backgroundBottom = Color.adaptive(
-        dark:  UIColor(red: 0.12, green: 0.06, blue: 0.22, alpha: 1),
-        light: UIColor(red: 1.00, green: 0.94, blue: 0.92, alpha: 1)
-    )
-    static let backgroundMid = Color.adaptive(
-        dark:  UIColor(red: 0.09, green: 0.05, blue: 0.18, alpha: 1),
-        light: UIColor(red: 0.99, green: 0.95, blue: 0.96, alpha: 1)
-    )
 
-    // Accent gradient: rose → coral (same in both modes)
-    static let accentStart  = Color(red: 1.00, green: 0.38, blue: 0.60)
-    static let accentEnd    = Color(red: 1.00, green: 0.60, blue: 0.35)
+    // Backgrounds
+    static var backgroundTop:    Color { Palette.backgroundTop }
+    static var backgroundMid:    Color { Palette.backgroundMid }
+    static var backgroundBottom: Color { Palette.backgroundBottom }
 
-    // Soft surfaces (adapt)
-    static let surfaceLight = Color.adaptive(
-        dark:  UIColor.white.withAlphaComponent(0.08),
-        light: UIColor.black.withAlphaComponent(0.04)
-    )
-    static let surfaceMid = Color.adaptive(
-        dark:  UIColor.white.withAlphaComponent(0.12),
-        light: UIColor.black.withAlphaComponent(0.07)
-    )
-    static let divider = Color.adaptive(
-        dark:  UIColor.white.withAlphaComponent(0.10),
-        light: UIColor.black.withAlphaComponent(0.08)
-    )
+    // Accents
+    static var accentStart: Color { Palette.accentStart }
+    static var accentEnd:   Color { Palette.accentEnd }
 
-    // Text (adapt)
-    static let textPrimary = Color.adaptive(
-        dark:  UIColor.white,
-        light: UIColor.black
-    )
-    static let textSecondary = Color.adaptive(
-        dark:  UIColor.white.withAlphaComponent(0.62),
-        light: UIColor.black.withAlphaComponent(0.60)
-    )
-    static let textTertiary = Color.adaptive(
-        dark:  UIColor.white.withAlphaComponent(0.38),
-        light: UIColor.black.withAlphaComponent(0.42)
-    )
+    // Surfaces
+    static var surfaceLight: Color { Palette.surfaceLight }
+    static var surfaceMid:   Color { Palette.surfaceMid }
+    static var divider:      Color { Palette.divider }
 
-    // Accent gradient shorthand
+    // Text
+    static var textPrimary:   Color { Palette.textPrimary }
+    static var textSecondary: Color { Palette.textSecondary }
+    static var textTertiary:  Color { Palette.textTertiary }
+
+    // Accent gradient (falls back to solid for flat variants)
     static var accentGradient: LinearGradient {
-        LinearGradient(colors: [accentStart, accentEnd], startPoint: .leading, endPoint: .trailing)
+        if ThemeVariant.current.usesSolidPrimary {
+            return LinearGradient(colors: [accentStart, accentStart],
+                                  startPoint: .leading, endPoint: .trailing)
+        }
+        return LinearGradient(colors: [accentStart, accentEnd],
+                              startPoint: .leading, endPoint: .trailing)
     }
 
     static var bgGradient: LinearGradient {
@@ -80,6 +62,10 @@ enum Brand {
             endPoint: .bottomTrailing
         )
     }
+
+    // Shape tokens (re-exposed for call sites)
+    static var buttonCornerRadius: CGFloat { ThemeVariant.current.buttonCornerRadius }
+    static var cardCornerRadius:   CGFloat { ThemeVariant.current.cardCornerRadius }
 }
 
 // MARK: - Bouncy Button Style
@@ -103,6 +89,9 @@ struct PrimaryButton: View {
     let action: () -> Void
 
     var body: some View {
+        let radius = Brand.buttonCornerRadius
+        let variant = ThemeVariant.current
+
         Button(action: {
             UIImpactFeedbackGenerator(style: .medium).impactOccurred()
             action()
@@ -123,13 +112,18 @@ struct PrimaryButton: View {
                     if isEnabled {
                         Brand.accentGradient
                     } else {
-                        LinearGradient(colors: [Brand.accentStart.opacity(0.35), Brand.accentEnd.opacity(0.35)],
-                                       startPoint: .leading, endPoint: .trailing)
+                        LinearGradient(
+                            colors: [Brand.accentStart.opacity(0.35), Brand.accentEnd.opacity(0.35)],
+                            startPoint: .leading, endPoint: .trailing
+                        )
                     }
                 }
             )
-            .clipShape(RoundedRectangle(cornerRadius: 18))
-            .shadow(color: Brand.accentStart.opacity(isEnabled ? 0.40 : 0.0), radius: 16, y: 6)
+            .clipShape(RoundedRectangle(cornerRadius: radius))
+            .shadow(
+                color: Brand.accentStart.opacity(variant.showsAmbientGlow && isEnabled ? 0.40 : 0.0),
+                radius: 16, y: 6
+            )
         }
         .buttonStyle(BouncyButtonStyle())
         .disabled(!isEnabled || isLoading)
@@ -143,6 +137,8 @@ struct GhostButton: View {
     let action: () -> Void
 
     var body: some View {
+        let radius = Brand.buttonCornerRadius - 2
+
         Button(action: action) {
             Text(title)
                 .font(.system(size: 16, weight: .medium, design: .rounded))
@@ -150,9 +146,9 @@ struct GhostButton: View {
                 .frame(maxWidth: .infinity)
                 .frame(height: 52)
                 .background(Brand.surfaceLight)
-                .clipShape(RoundedRectangle(cornerRadius: 16))
+                .clipShape(RoundedRectangle(cornerRadius: radius))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 16)
+                    RoundedRectangle(cornerRadius: radius)
                         .strokeBorder(Brand.divider, lineWidth: 1)
                 )
         }
@@ -163,16 +159,17 @@ struct GhostButton: View {
 // MARK: - Glass Card
 
 struct GlassCard<Content: View>: View {
-    var cornerRadius: CGFloat = 20
+    var cornerRadius: CGFloat? = nil
     @ViewBuilder let content: () -> Content
 
     var body: some View {
+        let r = cornerRadius ?? Brand.cardCornerRadius
         content()
             .background(
-                RoundedRectangle(cornerRadius: cornerRadius)
+                RoundedRectangle(cornerRadius: r)
                     .fill(Brand.surfaceLight)
                     .overlay(
-                        RoundedRectangle(cornerRadius: cornerRadius)
+                        RoundedRectangle(cornerRadius: r)
                             .strokeBorder(Brand.divider, lineWidth: 1)
                     )
             )
@@ -187,19 +184,19 @@ struct BrandBackground: View {
             Brand.bgGradient
                 .ignoresSafeArea(.all)
 
-            // Ambient glow top-left
-            Circle()
-                .fill(Brand.accentStart.opacity(0.18))
-                .frame(width: 340, height: 340)
-                .blur(radius: 90)
-                .offset(x: -80, y: -120)
+            if ThemeVariant.current.showsAmbientGlow {
+                Circle()
+                    .fill(Brand.accentStart.opacity(0.18))
+                    .frame(width: 340, height: 340)
+                    .blur(radius: 90)
+                    .offset(x: -80, y: -120)
 
-            // Ambient glow bottom-right
-            Circle()
-                .fill(Color(red: 0.35, green: 0.15, blue: 0.90).opacity(0.12))
-                .frame(width: 280, height: 280)
-                .blur(radius: 80)
-                .offset(x: 100, y: 200)
+                Circle()
+                    .fill(Color(red: 0.35, green: 0.15, blue: 0.90).opacity(0.12))
+                    .frame(width: 280, height: 280)
+                    .blur(radius: 80)
+                    .offset(x: 100, y: 200)
+            }
         }
         .ignoresSafeArea(.all)
     }
@@ -207,15 +204,23 @@ struct BrandBackground: View {
 
 // MARK: - Window Background Fixer (UIKit level)
 //
-// SwiftUI's ignoresSafeArea only works within the layout tree.
-// The UIHostingController's view still has a black background.
-// This UIView subclass sets all backgrounds the moment it attaches to a window.
+// SwiftUI's ignoresSafeArea only works within the layout tree. The hosting
+// controller's view is still black. This UIView sets the window/VC background
+// as soon as it attaches, and honors the active theme variant.
 //
 final class _BrandWindowFixer: UIView {
     private static let brandUIColor = UIColor { traits in
-        traits.userInterfaceStyle == .dark
-            ? UIColor(red: 0.07, green: 0.04, blue: 0.15, alpha: 1.0)
-            : UIColor(red: 0.98, green: 0.96, blue: 0.99, alpha: 1.0)
+        let isDark = traits.userInterfaceStyle == .dark
+        switch ThemeVariant.current {
+        case .classic:
+            return isDark
+                ? UIColor(red: 0.07, green: 0.04, blue: 0.15, alpha: 1.0)
+                : UIColor(red: 0.98, green: 0.96, blue: 0.99, alpha: 1.0)
+        case .coupleSync:
+            return isDark
+                ? UIColor(red: 0.12, green: 0.09, blue: 0.07, alpha: 1.0)
+                : UIColor(red: 0.96, green: 0.94, blue: 0.91, alpha: 1.0)
+        }
     }
 
     override func didMoveToWindow() {
@@ -292,5 +297,83 @@ struct ShimmerModifier: ViewModifier {
 extension View {
     func shimmer() -> some View {
         modifier(ShimmerModifier())
+    }
+}
+
+// MARK: - App Theming (tab bar / global UIKit appearance)
+
+enum AppTheming {
+
+    /// Configures UITabBarAppearance from the current theme variant. Call at
+    /// launch and again whenever the variant changes.
+    static func configureTabBar() {
+        let brandBg = UIColor { traits in
+            let isDark = traits.userInterfaceStyle == .dark
+            switch ThemeVariant.current {
+            case .classic:
+                return isDark
+                    ? UIColor(red: 0.07, green: 0.04, blue: 0.15, alpha: 0.97)
+                    : UIColor(red: 1.00, green: 0.98, blue: 0.99, alpha: 0.97)
+            case .coupleSync:
+                return isDark
+                    ? UIColor(red: 0.14, green: 0.10, blue: 0.08, alpha: 0.97)
+                    : UIColor(red: 0.96, green: 0.94, blue: 0.91, alpha: 0.97)
+            }
+        }
+
+        let accent = UIColor { _ in
+            switch ThemeVariant.current {
+            case .classic:    return UIColor(red: 1.00, green: 0.38, blue: 0.60, alpha: 1.0)
+            case .coupleSync: return UIColor(red: 0.78, green: 0.52, blue: 0.46, alpha: 1.0)
+            }
+        }
+
+        let inactive = UIColor { traits in
+            let isDark = traits.userInterfaceStyle == .dark
+            switch ThemeVariant.current {
+            case .classic:
+                return isDark
+                    ? UIColor.white.withAlphaComponent(0.38)
+                    : UIColor.black.withAlphaComponent(0.42)
+            case .coupleSync:
+                return isDark
+                    ? UIColor(red: 0.52, green: 0.47, blue: 0.42, alpha: 1.0)
+                    : UIColor(red: 0.60, green: 0.55, blue: 0.50, alpha: 1.0)
+            }
+        }
+
+        let a = UITabBarAppearance()
+        a.configureWithOpaqueBackground()
+        a.backgroundColor = brandBg
+        a.stackedLayoutAppearance.normal.iconColor     = inactive
+        a.stackedLayoutAppearance.selected.iconColor   = accent
+        a.stackedLayoutAppearance.normal.titleTextAttributes   = [.foregroundColor: inactive]
+        a.stackedLayoutAppearance.selected.titleTextAttributes = [.foregroundColor: accent]
+
+        UITabBar.appearance().standardAppearance   = a
+        UITabBar.appearance().scrollEdgeAppearance = a
+
+        // Poke existing tab bars so they pick up the new appearance immediately.
+        for scene in UIApplication.shared.connectedScenes {
+            guard let ws = scene as? UIWindowScene else { continue }
+            for window in ws.windows {
+                applyTabBarAppearance(a, to: window.rootViewController)
+            }
+        }
+    }
+
+    private static func applyTabBarAppearance(_ appearance: UITabBarAppearance,
+                                              to vc: UIViewController?) {
+        guard let vc else { return }
+        if let tabVC = vc as? UITabBarController {
+            tabVC.tabBar.standardAppearance = appearance
+            tabVC.tabBar.scrollEdgeAppearance = appearance
+        }
+        if let presented = vc.presentedViewController {
+            applyTabBarAppearance(appearance, to: presented)
+        }
+        for child in vc.children {
+            applyTabBarAppearance(appearance, to: child)
+        }
     }
 }

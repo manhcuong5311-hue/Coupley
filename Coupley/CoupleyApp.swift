@@ -19,7 +19,7 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         FirebaseApp.configure()
         UNUserNotificationCenter.current().delegate = NotificationService.shared
         Messaging.messaging().delegate = NotificationService.shared
-        configureTabBar()
+        AppTheming.configureTabBar()
         return true
     }
 
@@ -33,30 +33,6 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         print("APNs registration failed: \(error)")
     }
 
-    private func configureTabBar() {
-        let brandBg = UIColor { traits in
-            traits.userInterfaceStyle == .dark
-                ? UIColor(red: 0.07, green: 0.04, blue: 0.15, alpha: 0.97)
-                : UIColor(red: 1.00, green: 0.98, blue: 0.99, alpha: 0.97)
-        }
-        let accent = UIColor(red: 1.0, green: 0.38, blue: 0.60, alpha: 1.0)
-        let inactive = UIColor { traits in
-            traits.userInterfaceStyle == .dark
-                ? UIColor.white.withAlphaComponent(0.38)
-                : UIColor.black.withAlphaComponent(0.42)
-        }
-
-        let a = UITabBarAppearance()
-        a.configureWithOpaqueBackground()
-        a.backgroundColor = brandBg
-        a.stackedLayoutAppearance.normal.iconColor    = inactive
-        a.stackedLayoutAppearance.selected.iconColor  = accent
-        a.stackedLayoutAppearance.normal.titleTextAttributes  = [.foregroundColor: inactive]
-        a.stackedLayoutAppearance.selected.titleTextAttributes = [.foregroundColor: accent]
-
-        UITabBar.appearance().standardAppearance   = a
-        UITabBar.appearance().scrollEdgeAppearance = a
-    }
 }
 
 // MARK: - App Entry Point
@@ -78,7 +54,8 @@ struct CoupleyApp: App {
                 .environmentObject(themeManager)
                 .environmentObject(premiumStore)
                 .preferredColorScheme(themeManager.colorScheme)
-                .fixWindowBackground()        // ← UIKit-level fix
+                .id(themeManager.variant)      // rebuild tree when variant changes
+                .fixWindowBackground()          // ← UIKit-level fix
                 .onAppear { sessionStore.start() }
         }
     }

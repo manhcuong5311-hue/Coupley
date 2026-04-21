@@ -30,6 +30,7 @@ struct SettingsView: View {
                 premiumSection
                 accountSection
                 partnerSection
+                themeStyleSection
                 appearanceSection
                 notificationsSection
                 aboutSection
@@ -155,6 +156,51 @@ struct SettingsView: View {
                     }
                 }
             }
+        }
+        .listRowBackground(surfaceRowBackground)
+    }
+
+    // MARK: - Theme Style (variant picker)
+
+    @ViewBuilder
+    private var themeStyleSection: some View {
+        Section {
+            ForEach(ThemeVariant.allCases) { variant in
+                Button {
+                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                    themeManager.variant = variant
+                } label: {
+                    HStack(spacing: 14) {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(Brand.accentStart.opacity(0.15))
+                                .frame(width: 30, height: 30)
+                            Image(systemName: variant.icon)
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundStyle(Brand.accentStart)
+                        }
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(variant.label)
+                                .font(.system(size: 15, weight: .medium, design: .rounded))
+                                .foregroundStyle(Brand.textPrimary)
+                            Text(variant.tagline)
+                                .font(.system(size: 12, design: .rounded))
+                                .foregroundStyle(Brand.textSecondary)
+                        }
+                        Spacer()
+                        if themeManager.variant == variant {
+                            Image(systemName: "checkmark")
+                                .font(.system(size: 13, weight: .bold))
+                                .foregroundStyle(Brand.accentStart)
+                        }
+                    }
+                }
+            }
+        } header: {
+            Text("Theme Style")
+        } footer: {
+            Text("Pick between the new CoupleSync look or the classic gradient.")
+                .font(.system(size: 12, design: .rounded))
         }
         .listRowBackground(surfaceRowBackground)
     }

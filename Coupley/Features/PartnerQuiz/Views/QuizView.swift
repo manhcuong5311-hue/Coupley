@@ -19,19 +19,23 @@ struct QuizView: View {
 
     var body: some View {
         NavigationStack {
-            Group {
-                switch viewModel.quizState {
-                case .nameEntry:
-                    nameEntryView
+            ZStack {
+                Brand.bgGradient.ignoresSafeArea()
 
-                case .inProgress:
-                    questionView
+                Group {
+                    switch viewModel.quizState {
+                    case .nameEntry:
+                        nameEntryView
 
-                case .saving:
-                    savingView
+                    case .inProgress:
+                        questionView
 
-                case .completed:
-                    completionView
+                    case .saving:
+                        savingView
+
+                    case .completed:
+                        completionView
+                    }
                 }
             }
             .navigationTitle("Partner Quiz")
@@ -54,25 +58,32 @@ struct QuizView: View {
                 Text("Let's learn about\nyour partner")
                     .font(.title2)
                     .fontWeight(.bold)
+                    .foregroundStyle(Brand.textPrimary)
                     .multilineTextAlignment(.center)
 
                 Text("Answer fun questions so we can\nhelp you be the best partner ever")
                     .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Brand.textSecondary)
                     .multilineTextAlignment(.center)
             }
 
             VStack(alignment: .leading, spacing: 10) {
                 Text("What's their name?")
                     .font(.headline)
+                    .foregroundStyle(Brand.textPrimary)
 
                 TextField("Partner's name", text: $viewModel.partnerName)
                     .textFieldStyle(.plain)
                     .font(.title3)
+                    .foregroundStyle(Brand.textPrimary)
                     .padding(16)
                     .background(
-                        RoundedRectangle(cornerRadius: 16)
-                            .fill(Color(.systemGray6))
+                        RoundedRectangle(cornerRadius: Brand.cardCornerRadius)
+                            .fill(Brand.surfaceLight)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: Brand.cardCornerRadius)
+                                    .strokeBorder(Brand.divider, lineWidth: 1)
+                            )
                     )
                     .submitLabel(.continue)
                     .onSubmit {
@@ -85,18 +96,9 @@ struct QuizView: View {
 
             Spacer()
 
-            Button {
+            PrimaryButton(title: "Start Quiz", isEnabled: viewModel.canStartQuiz) {
                 viewModel.startQuiz()
-            } label: {
-                Text("Start Quiz")
-                    .fontWeight(.semibold)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 24)
             }
-            .buttonStyle(.borderedProminent)
-            .buttonBorderShape(.roundedRectangle(radius: 14))
-            .controlSize(.large)
-            .disabled(!viewModel.canStartQuiz)
             .padding(.horizontal, 20)
             .padding(.bottom, 32)
         }
@@ -136,7 +138,7 @@ struct QuizView: View {
                 .padding(.bottom, 32)
                 .background(
                     LinearGradient(
-                        colors: [Color(.systemBackground).opacity(0), Color(.systemBackground)],
+                        colors: [Brand.backgroundBottom.opacity(0), Brand.backgroundBottom],
                         startPoint: .top,
                         endPoint: .bottom
                     )
@@ -154,11 +156,11 @@ struct QuizView: View {
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
                     Capsule()
-                        .fill(Color(.systemGray5))
+                        .fill(Brand.surfaceMid)
                         .frame(height: 6)
 
                     Capsule()
-                        .fill(Color.accentColor)
+                        .fill(Brand.accentGradient)
                         .frame(
                             width: max(geo.size.width * viewModel.progress, 6),
                             height: 6
@@ -171,13 +173,13 @@ struct QuizView: View {
             HStack {
                 Text("Question \(viewModel.currentIndex + 1) of \(viewModel.totalQuestions)")
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Brand.textSecondary)
                 Spacer()
                 if let question = viewModel.currentQuestion {
                     Text("\(question.category.emoji) \(question.category.label)")
                         .font(.caption)
                         .fontWeight(.medium)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Brand.textSecondary)
                 }
             }
         }
@@ -190,12 +192,13 @@ struct QuizView: View {
             Text(question.question)
                 .font(.title3)
                 .fontWeight(.bold)
+                .foregroundStyle(Brand.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
 
             if !question.subtitle.isEmpty {
                 Text(question.subtitle)
                     .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Brand.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
@@ -223,16 +226,21 @@ struct QuizView: View {
                 .lineLimit(2...4)
                 .textFieldStyle(.plain)
                 .font(.body)
+                .foregroundStyle(Brand.textPrimary)
                 .padding(16)
                 .background(
-                    RoundedRectangle(cornerRadius: 16)
-                        .fill(Color(.systemGray6))
+                    RoundedRectangle(cornerRadius: Brand.cardCornerRadius)
+                        .fill(Brand.surfaceLight)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: Brand.cardCornerRadius)
+                                .strokeBorder(Brand.divider, lineWidth: 1)
+                        )
                 )
 
             if allowsMultiple {
                 Text("Separate multiple items with commas")
                     .font(.caption)
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(Brand.textTertiary)
             }
 
             // Show entered items as chips
@@ -246,9 +254,9 @@ struct QuizView: View {
                             .padding(.vertical, 6)
                             .background(
                                 Capsule()
-                                    .fill(Color.accentColor.opacity(0.12))
+                                    .fill(Brand.accentStart.opacity(0.12))
                             )
-                            .foregroundStyle(Color.accentColor)
+                            .foregroundStyle(Brand.accentStart)
                     }
                 }
             }
@@ -260,7 +268,7 @@ struct QuizView: View {
             if allowsMultiple {
                 Text("Pick all that apply")
                     .font(.caption)
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(Brand.textTertiary)
             }
 
             FlowLayout(spacing: 10) {
@@ -283,31 +291,17 @@ struct QuizView: View {
     private var navigationButtons: some View {
         HStack(spacing: 12) {
             if viewModel.currentIndex > 0 {
-                Button {
+                GhostButton(title: "Back") {
                     viewModel.previousQuestion()
-                } label: {
-                    Label("Back", systemImage: "chevron.left")
-                        .fontWeight(.medium)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 24)
                 }
-                .buttonStyle(.bordered)
-                .buttonBorderShape(.roundedRectangle(radius: 14))
-                .controlSize(.large)
             }
 
-            Button {
+            PrimaryButton(
+                title: viewModel.isLastQuestion ? "Finish" : "Next",
+                isEnabled: viewModel.canProceed
+            ) {
                 viewModel.nextQuestion()
-            } label: {
-                Text(viewModel.isLastQuestion ? "Finish" : "Next")
-                    .fontWeight(.semibold)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 24)
             }
-            .buttonStyle(.borderedProminent)
-            .buttonBorderShape(.roundedRectangle(radius: 14))
-            .controlSize(.large)
-            .disabled(!viewModel.canProceed)
         }
     }
 
@@ -318,9 +312,10 @@ struct QuizView: View {
             Spacer()
             ProgressView()
                 .controlSize(.large)
+                .tint(Brand.accentStart)
             Text("Building \(viewModel.partnerName)'s profile...")
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Brand.textSecondary)
             Spacer()
         }
     }
@@ -339,11 +334,12 @@ struct QuizView: View {
                     Text("You know \(viewModel.partnerName)\npretty well!")
                         .font(.title2)
                         .fontWeight(.bold)
+                        .foregroundStyle(Brand.textPrimary)
                         .multilineTextAlignment(.center)
 
                     Text("We'll use this to give you\npersonalized suggestions")
                         .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Brand.textSecondary)
                         .multilineTextAlignment(.center)
                 }
 
@@ -361,6 +357,7 @@ struct QuizView: View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Here's what we learned")
                 .font(.headline)
+                .foregroundStyle(Brand.textPrimary)
 
             let profile = viewModel.profile
 
@@ -379,8 +376,12 @@ struct QuizView: View {
         }
         .padding(20)
         .background(
-            RoundedRectangle(cornerRadius: 20)
-                .fill(Color(.systemGray6))
+            RoundedRectangle(cornerRadius: Brand.cardCornerRadius)
+                .fill(Brand.surfaceLight)
+                .overlay(
+                    RoundedRectangle(cornerRadius: Brand.cardCornerRadius)
+                        .strokeBorder(Brand.divider, lineWidth: 1)
+                )
         )
     }
 }
@@ -401,11 +402,12 @@ private struct SummaryRow: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(label)
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Brand.textSecondary)
 
                     Text(values.filter { !$0.isEmpty }.joined(separator: ", "))
                         .font(.subheadline)
                         .fontWeight(.medium)
+                        .foregroundStyle(Brand.textPrimary)
                 }
             }
         }
@@ -428,16 +430,16 @@ private struct ChoiceChip: View {
                 .padding(.vertical, 10)
                 .background(
                     Capsule()
-                        .fill(isSelected ? Color.accentColor.opacity(0.15) : Color(.systemGray6))
+                        .fill(isSelected ? Brand.accentStart.opacity(0.15) : Brand.surfaceLight)
                 )
                 .overlay(
                     Capsule()
                         .strokeBorder(
-                            isSelected ? Color.accentColor : Color.clear,
-                            lineWidth: 1.5
+                            isSelected ? Brand.accentStart : Brand.divider,
+                            lineWidth: isSelected ? 1.5 : 1
                         )
                 )
-                .foregroundStyle(isSelected ? Color.accentColor : Color.primary)
+                .foregroundStyle(isSelected ? Brand.accentStart : Brand.textPrimary)
         }
         .buttonStyle(.plain)
     }

@@ -23,12 +23,12 @@ struct MoodCheckinView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                // Adaptive background
-                Color(.systemBackground)
-                    .ignoresSafeArea()
+                // Brand background (variant-aware)
+                Brand.bgGradient.ignoresSafeArea()
 
-                // Mood-tinted ambient glow
-                if let mood = viewModel.selectedMood {
+                // Mood-tinted ambient glow (only in variants that use glow)
+                if let mood = viewModel.selectedMood,
+                   ThemeVariant.current.showsAmbientGlow {
                     Circle()
                         .fill(mood.color.opacity(0.12))
                         .frame(width: 340, height: 340)
@@ -106,11 +106,11 @@ struct MoodCheckinView: View {
             Text(greeting)
                 .font(.subheadline)
                 .fontWeight(.medium)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Brand.textSecondary)
 
             Text("How are you\nfeeling today?")
                 .font(.system(size: 34, weight: .bold, design: .rounded))
-                .foregroundStyle(.primary)
+                .foregroundStyle(Brand.textPrimary)
                 .lineSpacing(2)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -167,16 +167,16 @@ private struct MoodCard: View {
 
                 Text(mood.label)
                     .font(.system(size: 12, weight: isSelected ? .semibold : .regular))
-                    .foregroundStyle(isSelected ? mood.color : Color.secondary)
+                    .foregroundStyle(isSelected ? mood.color : Brand.textSecondary)
                     .animation(.easeInOut(duration: 0.2), value: isSelected)
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 18)
             .background(
-                RoundedRectangle(cornerRadius: 20)
+                RoundedRectangle(cornerRadius: Brand.cardCornerRadius)
                     .fill(isSelected
-                          ? mood.color.opacity(0.12)
-                          : Color(.secondarySystemBackground))
+                          ? AnyShapeStyle(mood.color.opacity(0.12))
+                          : AnyShapeStyle(Brand.surfaceLight))
                     .shadow(
                         color: isSelected ? mood.color.opacity(0.18) : Color.black.opacity(0.04),
                         radius: isSelected ? 12 : 4,
@@ -184,10 +184,10 @@ private struct MoodCard: View {
                     )
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 20)
+                RoundedRectangle(cornerRadius: Brand.cardCornerRadius)
                     .strokeBorder(
-                        isSelected ? mood.color.opacity(0.5) : Color.clear,
-                        lineWidth: 1.5
+                        isSelected ? mood.color.opacity(0.5) : Brand.divider,
+                        lineWidth: 1
                     )
             )
             .scaleEffect(isPressed ? 0.95 : 1.0)
@@ -236,7 +236,11 @@ struct EnergySelectorView: View {
             .padding(4)
             .background(
                 RoundedRectangle(cornerRadius: 18)
-                    .fill(Color(.secondarySystemBackground))
+                    .fill(Brand.surfaceLight)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 18)
+                            .strokeBorder(Brand.divider, lineWidth: 1)
+                    )
             )
         }
     }
@@ -258,11 +262,11 @@ private struct EnergyCapsule: View {
                 Image(systemName: level.icon)
                     .font(.system(size: 13, weight: .medium))
                     .symbolRenderingMode(.hierarchical)
-                    .foregroundStyle(isSelected ? level.color : Color.secondary)
+                    .foregroundStyle(isSelected ? level.color : Brand.textSecondary)
 
                 Text(level.label)
                     .font(.system(size: 14, weight: isSelected ? .semibold : .regular))
-                    .foregroundStyle(isSelected ? .primary : .secondary)
+                    .foregroundStyle(isSelected ? Brand.textPrimary : Brand.textSecondary)
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 11)
@@ -270,7 +274,7 @@ private struct EnergyCapsule: View {
                 Group {
                     if isSelected {
                         RoundedRectangle(cornerRadius: 14)
-                            .fill(Color(.systemBackground))
+                            .fill(Brand.surfaceMid)
                             .shadow(color: .black.opacity(0.08), radius: 6, y: 2)
                     }
                 }
@@ -294,13 +298,13 @@ struct NoteInputView: View {
             SectionLabel("Note")
 
             ZStack(alignment: .topLeading) {
-                RoundedRectangle(cornerRadius: 20)
-                    .fill(Color(.secondarySystemBackground))
+                RoundedRectangle(cornerRadius: Brand.cardCornerRadius)
+                    .fill(Brand.surfaceLight)
                     .overlay(
-                        RoundedRectangle(cornerRadius: 20)
+                        RoundedRectangle(cornerRadius: Brand.cardCornerRadius)
                             .strokeBorder(
-                                focused ? Color.accentColor.opacity(0.4) : Color.clear,
-                                lineWidth: 1.5
+                                focused ? Brand.accentStart.opacity(0.5) : Brand.divider,
+                                lineWidth: focused ? 1.5 : 1
                             )
                     )
                     .animation(.easeInOut(duration: 0.2), value: focused)
@@ -308,7 +312,7 @@ struct NoteInputView: View {
                 if text.isEmpty {
                     Text("What's on your mind today?")
                         .font(.system(size: 16))
-                        .foregroundStyle(Color(.tertiaryLabel))
+                        .foregroundStyle(Brand.textTertiary)
                         .padding(.horizontal, 18)
                         .padding(.top, 17)
                         .allowsHitTesting(false)
@@ -316,6 +320,7 @@ struct NoteInputView: View {
 
                 TextField("", text: $text, axis: .vertical)
                     .font(.system(size: 16))
+                    .foregroundStyle(Brand.textPrimary)
                     .lineLimit(3...7)
                     .padding(.horizontal, 18)
                     .padding(.vertical, 16)
@@ -337,27 +342,21 @@ struct SubmitButtonView: View {
     @State private var isPressed = false
 
     var body: some View {
+        let radius = Brand.buttonCornerRadius
+        let showGlow = ThemeVariant.current.showsAmbientGlow
+
         Button(action: action) {
             ZStack {
-                // Gradient background
-                RoundedRectangle(cornerRadius: 22)
+                // Brand-aware background (gradient in classic, flat terracotta in CoupleSync)
+                RoundedRectangle(cornerRadius: radius)
                     .fill(
                         isEnabled
-                        ? LinearGradient(
-                            colors: [Color(red: 1.0, green: 0.42, blue: 0.42),
-                                     Color(red: 1.0, green: 0.60, blue: 0.30)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                          )
-                        : LinearGradient(
-                            colors: [Color(.systemGray4), Color(.systemGray4)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                          )
+                        ? AnyShapeStyle(Brand.accentGradient)
+                        : AnyShapeStyle(Brand.surfaceMid)
                     )
                     .frame(height: 58)
                     .shadow(
-                        color: isEnabled ? Color(red: 1.0, green: 0.42, blue: 0.42).opacity(0.35) : .clear,
+                        color: (isEnabled && showGlow) ? Brand.accentStart.opacity(0.35) : .clear,
                         radius: isPressed ? 4 : 14,
                         y: isPressed ? 2 : 6
                     )
@@ -388,7 +387,7 @@ struct SubmitButtonView: View {
                     default:
                         Text("Save how I feel")
                             .font(.system(size: 17, weight: .semibold))
-                            .foregroundStyle(isEnabled ? .white : Color(.systemGray2))
+                            .foregroundStyle(isEnabled ? Color.white : Brand.textTertiary)
                     }
                 }
                 .animation(.spring(response: 0.35, dampingFraction: 0.75), value: state)
@@ -414,7 +413,7 @@ struct SectionLabel: View {
     var body: some View {
         Text(title)
             .font(.system(size: 13, weight: .semibold))
-            .foregroundStyle(.secondary)
+            .foregroundStyle(Brand.textSecondary)
             .kerning(0.6)
             .textCase(.uppercase)
     }

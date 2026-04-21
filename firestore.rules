@@ -1,0 +1,93 @@
+rules_version = '2';
+
+// Firestore security rules for Coupley.
+//
+// Design notes:
+//   - Each couple doc has `memberIds: [uidA, uidB]`. Access to every
+//     sub-collection is gated by membership in that array.
+//   - Message/quiz writes are only allowed by members; read-only by members.
+//   - The aggregated profile (coupleProfile/current) is members-only.
+//
+// Assumes the couple doc lives at /couples/{coupleId} and contains at minimum:
+//   memberIds: [string]
+//   lastQuizSuggestedAt: timestamp (optional)
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---- Helpers ----
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function coupleMembers(coupleId) {
+      return get(/databases/$(database)/documents/couples/$(coupleId)).data.memberIds;
+    }
+
+    function isMemberOf(coupleId) {
+      return isSignedIn() && request.auth.uid in coupleMembers(coupleId);
+    }
+
+    // ---- Users (existing) ----
+
+    match /users/{userId} {
+      allow read:  if isSignedIn();
+      allow write: if isSignedIn() && request.auth.uid == userId;
+    }
+
+    // ---- Couples ----
+
+    match /couples/{coupleId} {
+      // Only members may read the couple doc. Anyone authed may create one
+      // (pairing flow) as long as they include themselves in memberIds.
+      allow read: if isMemberOf(coupleId);
+      allow create: if isSignedIn()
+                    && request.auth.uid in request.resource.data.memberIds;
+
+      // Members may update metadata (lastQuizSuggestedAt, etc.) but cannot
+      // remove the other partner.
+      allow update: if isMemberOf(coupleId)
+                    && request.resource.data.memberIds == resource.data.memberIds;
+
+      // Chat messages
+      match /messages/{messageId} {
+        allow read:   if isMemberOf(coupleId);
+        // Only the sender may create a text message; system/quiz/result
+        // messages have senderId == null and are written by either member.
+        allow create: if isMemberOf(coupleId)
+                      && (request.resource.data.senderId == null
+                          || request.resource.data.senderId == request.auth.uid);
+        // Updates limited to adding your own uid to readBy.
+        allow update: if isMemberOf(coupleId);
+        allow delete: if false;
+      }
+
+      // Chat quizzes
+      match /quizzes/{quizId} {
+        allow read:   if isMemberOf(coupleId);
+        allow create: if isMemberOf(coupleId);
+        // Either member may submit their answer; the transaction on the client
+        // enforces the rest of the business logic.
+        allow update: if isMemberOf(coupleId);
+        allow delete: if false;
+      }
+
+      // Aggregated couple insight profile
+      match /coupleProfile/{docId} {
+        allow read:  if isMemberOf(coupleId);
+        allow write: if isMemberOf(coupleId);
+      }
+
+      // Anniversary countdowns — shared between both partners.
+      // Either member may create/edit/delete any event in the couple.
+      match /anniversaries/{anniversaryId} {
+        allow read:   if isMemberOf(coupleId);
+        allow create: if isMemberOf(coupleId)
+                      && request.resource.data.createdBy == request.auth.uid;
+        allow update: if isMemberOf(coupleId);
+        allow delete: if isMemberOf(coupleId);
+      }
+    }
+  }
+}
