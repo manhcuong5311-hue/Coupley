@@ -132,12 +132,31 @@ struct SettingsView: View {
     private var partnerSection: some View {
         Section("Partner") {
             if let session, session.isPaired {
-                SettingsRow(
-                    icon: "heart.fill",
-                    iconTint: Brand.accentStart,
-                    title: "Connected",
-                    value: "Tap to manage"
-                )
+                NavigationLink {
+                    ManagePartnerView(
+                        session: session,
+                        partnerDisplayName: nil
+                    )
+                } label: {
+                    HStack(spacing: 14) {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 8).fill(Brand.accentStart.opacity(0.15))
+                                .frame(width: 30, height: 30)
+                            Image(systemName: "heart.fill")
+                                .font(.system(size: 13, weight: .bold))
+                                .foregroundStyle(Brand.accentStart)
+                        }
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Connected")
+                                .font(.system(size: 15, weight: .medium, design: .rounded))
+                                .foregroundStyle(Brand.textPrimary)
+                            Text("Tap to manage or disconnect")
+                                .font(.system(size: 12, design: .rounded))
+                                .foregroundStyle(Brand.textSecondary)
+                        }
+                        Spacer()
+                    }
+                }
             } else {
                 NavigationLink {
                     SettingsPairingContainer(session: session)
@@ -153,6 +172,37 @@ struct SettingsView: View {
                         Text("Connect a partner")
                             .font(.system(size: 15, weight: .medium, design: .rounded))
                             .foregroundStyle(Brand.textPrimary)
+                    }
+                }
+            }
+
+            // Surfaces after a disconnect — archived data is kept until
+            // the user chooses to remove it.
+            if let lastCoupleId = sessionStore.lastCoupleId, !lastCoupleId.isEmpty {
+                NavigationLink {
+                    ManageSharedDataView(
+                        connectionId: lastCoupleId,
+                        partnerDisplayName: sessionStore.lastPartnerName
+                    )
+                } label: {
+                    HStack(spacing: 14) {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(Brand.textSecondary.opacity(0.15))
+                                .frame(width: 30, height: 30)
+                            Image(systemName: "tray.full.fill")
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundStyle(Brand.textSecondary)
+                        }
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Manage shared data")
+                                .font(.system(size: 15, weight: .medium, design: .rounded))
+                                .foregroundStyle(Brand.textPrimary)
+                            Text("Review or delete data from a past partner")
+                                .font(.system(size: 12, design: .rounded))
+                                .foregroundStyle(Brand.textSecondary)
+                        }
+                        Spacer()
                     }
                 }
             }

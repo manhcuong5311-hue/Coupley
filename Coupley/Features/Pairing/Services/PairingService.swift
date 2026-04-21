@@ -124,18 +124,37 @@ final class FirestorePairingService: PairingServiceProtocol {
             "userIds": [creatorId, userId],
             "createdAt": FieldValue.serverTimestamp(),
             "currentStreak": 0,
-            "longestStreak": 0
+            "longestStreak": 0,
+            // Every join creates a brand-new coupleId; the status tag makes
+            // soft-disconnect queryable without relying on link-level fields.
+            ConnectionField.status: ConnectionStatus.active.rawValue
         ], forDocument: coupleRef)
 
-        // Give each user their coupleId and partnerId
+        // Give each user their coupleId and partnerId, and clear any
+        // archived pointers from a previous relationship so old data is
+        // never addressable from the new session.
         batch.setData(
-            ["coupleId": coupleId, "partnerId": userId],
+            [
+                "coupleId": coupleId,
+                "partnerId": userId,
+                ConnectionField.lastCoupleId:            FieldValue.delete(),
+                ConnectionField.lastPartnerId:           FieldValue.delete(),
+                ConnectionField.lastPartnerName:         FieldValue.delete(),
+                ConnectionField.pendingDisconnectNotice: FieldValue.delete()
+            ],
             forDocument: db.collection(FirestorePath.users).document(creatorId),
             merge: true
         )
 
         batch.setData(
-            ["coupleId": coupleId, "partnerId": creatorId],
+            [
+                "coupleId": coupleId,
+                "partnerId": creatorId,
+                ConnectionField.lastCoupleId:            FieldValue.delete(),
+                ConnectionField.lastPartnerId:           FieldValue.delete(),
+                ConnectionField.lastPartnerName:         FieldValue.delete(),
+                ConnectionField.pendingDisconnectNotice: FieldValue.delete()
+            ],
             forDocument: db.collection(FirestorePath.users).document(userId),
             merge: true
         )

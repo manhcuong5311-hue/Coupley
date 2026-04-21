@@ -11,11 +11,14 @@ import SwiftUI
 struct ChatView: View {
 
     @StateObject private var viewModel: ChatViewModel
+    @ObservedObject var profileViewModel: CouplePersonProfileViewModel
     let session: UserSession
     @State private var showProfile = false
+    @State private var showPartnerAndMe = false
 
-    init(session: UserSession) {
+    init(session: UserSession, profileViewModel: CouplePersonProfileViewModel) {
         self.session = session
+        self.profileViewModel = profileViewModel
         _viewModel = StateObject(wrappedValue: ChatViewModel(session: session))
     }
 
@@ -34,9 +37,17 @@ struct ChatView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button { showProfile = true } label: {
-                        Image(systemName: "sparkles.rectangle.stack")
-                            .foregroundStyle(Brand.accentStart)
+                    HStack(spacing: 14) {
+                        Button { showPartnerAndMe = true } label: {
+                            Image(systemName: "heart.text.square")
+                                .foregroundStyle(Brand.accentStart)
+                        }
+                        .accessibilityLabel("Partner & Me Profile")
+
+                        Button { showProfile = true } label: {
+                            Image(systemName: "sparkles.rectangle.stack")
+                                .foregroundStyle(Brand.accentStart)
+                        }
                     }
                 }
             }
@@ -46,6 +57,15 @@ struct ChatView: View {
                                       userAId: session.userId,
                                       userBId: session.partnerId)
                 }
+                .presentationBackground(Brand.backgroundTop)
+            }
+            .sheet(isPresented: $showPartnerAndMe) {
+                PartnerAndMeProfileView(
+                    profileViewModel: profileViewModel,
+                    session: session
+                )
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
                 .presentationBackground(Brand.backgroundTop)
             }
             .sheet(item: $viewModel.activeQuizForAnswering) { quiz in

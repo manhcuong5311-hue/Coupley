@@ -80,7 +80,7 @@ struct ContentView: View {
                     .tabItem { Label("Anniversary", systemImage: "calendar.badge.clock") }
                     .tag(AppTab.anniversary)
 
-                ChatView(session: session)
+                ChatView(session: session, profileViewModel: profileViewModel)
                     .tabItem { Label("Chat", systemImage: "bubble.left.and.bubble.right.fill") }
                     .tag(AppTab.chat)
             }
@@ -93,6 +93,15 @@ struct ContentView: View {
                     .padding(.horizontal, 16)
                     .transition(.move(edge: .bottom).combined(with: .opacity))
             }
+
+            VStack {
+                DisconnectNoticeBanner()
+                    .padding(.horizontal, 16)
+                    .padding(.top, 8)
+                Spacer()
+            }
+            .animation(.spring(response: 0.5, dampingFraction: 0.9),
+                       value: sessionStore.pendingDisconnectNotice)
         }
         .brandBackground()
             .sheet(isPresented: $showPairingSheet) {

@@ -26,6 +26,8 @@ struct CoupleDashboardView: View {
     @State private var didSendPing = false
     @State private var showSettings = false
     @State private var showAvatarPicker = false
+    @State private var showMyDetail = false
+    @State private var showPartnerDetail = false
 
     private let reactionService: ReactionService = FirestoreReactionService()
     private let presenceService: PresenceService = FirestorePresenceService()
@@ -90,6 +92,34 @@ struct CoupleDashboardView: View {
                 .presentationDragIndicator(.visible)
                 .presentationBackground(Brand.backgroundTop)
         }
+        .sheet(isPresented: $showMyDetail) {
+            NavigationStack {
+                PartnerProfileDetailView(
+                    targetUserId: sessionStore.session?.userId ?? "",
+                    mode: .mine,
+                    hasPartner: sessionStore.isPaired,
+                    avatar: profileViewModel.myProfile.avatar,
+                    displayName: profileViewModel.myProfile.displayName
+                )
+            }
+            .presentationDetents([.large])
+            .presentationDragIndicator(.visible)
+            .presentationBackground(Brand.backgroundTop)
+        }
+        .sheet(isPresented: $showPartnerDetail) {
+            NavigationStack {
+                PartnerProfileDetailView(
+                    targetUserId: sessionStore.session?.partnerId ?? "",
+                    mode: .partner,
+                    hasPartner: sessionStore.isPaired,
+                    avatar: profileViewModel.partnerProfile.avatar,
+                    displayName: profileViewModel.partnerProfile.displayName
+                )
+            }
+            .presentationDetents([.large])
+            .presentationDragIndicator(.visible)
+            .presentationBackground(Brand.backgroundTop)
+        }
         .onAppear { viewModel.startListening() }
         .onDisappear { viewModel.stopListening() }
     }
@@ -148,17 +178,25 @@ struct CoupleDashboardView: View {
         HStack(alignment: .center, spacing: 14) {
             avatarTile(
                 profile: profileViewModel.myProfile,
-                tappable: true
+                tappable: true,
+                editAction: {
+                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                    showAvatarPicker = true
+                }
             ) {
                 UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                showAvatarPicker = true
+                showMyDetail = true
             }
 
             avatarTile(
                 profile: profileViewModel.partnerProfile,
-                tappable: false,
-                action: {}
-            )
+                tappable: sessionStore.isPaired,
+                editAction: nil
+            ) {
+                guard sessionStore.isPaired else { return }
+                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                showPartnerDetail = true
+            }
             .opacity(sessionStore.isPaired ? 1 : 0.55)
 
             statsPreviewCompact
@@ -175,11 +213,12 @@ struct CoupleDashboardView: View {
     private func avatarTile(
         profile: CouplePersonProfile,
         tappable: Bool,
+        editAction: (() -> Void)?,
         action: @escaping () -> Void
     ) -> some View {
-        Button(action: action) {
-            VStack(spacing: 8) {
-                ZStack(alignment: .bottomTrailing) {
+        VStack(spacing: 8) {
+            ZStack(alignment: .bottomTrailing) {
+                Button(action: action) {
                     ZStack {
                         Circle()
                             .fill(Brand.backgroundTop)
@@ -189,11 +228,15 @@ struct CoupleDashboardView: View {
                             .padding(3)
                     }
                     .frame(width: 62, height: 62)
+                }
+                .buttonStyle(BouncyButtonStyle(scale: tappable ? 0.94 : 1))
+                .disabled(!tappable)
 
-                    if tappable {
+                if let editAction {
+                    Button(action: editAction) {
                         Circle()
                             .fill(Brand.accentStart)
-                            .frame(width: 20, height: 20)
+                            .frame(width: 22, height: 22)
                             .overlay(
                                 Image(systemName: "pencil")
                                     .font(.system(size: 10, weight: .bold))
@@ -201,18 +244,17 @@ struct CoupleDashboardView: View {
                             )
                             .overlay(Circle().strokeBorder(Brand.backgroundTop, lineWidth: 2))
                     }
+                    .buttonStyle(BouncyButtonStyle(scale: 0.9))
                 }
-
-                Text(profile.displayName)
-                    .font(.system(size: 13, weight: .semibold, design: .rounded))
-                    .foregroundStyle(Brand.textPrimary)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
             }
-            .frame(maxWidth: .infinity)
+
+            Text(profile.displayName)
+                .font(.system(size: 13, weight: .semibold, design: .rounded))
+                .foregroundStyle(Brand.textPrimary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
         }
-        .buttonStyle(BouncyButtonStyle(scale: tappable ? 0.94 : 1))
-        .disabled(!tappable)
+        .frame(maxWidth: .infinity)
     }
 
     private var statsPreviewCompact: some View {

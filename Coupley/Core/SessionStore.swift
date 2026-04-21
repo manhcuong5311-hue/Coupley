@@ -25,6 +25,18 @@ final class SessionStore: ObservableObject {
 
     @Published var appState: AppState = .loading
 
+    // MARK: - Archived connection (post-disconnect)
+
+    /// Set when the user has a retired coupleId on their user doc — used
+    /// by "Manage shared data" to reach archived data after disconnect.
+    @Published var lastCoupleId: String?
+    @Published var lastPartnerId: String?
+    @Published var lastPartnerName: String?
+
+    /// One-shot flag written by the other user's disconnect batch. The
+    /// client shows "Your partner has disconnected" and then clears it.
+    @Published var pendingDisconnectNotice: Bool = false
+
     var session: UserSession? {
         switch appState {
         case .ready(let s):          return s
@@ -106,9 +118,20 @@ final class SessionStore: ObservableObject {
 
                     guard let data = snapshot?.data() else {
                         // No Firestore document yet — treat as solo (not a blocker)
+                        self.lastCoupleId = nil
+                        self.lastPartnerId = nil
+                        self.lastPartnerName = nil
+                        self.pendingDisconnectNotice = false
                         self.appState = .needsPairing(userId: userId, displayName: displayName)
                         return
                     }
+
+                    // Archived connection fields (populated after disconnect)
+                    self.lastCoupleId    = data[ConnectionField.lastCoupleId]    as? String
+                    self.lastPartnerId   = data[ConnectionField.lastPartnerId]   as? String
+                    self.lastPartnerName = data[ConnectionField.lastPartnerName] as? String
+                    self.pendingDisconnectNotice =
+                        (data[ConnectionField.pendingDisconnectNotice] as? Bool) ?? false
 
                     if let coupleId = data["coupleId"] as? String,
                        let partnerId = data["partnerId"] as? String,
