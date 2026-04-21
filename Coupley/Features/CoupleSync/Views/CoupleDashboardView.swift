@@ -28,6 +28,7 @@ struct CoupleDashboardView: View {
     @State private var showAvatarPicker = false
     @State private var showMyDetail = false
     @State private var showPartnerDetail = false
+    @State private var showProfileHub = false
 
     private let reactionService: ReactionService = FirestoreReactionService()
     private let presenceService: PresenceService = FirestorePresenceService()
@@ -116,6 +117,15 @@ struct CoupleDashboardView: View {
                     displayName: profileViewModel.partnerProfile.displayName
                 )
             }
+            .presentationDetents([.large])
+            .presentationDragIndicator(.visible)
+            .presentationBackground(Brand.backgroundTop)
+        }
+        .sheet(isPresented: $showProfileHub) {
+            PartnerAndMeProfileView(
+                profileViewModel: profileViewModel,
+                session: sessionStore.session ?? .demo
+            )
             .presentationDetents([.large])
             .presentationDragIndicator(.visible)
             .presentationBackground(Brand.backgroundTop)
@@ -227,7 +237,7 @@ struct CoupleDashboardView: View {
                             .clipShape(Circle())
                             .padding(3)
                     }
-                    .frame(width: 62, height: 62)
+                    .frame(width: 92, height: 92)
                 }
                 .buttonStyle(BouncyButtonStyle(scale: tappable ? 0.94 : 1))
                 .disabled(!tappable)
@@ -236,10 +246,10 @@ struct CoupleDashboardView: View {
                     Button(action: editAction) {
                         Circle()
                             .fill(Brand.accentStart)
-                            .frame(width: 22, height: 22)
+                            .frame(width: 28, height: 28)
                             .overlay(
                                 Image(systemName: "pencil")
-                                    .font(.system(size: 10, weight: .bold))
+                                    .font(.system(size: 12, weight: .bold))
                                     .foregroundStyle(.white)
                             )
                             .overlay(Circle().strokeBorder(Brand.backgroundTop, lineWidth: 2))
@@ -362,6 +372,13 @@ struct CoupleDashboardView: View {
                     subtitle: "Track progress"
                 ) { showStatsSheet = true }
             }
+
+            activityCard(
+                icon: "heart.text.square.fill",
+                tint: Color(red: 1.0, green: 0.40, blue: 0.55),
+                title: "Profile",
+                subtitle: "Likes, dislikes & more"
+            ) { showProfileHub = true }
         }
     }
 

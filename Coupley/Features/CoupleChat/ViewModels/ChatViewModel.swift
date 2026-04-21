@@ -21,12 +21,27 @@ final class ChatViewModel: ObservableObject {
 
     @Published private(set) var messages: [ChatMessage] = []
     @Published private(set) var quizzes:  [ChatQuiz]    = []
+    @Published private(set) var pendingMessageIds: Set<String> = []
     @Published var draftText: String = ""
     @Published private(set) var isSending = false
     @Published private(set) var errorMessage: String?
 
+    // Pagination
+    @Published private(set) var isLoadingOlder = false
+    @Published private(set) var hasMoreOlder: Bool = true
+
     // Quiz answer flow (view presents a sheet when this is non-nil)
     @Published var activeQuizForAnswering: ChatQuiz?
+
+    // Internal store: message id → message. The listener covers the newest
+    // `liveWindowSize` messages; older pages are merged in here too.
+    private var messagesById: [String: ChatMessage] = [:]
+    // The set of ids currently inside the listener's window, so we know
+    // which entries to refresh vs preserve when the listener fires.
+    private var liveWindowIds: Set<String> = []
+
+    private let liveWindowSize = 50
+    private let pageSize       = 50
 
     // MARK: - Dependencies
 
@@ -74,11 +89,11 @@ final class ChatViewModel: ObservableObject {
     private func listen() {
         messageListener = chatService.listenToMessages(
             coupleId: session.coupleId,
-            limit: 100,
-            onUpdate: { [weak self] newMessages in
+            limit: liveWindowSize,
+            onUpdate: { [weak self] newMessages, pendingIds in
                 Task { @MainActor in
                     guard let self else { return }
-                    self.messages = newMessages
+                    self.mergeLiveWindow(newMessages, pendingIds: pendingIds)
                     self.markUnreadAsRead()
                 }
             },
@@ -96,6 +111,59 @@ final class ChatViewModel: ObservableObject {
                 Task { @MainActor in self?.errorMessage = err.localizedDescription }
             }
         )
+    }
+
+    // MARK: - Store merge + pagination
+
+    /// Incorporate the newest-N window emitted by the listener. Any ids
+    /// that used to be in the window but aren't anymore are preserved
+    /// (they may have fallen out because older messages are still loaded
+    /// above them — they're historical and shouldn't be removed).
+    private func mergeLiveWindow(_ window: [ChatMessage], pendingIds: Set<String>) {
+        // Messages that fall out of the live window (pushed out by a newer
+        // arrival) are intentionally kept in the dict so history stays
+        // contiguous under infinite scroll.
+        for msg in window {
+            messagesById[msg.id] = msg
+        }
+        liveWindowIds = Set(window.map(\.id))
+        pendingMessageIds = pendingIds
+        rebuildMessageList()
+    }
+
+    private func rebuildMessageList() {
+        messages = messagesById.values.sorted { $0.createdAt < $1.createdAt }
+    }
+
+    func loadOlder() {
+        guard !isLoadingOlder, hasMoreOlder else { return }
+        guard let oldest = messages.first else { return }
+        isLoadingOlder = true
+        Task {
+            defer { Task { @MainActor in self.isLoadingOlder = false } }
+            do {
+                let older = try await chatService.loadOlderMessages(
+                    coupleId: session.coupleId,
+                    before: oldest.createdAt,
+                    limit: pageSize
+                )
+                await MainActor.run {
+                    if older.isEmpty {
+                        self.hasMoreOlder = false
+                        return
+                    }
+                    for msg in older {
+                        self.messagesById[msg.id] = msg
+                    }
+                    if older.count < self.pageSize {
+                        self.hasMoreOlder = false
+                    }
+                    self.rebuildMessageList()
+                }
+            } catch {
+                await MainActor.run { self.errorMessage = error.localizedDescription }
+            }
+        }
     }
 
     // MARK: - Sending text
@@ -176,6 +244,50 @@ final class ChatViewModel: ObservableObject {
 
     var myUserId: String { session.userId }
     var partnerUserId: String { session.partnerId }
+
+    // MARK: - Status helpers
+
+    /// Status for the current user's outgoing message: pending (not yet
+    /// acknowledged by Firestore), seen (partner read it), or sent.
+    enum OutgoingStatus { case pending, sent, seen }
+
+    func outgoingStatus(for message: ChatMessage) -> OutgoingStatus? {
+        guard message.senderId == session.userId, message.kind == .text else { return nil }
+        if pendingMessageIds.contains(message.id) { return .pending }
+        if message.readBy.contains(session.partnerId) { return .seen }
+        return .sent
+    }
+
+    // MARK: - Quiz picker (user-initiated)
+
+    /// Post a quiz the user picked from the bank. Writes a system "New quiz"
+    /// line, the quiz doc, and the card in one shot.
+    func sendQuiz(template: ChatQuizTemplate) {
+        Task {
+            let quiz = ChatQuiz(
+                id: UUID().uuidString,
+                questionId: template.questionId,
+                topic: template.topic,
+                question: template.question,
+                subtitle: template.subtitle,
+                options: template.options,
+                allowsMultiple: template.allowsMultiple,
+                createdAt: Date(),
+                status: .pending,
+                answers: [:],
+                result: nil
+            )
+            do {
+                try await chatService.postSystemMessage(
+                    "New quiz: \(quiz.topic.emoji) \(quiz.topic.label)",
+                    coupleId: session.coupleId
+                )
+                try await chatService.postQuiz(quiz, coupleId: session.coupleId)
+            } catch {
+                await MainActor.run { self.errorMessage = error.localizedDescription }
+            }
+        }
+    }
 
     // MARK: - Read receipts
 

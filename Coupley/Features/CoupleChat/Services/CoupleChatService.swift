@@ -17,10 +17,20 @@ import FirebaseFirestore
 protocol CoupleChatServicing {
 
     /// Stream the most recent N messages for this couple, newest last.
+    /// `pendingIds` contains the IDs of messages whose write hasn't yet
+    /// been acknowledged by the server — used to render a "Sending…" state.
     func listenToMessages(coupleId: String,
                           limit: Int,
-                          onUpdate: @escaping ([ChatMessage]) -> Void,
+                          onUpdate: @escaping (_ messages: [ChatMessage],
+                                               _ pendingIds: Set<String>) -> Void,
                           onError: @escaping (Error) -> Void) -> ListenerRegistration
+
+    /// One-shot paginated fetch of messages older than `before`. Used to
+    /// power infinite upward scroll. Returns up to `limit` messages,
+    /// oldest-first.
+    func loadOlderMessages(coupleId: String,
+                           before: Date,
+                           limit: Int) async throws -> [ChatMessage]
 
     /// Stream the active (non-complete) quizzes so both clients can react when
     /// their partner answers.
@@ -59,21 +69,42 @@ final class FirestoreCoupleChatService: CoupleChatServicing {
     // MARK: Listeners
 
     func listenToMessages(coupleId: String,
-                          limit: Int = 100,
-                          onUpdate: @escaping ([ChatMessage]) -> Void,
+                          limit: Int = 50,
+                          onUpdate: @escaping (_ messages: [ChatMessage],
+                                               _ pendingIds: Set<String>) -> Void,
                           onError: @escaping (Error) -> Void) -> ListenerRegistration {
+        // `includeMetadataChanges` so we're notified when a locally-cached
+        // write gets ack'd by the server (hasPendingWrites flips false),
+        // which is how the "Sending… → Sent" UI transition is driven.
         db.collection(FirestorePath.messages(coupleId: coupleId))
             .order(by: "createdAt", descending: true)
             .limit(to: limit)
-            .addSnapshotListener { snapshot, error in
+            .addSnapshotListener(includeMetadataChanges: true) { snapshot, error in
                 if let error {
                     onError(error); return
                 }
                 let docs = snapshot?.documents ?? []
-                let messages = docs.compactMap { try? $0.data(as: ChatMessage.self) }
+                var pending: Set<String> = []
+                let messages: [ChatMessage] = docs.compactMap { doc in
+                    guard let msg = try? doc.data(as: ChatMessage.self) else { return nil }
+                    if doc.metadata.hasPendingWrites { pending.insert(msg.id) }
+                    return msg
+                }
                 // Listener returns newest-first; callers want oldest-first for a chat feed.
-                onUpdate(messages.reversed())
+                onUpdate(messages.reversed(), pending)
             }
+    }
+
+    func loadOlderMessages(coupleId: String,
+                           before: Date,
+                           limit: Int = 50) async throws -> [ChatMessage] {
+        let snap = try await db.collection(FirestorePath.messages(coupleId: coupleId))
+            .order(by: "createdAt", descending: true)
+            .whereField("createdAt", isLessThan: Timestamp(date: before))
+            .limit(to: limit)
+            .getDocuments()
+        let msgs = snap.documents.compactMap { try? $0.data(as: ChatMessage.self) }
+        return msgs.reversed()
     }
 
     func listenToQuizzes(coupleId: String,

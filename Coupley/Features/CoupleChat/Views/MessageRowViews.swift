@@ -15,12 +15,20 @@ struct MessageRow: View {
     let quiz: ChatQuiz?
     let viewerId: String
     let partnerId: String
+    /// Status for the sender's own outgoing message (nil for incoming / non-text).
+    let outgoingStatus: ChatViewModel.OutgoingStatus?
     let onAnswerTapped: (String) -> Void
 
     var body: some View {
         switch message.kind {
         case .text:
-            TextBubble(text: message.text ?? "", isMine: isMine)
+            VStack(alignment: isMine ? .trailing : .leading, spacing: 2) {
+                TextBubble(text: message.text ?? "", isMine: isMine)
+                if isMine, let status = outgoingStatus {
+                    OutgoingStatusLabel(status: status)
+                        .padding(.trailing, 8)
+                }
+            }
         case .system:
             SystemLine(text: message.text ?? "")
         case .quiz:
@@ -28,6 +36,39 @@ struct MessageRow: View {
                            onAnswerTapped: onAnswerTapped)
         case .result:
             ResultCardBubble(message: message)
+        }
+    }
+}
+
+// MARK: - Outgoing status label
+
+struct OutgoingStatusLabel: View {
+    let status: ChatViewModel.OutgoingStatus
+
+    var body: some View {
+        HStack(spacing: 3) {
+            Image(systemName: icon)
+                .font(.system(size: 9, weight: .semibold))
+            Text(label)
+                .font(.system(size: 10, weight: .medium, design: .rounded))
+        }
+        .foregroundStyle(status == .seen ? Brand.accentStart : Brand.textTertiary)
+        .transition(.opacity)
+    }
+
+    private var icon: String {
+        switch status {
+        case .pending: return "clock"
+        case .sent:    return "checkmark"
+        case .seen:    return "checkmark.circle.fill"
+        }
+    }
+
+    private var label: String {
+        switch status {
+        case .pending: return "Sending…"
+        case .sent:    return "Sent"
+        case .seen:    return "Seen"
         }
     }
 }

@@ -15,6 +15,7 @@ struct ChatView: View {
     let session: UserSession
     @State private var showProfile = false
     @State private var showPartnerAndMe = false
+    @State private var showQuizPicker = false
 
     init(session: UserSession, profileViewModel: CouplePersonProfileViewModel) {
         self.session = session
@@ -77,6 +78,14 @@ struct ChatView: View {
                 .presentationDetents([.medium, .large])
                 .presentationBackground(Brand.backgroundTop)
             }
+            .sheet(isPresented: $showQuizPicker) {
+                QuizPickerSheet { template in
+                    viewModel.sendQuiz(template: template)
+                }
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
+                .presentationBackground(Brand.backgroundTop)
+            }
             .onAppear   { viewModel.start() }
             .onDisappear { viewModel.stop() }
         }
@@ -95,6 +104,9 @@ struct ChatView: View {
         ScrollViewReader { proxy in
             ScrollView {
                 LazyVStack(spacing: 10) {
+                    loadOlderIndicator
+                        .id("__loadOlder")
+
                     ForEach(viewModel.messages) { msg in
                         MessageRow(
                             message: msg,
@@ -102,6 +114,7 @@ struct ChatView: View {
                             quiz: viewModel.quiz(for: msg),
                             viewerId: viewModel.myUserId,
                             partnerId: viewModel.partnerUserId,
+                            outgoingStatus: viewModel.outgoingStatus(for: msg),
                             onAnswerTapped: { quizId in
                                 viewModel.presentQuizForAnswering(quizId: quizId)
                             }
@@ -122,10 +135,52 @@ struct ChatView: View {
         }
     }
 
+    @ViewBuilder
+    private var loadOlderIndicator: some View {
+        if viewModel.hasMoreOlder {
+            HStack {
+                Spacer()
+                if viewModel.isLoadingOlder {
+                    ProgressView()
+                        .tint(Brand.accentStart)
+                        .controlSize(.small)
+                } else {
+                    Text("Pull up to see older messages")
+                        .font(.system(size: 11, design: .rounded))
+                        .foregroundStyle(Brand.textTertiary)
+                }
+                Spacer()
+            }
+            .padding(.vertical, 10)
+            .onAppear {
+                // Fires when the top sentinel scrolls into view — LazyVStack
+                // only instantiates it near the top of the scroll range.
+                viewModel.loadOlder()
+            }
+        }
+    }
+
     // MARK: - Composer
 
     private var composerBar: some View {
         HStack(spacing: 10) {
+            Button {
+                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                showQuizPicker = true
+            } label: {
+                Image(systemName: "sparkles")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(Brand.accentStart)
+                    .frame(width: 38, height: 38)
+                    .background(
+                        Circle()
+                            .fill(Brand.surfaceLight)
+                            .overlay(Circle().strokeBorder(Brand.divider, lineWidth: 1))
+                    )
+            }
+            .buttonStyle(BouncyButtonStyle())
+            .accessibilityLabel("Pick a quiz")
+
             TextField("Message", text: $viewModel.draftText, axis: .vertical)
                 .lineLimit(1...5)
                 .font(.system(size: 16, design: .rounded))
