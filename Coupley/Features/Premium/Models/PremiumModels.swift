@@ -22,15 +22,22 @@ enum PremiumPlan: String, CaseIterable, Identifiable, Codable {
 
     var priceLabel: String {
         switch self {
-        case .monthly: return "$4.99 / month"
-        case .yearly:  return "$39.99 / year"
+        case .monthly: return "$3.99 / month"
+        case .yearly:  return "$29.99 / year"
+        }
+    }
+
+    var perMonthLabel: String {
+        switch self {
+        case .monthly: return "$3.99 / mo"
+        case .yearly:  return "~$2.50 / mo for two"
         }
     }
 
     var savingsBadge: String? {
         switch self {
         case .monthly: return nil
-        case .yearly:  return "Save 33%"
+        case .yearly:  return "Best Value"
         }
     }
 
@@ -49,7 +56,7 @@ enum PremiumPlan: String, CaseIterable, Identifiable, Codable {
 /// from a paired partner.
 enum PremiumSource: String, Codable {
     case none
-    case self_        = "self"
+    case self_   = "self"
     case partner
 }
 
@@ -57,29 +64,61 @@ enum PremiumSource: String, Codable {
 
 /// Features gated behind premium. Use `PremiumStore.hasAccess(to:)` at call sites.
 enum PremiumFeature: String, CaseIterable {
-    case unlimitedAISuggestions
-    case advancedStats
-    case customThemes
-    case moodHistoryExport
-    case prioritySupport
+    case customAvatar          // Upload custom photo as avatar (free: preset only)
+    case anniversaryPhoto      // Upload cover photo for anniversaries (free: none)
+    case allThemes             // All theme styles (free: default only)
+    case fullQuizAccess        // All quiz topics (free: first half of topics)
+    case dateIdeas             // Date ideas access (free: locked, premium: 25/day)
+    case aiMoodSuggestions     // AI mood suggestions (free: 1/day, premium: 50/day)
 
     var label: String {
         switch self {
-        case .unlimitedAISuggestions: return "Unlimited AI suggestions"
-        case .advancedStats:          return "Advanced couple analytics"
-        case .customThemes:           return "Custom themes + wallpapers"
-        case .moodHistoryExport:      return "Export mood history"
-        case .prioritySupport:        return "Priority support"
+        case .customAvatar:       return "Custom avatar photo"
+        case .anniversaryPhoto:   return "Anniversary cover photos"
+        case .allThemes:          return "All themes & styles"
+        case .fullQuizAccess:     return "Full quiz library"
+        case .dateIdeas:          return "Date ideas (25/day)"
+        case .aiMoodSuggestions:  return "AI mood suggestions (50/day)"
+        }
+    }
+
+    var freeLabel: String {
+        switch self {
+        case .customAvatar:       return "Preset avatars only"
+        case .anniversaryPhoto:   return "No cover photos"
+        case .allThemes:          return "Default theme only"
+        case .fullQuizAccess:     return "Half the quiz library"
+        case .dateIdeas:          return "Locked"
+        case .aiMoodSuggestions:  return "1 per day"
         }
     }
 
     var icon: String {
         switch self {
-        case .unlimitedAISuggestions: return "sparkles"
-        case .advancedStats:          return "chart.bar.xaxis"
-        case .customThemes:           return "paintpalette.fill"
-        case .moodHistoryExport:      return "square.and.arrow.up.on.square"
-        case .prioritySupport:        return "lifepreserver.fill"
+        case .customAvatar:       return "person.crop.circle.fill"
+        case .anniversaryPhoto:   return "photo.fill"
+        case .allThemes:          return "paintpalette.fill"
+        case .fullQuizAccess:     return "questionmark.bubble.fill"
+        case .dateIdeas:          return "map.fill"
+        case .aiMoodSuggestions:  return "sparkles"
+        }
+    }
+
+    /// Daily limit for free users (nil = binary access, not daily-limited)
+    var freeDailyLimit: Int? {
+        switch self {
+        case .aiMoodSuggestions: return 1
+        case .dateIdeas:         return 0  // locked
+        default:                 return nil
+        }
+    }
+
+    /// Daily limit for premium users (nil = unlimited)
+    var premiumDailyLimit: Int? {
+        switch self {
+        case .aiMoodSuggestions: return 50
+        case .dateIdeas:         return 25
+        default:                 return nil
         }
     }
 }

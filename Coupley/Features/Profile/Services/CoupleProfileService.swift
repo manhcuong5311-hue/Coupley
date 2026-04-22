@@ -8,7 +8,7 @@ import FirebaseFirestore
 
 // MARK: - Profile
 
-struct CouplePersonProfile: Equatable {
+struct CouplePersonProfile: Equatable, Codable {
     var displayName: String
     var avatar: AvatarOption
 

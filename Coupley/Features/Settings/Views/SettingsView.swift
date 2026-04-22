@@ -22,6 +22,7 @@ struct SettingsView: View {
     @State private var showSignOutConfirm = false
     @State private var showEditName = false
     @State private var currentDisplayName: String = Auth.auth().currentUser?.displayName ?? "—"
+    @State private var showThemePaywall = false
 
     let session: UserSession?
 
@@ -36,6 +37,7 @@ struct SettingsView: View {
                 themeStyleSection
                 appearanceSection
                 notificationsSection
+                faqSection
                 aboutSection
                 signOutSection
             }
@@ -244,29 +246,51 @@ struct SettingsView: View {
     private var themeStyleSection: some View {
         Section {
             ForEach(ThemeVariant.allCases) { variant in
+                let isDefault = variant == ThemeVariant.allCases.first
+                let isLocked = !isDefault && !premiumStore.hasAccess(to: .allThemes)
+
                 Button {
-                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                    themeManager.variant = variant
+                    if isLocked {
+                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                        showThemePaywall = true
+                    } else {
+                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                        themeManager.variant = variant
+                    }
                 } label: {
                     HStack(spacing: 14) {
                         ZStack {
                             RoundedRectangle(cornerRadius: 8)
-                                .fill(Brand.accentStart.opacity(0.15))
+                                .fill(isLocked
+                                      ? Brand.textTertiary.opacity(0.12)
+                                      : Brand.accentStart.opacity(0.15))
                                 .frame(width: 30, height: 30)
-                            Image(systemName: variant.icon)
+                            Image(systemName: isLocked ? "lock.fill" : variant.icon)
                                 .font(.system(size: 13, weight: .semibold))
-                                .foregroundStyle(Brand.accentStart)
+                                .foregroundStyle(isLocked ? Brand.textTertiary : Brand.accentStart)
                         }
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(variant.label)
-                                .font(.system(size: 15, weight: .medium, design: .rounded))
-                                .foregroundStyle(Brand.textPrimary)
+                            HStack(spacing: 6) {
+                                Text(variant.label)
+                                    .font(.system(size: 15, weight: .medium, design: .rounded))
+                                    .foregroundStyle(isLocked ? Brand.textSecondary : Brand.textPrimary)
+                                if isLocked {
+                                    Text("Premium")
+                                        .font(.system(size: 10, weight: .bold, design: .rounded))
+                                        .foregroundStyle(Color(red: 0.95, green: 0.65, blue: 0.15))
+                                        .padding(.horizontal, 6)
+                                        .padding(.vertical, 2)
+                                        .background(
+                                            Capsule().fill(Color(red: 0.95, green: 0.65, blue: 0.15).opacity(0.15))
+                                        )
+                                }
+                            }
                             Text(variant.tagline)
                                 .font(.system(size: 12, design: .rounded))
-                                .foregroundStyle(Brand.textSecondary)
+                                .foregroundStyle(Brand.textTertiary)
                         }
                         Spacer()
-                        if themeManager.variant == variant {
+                        if !isLocked && themeManager.variant == variant {
                             Image(systemName: "checkmark")
                                 .font(.system(size: 13, weight: .bold))
                                 .foregroundStyle(Brand.accentStart)
@@ -277,10 +301,20 @@ struct SettingsView: View {
         } header: {
             Text("Theme Style")
         } footer: {
-            Text("Pick between the new CoupleSync look or the classic gradient.")
-                .font(.system(size: 12, design: .rounded))
+            if !premiumStore.isActive {
+                Text("Additional themes require Premium. Free tier includes the default style.")
+                    .font(.system(size: 12, design: .rounded))
+            } else {
+                Text("Pick between the new CoupleSync look or the classic gradient.")
+                    .font(.system(size: 12, design: .rounded))
+            }
         }
         .listRowBackground(surfaceRowBackground)
+        .sheet(isPresented: $showThemePaywall) {
+            NavigationStack { PremiumPaywallView() }
+                .environmentObject(premiumStore)
+                .presentationDragIndicator(.visible)
+        }
     }
 
     // MARK: - Appearance
@@ -353,6 +387,32 @@ struct SettingsView: View {
                             .padding(.vertical, 2)
                             .background(Capsule().fill(Brand.accentStart))
                     }
+                }
+            }
+        }
+        .listRowBackground(surfaceRowBackground)
+    }
+
+    // MARK: - FAQ
+
+    @ViewBuilder
+    private var faqSection: some View {
+        Section("FAQ") {
+            NavigationLink {
+                FAQView()
+            } label: {
+                HStack(spacing: 14) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(Brand.accentStart.opacity(0.15))
+                            .frame(width: 30, height: 30)
+                        Image(systemName: "questionmark.circle.fill")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(Brand.accentStart)
+                    }
+                    Text("Frequently Asked Questions")
+                        .font(.system(size: 15, weight: .medium, design: .rounded))
+                        .foregroundStyle(Brand.textPrimary)
                 }
             }
         }

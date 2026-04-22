@@ -36,6 +36,8 @@ struct MessageRow: View {
                            onAnswerTapped: onAnswerTapped)
         case .result:
             ResultCardBubble(message: message)
+        case .photo:
+            PhotoBubble(imageURL: message.imageURL ?? "", isMine: isMine)
         }
     }
 }
@@ -268,6 +270,58 @@ struct ResultCardBubble: View {
                     )
             )
             Spacer(minLength: 16)
+        }
+    }
+}
+
+// MARK: - Photo bubble
+
+struct PhotoBubble: View {
+    let imageURL: String
+    let isMine: Bool
+
+    @State private var loadedImage: UIImage? = nil
+    @State private var isLoading = true
+
+    var body: some View {
+        HStack {
+            if isMine { Spacer(minLength: 48) }
+            ZStack {
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(Brand.surfaceLight)
+                    .frame(width: 200, height: 200)
+
+                if let img = loadedImage {
+                    Image(uiImage: img)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: 200, height: 200)
+                        .clipShape(RoundedRectangle(cornerRadius: 16))
+                } else if isLoading {
+                    ProgressView().tint(Brand.accentStart)
+                } else {
+                    Image(systemName: "photo.fill")
+                        .font(.system(size: 32))
+                        .foregroundStyle(Brand.textTertiary)
+                }
+            }
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .strokeBorder(Brand.divider, lineWidth: 1)
+            )
+            .task { await loadImage() }
+            if !isMine { Spacer(minLength: 48) }
+        }
+    }
+
+    private func loadImage() async {
+        guard let url = URL(string: imageURL) else { isLoading = false; return }
+        do {
+            let (data, _) = try await URLSession.shared.data(from: url)
+            let img = UIImage(data: data)
+            await MainActor.run { loadedImage = img; isLoading = false }
+        } catch {
+            await MainActor.run { isLoading = false }
         }
     }
 }

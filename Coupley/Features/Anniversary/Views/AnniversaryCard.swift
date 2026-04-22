@@ -27,7 +27,7 @@ struct AnniversaryCard: View {
 
                 // MARK: Hero image
                 if let urlString = anniversary.imageURL, let url = URL(string: urlString) {
-                    AsyncImage(url: url) { phase in
+                    CachedAsyncImage(url: url) { phase in
                         if case .success(let image) = phase {
                             image
                                 .resizable()

@@ -57,6 +57,9 @@ protocol CoupleChatServicing {
 
     /// Mark all unread messages as read by this user (writes readBy in batches).
     func markAsRead(coupleId: String, userId: String, messageIds: [String]) async throws
+
+    /// Post a photo message with an already-uploaded image URL.
+    func sendPhoto(_ imageURL: String, coupleId: String, senderId: String) async throws
 }
 
 // MARK: - Firestore implementation
@@ -259,6 +262,12 @@ final class FirestoreCoupleChatService: CoupleChatServicing {
             }
             try await batch.commit()
         }
+    }
+
+    func sendPhoto(_ imageURL: String, coupleId: String, senderId: String) async throws {
+        let msg = ChatMessage.photo(imageURL, senderId: senderId)
+        try await writeMessage(msg, coupleId: coupleId)
+        try await touchLastMessage(coupleId: coupleId)
     }
 
     // MARK: - Helpers

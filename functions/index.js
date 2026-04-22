@@ -19,11 +19,8 @@ const openaiApiKey = defineSecret("OPENAI_API_KEY");
 // MARK: - Constants
 // =============================================================================
 
-const MAX_NOTIFICATIONS_PER_DAY = 5;
+const MAX_NOTIFICATIONS_PER_DAY = 2;
 const INACTIVITY_THRESHOLD_HOURS = 24;
-
-// Notification types that are user-initiated and should bypass rate limiting
-const USER_INITIATED_TYPES = new Set(["ping", "reaction"]);
 
 const PRIORITY_LOW_MOOD = 1;
 const PRIORITY_DAILY_SYNC = 2;
@@ -240,56 +237,21 @@ async function findCoupleId(userId) {
 }
 
 /**
- * Returns false if the recipient has disabled this notification type in their preferences.
- * Defaults to true (enabled) if preferences are missing or the key is absent.
- */
-async function isNotificationTypeEnabled(userId, type) {
-  const userDoc = await db.collection("users").doc(userId).get();
-  if (!userDoc.exists) return true;
-
-  const prefs = userDoc.data().notificationPreferences || {};
-
-  const prefKey = {
-    low_mood:   "partnerMoodAlert",
-    daily_sync: "dailySyncReminder",
-    inactivity: "inactivityReminder",
-    ping:       "partnerPing",
-    reaction:   "partnerReaction",
-  }[type];
-
-  if (!prefKey) return true;
-  const val = prefs[prefKey];
-  return val === undefined ? true : val === true;
-}
-
-/**
  * Send a push notification via FCM.
  */
 async function sendNotification(userId, type, title, body, data = {}) {
-  // Check recipient's per-type preference before anything else
-  const typeEnabled = await isNotificationTypeEnabled(userId, type);
-  if (!typeEnabled) {
-    console.log(`User ${userId} disabled ${type} notifications. Skipping.`);
+  // Rate limit check
+  const allowed = await canSendNotification(userId);
+  if (!allowed) {
+    console.log(`Rate limit reached for user ${userId}. Skipping.`);
     return false;
   }
 
-  // User-initiated types (ping, reaction) always go through — no rate limit or dedup
-  const isUserInitiated = USER_INITIATED_TYPES.has(type);
-
-  if (!isUserInitiated) {
-    // Rate limit check for automated notifications only
-    const allowed = await canSendNotification(userId);
-    if (!allowed) {
-      console.log(`Rate limit reached for user ${userId}. Skipping.`);
-      return false;
-    }
-
-    // Duplicate check for automated notifications only
-    const duplicate = await isDuplicateToday(userId, type);
-    if (duplicate) {
-      console.log(`Duplicate ${type} notification for user ${userId}. Skipping.`);
-      return false;
-    }
+  // Duplicate check
+  const duplicate = await isDuplicateToday(userId, type);
+  if (duplicate) {
+    console.log(`Duplicate ${type} notification for user ${userId}. Skipping.`);
+    return false;
   }
 
   // Get FCM token

@@ -189,6 +189,27 @@ final class ChatViewModel: ObservableObject {
         }
     }
 
+    // MARK: - Photo sending
+
+    @Published private(set) var isUploadingPhoto = false
+
+    private let photoStorage = ChatPhotoStorageService()
+
+    func sendPhoto(_ image: UIImage) {
+        guard session.isPaired, !isUploadingPhoto else { return }
+        isUploadingPhoto = true
+        let messageId = UUID().uuidString
+        Task {
+            defer { Task { @MainActor in self.isUploadingPhoto = false } }
+            do {
+                let url = try await photoStorage.upload(image, coupleId: session.coupleId, messageId: messageId)
+                try await chatService.sendPhoto(url, coupleId: session.coupleId, senderId: session.userId)
+            } catch {
+                await MainActor.run { self.errorMessage = error.localizedDescription }
+            }
+        }
+    }
+
     // MARK: - Quiz answering
 
     func presentQuizForAnswering(quizId: String) {
@@ -290,6 +311,11 @@ final class ChatViewModel: ObservableObject {
     }
 
     // MARK: - Read receipts
+
+    /// Called from ChatView when the partner photo popup is dismissed.
+    static func markMessageRead(messageId: String, coupleId: String, userId: String) async throws {
+        try await FirestoreCoupleChatService().markAsRead(coupleId: coupleId, userId: userId, messageIds: [messageId])
+    }
 
     private func markUnreadAsRead() {
         let unread = messages

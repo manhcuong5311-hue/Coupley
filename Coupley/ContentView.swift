@@ -29,12 +29,14 @@ struct ContentView: View {
     @StateObject private var moodViewModel: MoodViewModel
     @StateObject private var profileViewModel: CouplePersonProfileViewModel
     @StateObject private var microActionViewModel: MicroActionViewModel
+    @StateObject private var nudgeViewModel: NudgeViewModel
 
     init(session: UserSession, displayName: String?) {
         self.session = session
         self.displayName = displayName
 
         let safeSession = session.isPaired ? session : UserSession.demo
+        _nudgeViewModel = StateObject(wrappedValue: NudgeViewModel(session: session))
         _coupleViewModel = StateObject(wrappedValue: CoupleViewModel(
             session: safeSession,
             listenerService: FirestoreMoodListenerService(),
@@ -104,6 +106,19 @@ struct ContentView: View {
                        value: sessionStore.pendingDisconnectNotice)
         }
         .brandBackground()
+        .overlay {
+            if let nudge = nudgeViewModel.incomingNudge {
+                NudgePopupView(
+                    nudge: nudge,
+                    partnerName: profileViewModel.partnerProfile.displayName,
+                    partnerAvatar: profileViewModel.partnerProfile.avatar,
+                    onDismiss: { nudgeViewModel.dismiss() }
+                )
+                .transition(.opacity.combined(with: .scale(scale: 0.92)))
+                .zIndex(999)
+            }
+        }
+        .animation(.spring(response: 0.45, dampingFraction: 0.78), value: nudgeViewModel.incomingNudge?.id)
             .sheet(isPresented: $showPairingSheet) {
                 PairingSheetView(
                     userId: session.userId,
@@ -134,6 +149,7 @@ struct ContentView: View {
                 if session.isPaired {
                     coupleViewModel.startListening()
                     statsViewModel.loadStats()
+                    nudgeViewModel.startListening()
                 }
                 notificationViewModel.setup(session: session)
             }
@@ -148,6 +164,7 @@ struct ContentView: View {
                     coupleViewModel.startListening()
                     statsViewModel.loadStats()
                     profileViewModel.startListening()
+                    nudgeViewModel.startListening()
                 }
             }
     }

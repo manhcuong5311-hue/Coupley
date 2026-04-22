@@ -2,9 +2,10 @@
 //  PremiumStore.swift
 //  Coupley
 //
-//  Observable wrapper around PremiumService. Keeps a live entitlement for the
-//  current session (couple-shared when paired, user-scoped when solo) and
-//  drives feature gating via `hasAccess(to:)`.
+//  Observable wrapper around PremiumService + StoreKit 2. Keeps a live
+//  entitlement for the current session (couple-shared when paired, user-scoped
+//  when solo) and drives feature gating via `hasAccess(to:)`. Also tracks daily
+//  usage for rate-limited free-tier features.
 //
 //  Inject into the environment from CoupleyApp; call `bind(session:)` from
 //  RootView whenever the session changes.
@@ -13,6 +14,10 @@
 import Foundation
 import FirebaseFirestore
 import Combine
+import StoreKit
+
+// Resolve StoreKit.SKTransaction vs FirebaseFirestore.SKTransaction ambiguity
+private typealias SKTransaction = StoreKit.Transaction
 
 @MainActor
 final class PremiumStore: ObservableObject {
@@ -21,6 +26,7 @@ final class PremiumStore: ObservableObject {
 
     @Published private(set) var entitlement: PremiumEntitlement = .inactive
     @Published private(set) var isPurchasing: Bool = false
+    @Published private(set) var products: [Product] = []
     @Published var lastError: String?
 
     // MARK: - Dependencies
@@ -29,14 +35,36 @@ final class PremiumStore: ObservableObject {
     private var listener: ListenerRegistration?
     private var boundUserId: String?
     private var boundCoupleId: String?
+    private var transactionListenerTask: Task<Void, Never>?
+
+    // MARK: - Daily Usage
+
+    private let defaults = UserDefaults.standard
 
     // MARK: - Init
 
     init(service: PremiumService = FirestorePremiumService()) {
         self.service = service
+        transactionListenerTask = Task { await listenForSKTransactions() }
+        Task { await loadProducts() }
     }
 
-    deinit { listener?.remove() }
+    deinit {
+        listener?.remove()
+        transactionListenerTask?.cancel()
+    }
+
+    // MARK: - Product Loading
+
+    func loadProducts() async {
+        let ids = PremiumPlan.allCases.map { $0.productID }
+        do {
+            let loaded = try await Product.products(for: ids)
+            products = loaded.sorted { $0.price < $1.price }
+        } catch {
+            print("[PremiumStore] Failed to load products: \(error)")
+        }
+    }
 
     // MARK: - Binding
 
@@ -76,18 +104,64 @@ final class PremiumStore: ObservableObject {
     // MARK: - Gating
 
     var isActive: Bool { entitlement.isActive }
-
     var source: PremiumSource { entitlement.source }
 
     func hasAccess(to feature: PremiumFeature) -> Bool {
-        // Every feature currently requires an active entitlement — keep the
-        // switch explicit so we can carve out free tiers later without rewriting
-        // call sites.
-        _ = feature
-        return isActive
+        switch feature {
+        case .customAvatar, .anniversaryPhoto, .allThemes, .fullQuizAccess:
+            return isActive
+        case .dateIdeas:
+            // Free: totally locked
+            return isActive
+        case .aiMoodSuggestions:
+            if isActive { return true }
+            // Free: 1 use per day
+            return dailyUsage(for: .aiMoodSuggestions) < 1
+        }
     }
 
-    // MARK: - Purchase (stubbed — swap for StoreKit 2 when products are wired)
+    // MARK: - Daily Usage Tracking
+
+    func dailyUsage(for feature: PremiumFeature) -> Int {
+        let today = Calendar.current.startOfDay(for: Date())
+        if let storedDate = defaults.object(forKey: dailyDateKey(for: feature)) as? Date,
+           Calendar.current.isDate(storedDate, inSameDayAs: today) {
+            return defaults.integer(forKey: dailyCountKey(for: feature))
+        }
+        return 0
+    }
+
+    func recordUsage(for feature: PremiumFeature) {
+        let today = Calendar.current.startOfDay(for: Date())
+        let currentCount: Int
+        if let storedDate = defaults.object(forKey: dailyDateKey(for: feature)) as? Date,
+           Calendar.current.isDate(storedDate, inSameDayAs: today) {
+            currentCount = defaults.integer(forKey: dailyCountKey(for: feature))
+        } else {
+            currentCount = 0
+            defaults.set(today, forKey: dailyDateKey(for: feature))
+        }
+        defaults.set(currentCount + 1, forKey: dailyCountKey(for: feature))
+    }
+
+    func remainingUsage(for feature: PremiumFeature) -> Int {
+        let limit: Int
+        if isActive {
+            limit = feature.premiumDailyLimit ?? Int.max
+        } else {
+            limit = feature.freeDailyLimit ?? 0
+        }
+        return max(0, limit - dailyUsage(for: feature))
+    }
+
+    private func dailyDateKey(for feature: PremiumFeature) -> String {
+        "coupley_daily_date_\(feature.rawValue)"
+    }
+    private func dailyCountKey(for feature: PremiumFeature) -> String {
+        "coupley_daily_count_\(feature.rawValue)"
+    }
+
+    // MARK: - Purchase (StoreKit 2)
 
     func purchase(plan: PremiumPlan) async {
         guard let userId = boundUserId else {
@@ -95,27 +169,28 @@ final class PremiumStore: ObservableObject {
             return
         }
 
+        guard let product = products.first(where: { $0.id == plan.productID }) else {
+            lastError = "Product not available. Check your connection and try again."
+            return
+        }
+
         isPurchasing = true
         lastError = nil
 
         do {
-            // TODO: Replace with StoreKit 2 `Product.purchase()` + transaction verification.
-            try await Task.sleep(nanoseconds: 800_000_000)
-
-            let expires: Date = {
-                switch plan {
-                case .monthly: return Calendar.current.date(byAdding: .month, value: 1, to: Date()) ?? Date()
-                case .yearly:  return Calendar.current.date(byAdding: .year,  value: 1, to: Date()) ?? Date()
-                }
-            }()
-
-            try await service.recordPurchase(
-                userId: userId,
-                coupleId: boundCoupleId,
-                plan: plan,
-                expiresAt: expires
-            )
-            // Snapshot listener will push the new entitlement back.
+            let result = try await product.purchase()
+            switch result {
+            case .success(let verification):
+                let transaction = try checkVerified(verification)
+                await fulfillPurchase(userId: userId, plan: plan, transaction: transaction)
+                await transaction.finish()
+            case .pending:
+                break  // Awaiting approval (e.g. Ask to Buy)
+            case .userCancelled:
+                break
+            @unknown default:
+                break
+            }
         } catch {
             lastError = error.localizedDescription
         }
@@ -124,10 +199,60 @@ final class PremiumStore: ObservableObject {
     }
 
     func restorePurchases() async {
-        // StoreKit 2 restore is a no-op for most users; leave a hook here so
-        // the settings "Restore" button has something to call.
-        // When StoreKit is wired, iterate `Transaction.currentEntitlements` and
-        // re-post the newest to Firestore via `service.recordPurchase`.
+        guard let userId = boundUserId else { return }
+        isPurchasing = true
+        do {
+            try await AppStore.sync()
+            for await result in SKTransaction.currentEntitlements {
+                if case .verified(let tx) = result,
+                   let plan = PremiumPlan.allCases.first(where: { $0.productID == tx.productID }) {
+                    await fulfillPurchase(userId: userId, plan: plan, transaction: tx)
+                    await tx.finish()
+                }
+            }
+        } catch {
+            lastError = error.localizedDescription
+        }
+        isPurchasing = false
+    }
+
+    // MARK: - Private
+
+    private func checkVerified<T>(_ result: VerificationResult<T>) throws -> T {
+        switch result {
+        case .unverified(_, let error): throw error
+        case .verified(let value): return value
+        }
+    }
+
+    private func fulfillPurchase(userId: String, plan: PremiumPlan, transaction: SKTransaction) async {
+        let expires: Date = transaction.expirationDate ?? {
+            switch plan {
+            case .monthly: return Calendar.current.date(byAdding: .month, value: 1, to: Date()) ?? Date()
+            case .yearly:  return Calendar.current.date(byAdding: .year,  value: 1, to: Date()) ?? Date()
+            }
+        }()
+        do {
+            try await service.recordPurchase(
+                userId: userId,
+                coupleId: boundCoupleId,
+                plan: plan,
+                expiresAt: expires
+            )
+        } catch {
+            lastError = error.localizedDescription
+        }
+    }
+
+    private func listenForSKTransactions() async {
+        for await result in SKTransaction.updates {
+            guard let userId = boundUserId else { continue }
+            if case .verified(let tx) = result,
+               let plan = PremiumPlan.allCases.first(where: { $0.productID == tx.productID }) {
+                await fulfillPurchase(userId: userId, plan: plan, transaction: tx)
+                await tx.finish()
+            }
+        }
     }
 
     func cancelForTesting() async {

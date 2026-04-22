@@ -7,6 +7,7 @@
 //
 
 import SwiftUI
+import PhotosUI
 
 struct ChatView: View {
 
@@ -16,6 +17,9 @@ struct ChatView: View {
     @State private var showProfile = false
     @State private var showPartnerAndMe = false
     @State private var showQuizPicker = false
+    @State private var photosPickerItem: PhotosPickerItem? = nil
+    @State private var pendingPhotoPopup: ChatMessage? = nil
+    @State private var seenPhotoMessageIds: Set<String> = []
 
     init(session: UserSession, profileViewModel: CouplePersonProfileViewModel) {
         self.session = session
@@ -88,6 +92,53 @@ struct ChatView: View {
             }
             .onAppear   { viewModel.start() }
             .onDisappear { viewModel.stop() }
+            .onChange(of: photosPickerItem) { _, item in
+                guard let item else { return }
+                Task {
+                    guard let data = try? await item.loadTransferable(type: Data.self),
+                          let image = UIImage(data: data) else { return }
+                    viewModel.sendPhoto(image)
+                    await MainActor.run { photosPickerItem = nil }
+                }
+            }
+            .onChange(of: viewModel.messages) { _, messages in
+                checkForIncomingPhoto(in: messages)
+            }
+            .overlay {
+                if let photo = pendingPhotoPopup, let url = photo.imageURL {
+                    PartnerPhotoPopupView(imageURL: url) {
+                        markPhotoSeen(photo)
+                    }
+                    .transition(.opacity)
+                    .zIndex(200)
+                }
+            }
+            .animation(.easeInOut(duration: 0.25), value: pendingPhotoPopup?.id)
+        }
+    }
+
+    private func checkForIncomingPhoto(in messages: [ChatMessage]) {
+        // Find the newest photo message from the partner not yet shown
+        let partnerPhotos = messages.filter {
+            $0.kind == .photo &&
+            $0.senderId == session.partnerId &&
+            !seenPhotoMessageIds.contains($0.id) &&
+            !$0.readBy.contains(session.userId)
+        }
+        guard let newest = partnerPhotos.last else { return }
+        seenPhotoMessageIds.insert(newest.id)
+        pendingPhotoPopup = newest
+    }
+
+    private func markPhotoSeen(_ message: ChatMessage) {
+        pendingPhotoPopup = nil
+        // Mark read in Firestore so popup won't show again after relaunch
+        Task {
+            try? await ChatViewModel.markMessageRead(
+                messageId: message.id,
+                coupleId: session.coupleId,
+                userId: session.userId
+            )
         }
     }
 
@@ -180,6 +231,28 @@ struct ChatView: View {
             }
             .buttonStyle(BouncyButtonStyle())
             .accessibilityLabel("Pick a quiz")
+
+            PhotosPicker(selection: $photosPickerItem, matching: .images) {
+                ZStack {
+                    if viewModel.isUploadingPhoto {
+                        ProgressView()
+                            .tint(Brand.accentStart)
+                            .controlSize(.small)
+                    } else {
+                        Image(systemName: "photo")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(Brand.accentStart)
+                    }
+                }
+                .frame(width: 38, height: 38)
+                .background(
+                    Circle()
+                        .fill(Brand.surfaceLight)
+                        .overlay(Circle().strokeBorder(Brand.divider, lineWidth: 1))
+                )
+            }
+            .disabled(viewModel.isUploadingPhoto)
+            .accessibilityLabel("Send a photo")
 
             TextField("Message", text: $viewModel.draftText, axis: .vertical)
                 .lineLimit(1...5)

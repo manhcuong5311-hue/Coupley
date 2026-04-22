@@ -87,6 +87,7 @@ enum ChatMessageKind: String, Codable {
     case system         // app-generated neutral message ("New quiz: …")
     case quiz           // references a quiz doc (renders a card)
     case result         // renders the comparison result card
+    case photo          // image sent between partners
 }
 
 struct ChatMessage: Identifiable, Codable, Equatable {
@@ -103,33 +104,46 @@ struct ChatMessage: Identifiable, Codable, Equatable {
     let resultSummary: String?
     let resultEmoji: String?
     let resultMatch: Bool?
+    let imageURL: String?       // only set for .photo messages
 
     static func text(_ body: String, senderId: String) -> ChatMessage {
         ChatMessage(id: UUID().uuidString, kind: .text, senderId: senderId,
                     createdAt: Date(), readBy: [senderId],
                     text: body, quizId: nil,
-                    resultSummary: nil, resultEmoji: nil, resultMatch: nil)
+                    resultSummary: nil, resultEmoji: nil, resultMatch: nil,
+                    imageURL: nil)
     }
 
     static func system(_ body: String) -> ChatMessage {
         ChatMessage(id: UUID().uuidString, kind: .system, senderId: nil,
                     createdAt: Date(), readBy: [],
                     text: body, quizId: nil,
-                    resultSummary: nil, resultEmoji: nil, resultMatch: nil)
+                    resultSummary: nil, resultEmoji: nil, resultMatch: nil,
+                    imageURL: nil)
     }
 
     static func quizCard(quizId: String) -> ChatMessage {
         ChatMessage(id: UUID().uuidString, kind: .quiz, senderId: nil,
                     createdAt: Date(), readBy: [],
                     text: nil, quizId: quizId,
-                    resultSummary: nil, resultEmoji: nil, resultMatch: nil)
+                    resultSummary: nil, resultEmoji: nil, resultMatch: nil,
+                    imageURL: nil)
     }
 
     static func resultCard(quizId: String, summary: String, emoji: String, match: Bool) -> ChatMessage {
         ChatMessage(id: UUID().uuidString, kind: .result, senderId: nil,
                     createdAt: Date(), readBy: [],
                     text: nil, quizId: quizId,
-                    resultSummary: summary, resultEmoji: emoji, resultMatch: match)
+                    resultSummary: summary, resultEmoji: emoji, resultMatch: match,
+                    imageURL: nil)
+    }
+
+    static func photo(_ url: String, senderId: String) -> ChatMessage {
+        ChatMessage(id: UUID().uuidString, kind: .photo, senderId: senderId,
+                    createdAt: Date(), readBy: [senderId],
+                    text: nil, quizId: nil,
+                    resultSummary: nil, resultEmoji: nil, resultMatch: nil,
+                    imageURL: url)
     }
 }
 

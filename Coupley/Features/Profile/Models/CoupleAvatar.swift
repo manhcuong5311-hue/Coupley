@@ -10,9 +10,36 @@ import SwiftUI
 
 /// Identifier for a user avatar — either one of the 6 bundled assets or a
 /// user-uploaded photo encoded as base64 in the user's Firestore document.
-enum AvatarOption: Equatable, Hashable {
+enum AvatarOption: Equatable, Hashable, Codable {
     case asset(String)
     case custom(String)   // base64-encoded JPEG
+
+    // MARK: - Codable (custom so the format is stable)
+
+    private enum CodingKeys: String, CodingKey { case type, value }
+
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        switch self {
+        case .asset(let name):
+            try c.encode("asset", forKey: .type)
+            try c.encode(name,    forKey: .value)
+        case .custom(let b64):
+            try c.encode("custom", forKey: .type)
+            try c.encode(b64,      forKey: .value)
+        }
+    }
+
+    init(from decoder: Decoder) throws {
+        let c    = try decoder.container(keyedBy: CodingKeys.self)
+        let type = try c.decode(String.self, forKey: .type)
+        let val  = try c.decode(String.self, forKey: .value)
+        switch type {
+        case "asset":  self = .asset(val)
+        case "custom": self = .custom(val)
+        default:       self = .placeholderPartner
+        }
+    }
 
     static let men1   = AvatarOption.asset("Men1")
     static let men2   = AvatarOption.asset("Men2")

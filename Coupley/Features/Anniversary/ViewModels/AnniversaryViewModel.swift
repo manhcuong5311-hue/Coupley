@@ -57,6 +57,8 @@ final class AnniversaryViewModel: ObservableObject {
         guard listener == nil, session.isPaired else { return }
         isListening = true
 
+        loadCache()
+
         listener = service.observe(
             coupleId: session.coupleId,
             onUpdate: { [weak self] items in
@@ -177,6 +179,7 @@ final class AnniversaryViewModel: ObservableObject {
     private func handleRemoteUpdate(_ items: [Anniversary]) {
         let previous = Dictionary(uniqueKeysWithValues: anniversaries.map { ($0.id, $0) })
         anniversaries = items
+        saveCache(items)
 
         // Reconcile local notifications with remote truth. This covers all
         // the partner-side edits/deletes plus the case where the OS dropped
@@ -200,10 +203,61 @@ final class AnniversaryViewModel: ObservableObject {
             Task { @MainActor in self?.now = Date() }
         }
     }
+
+    // MARK: - Anniversary Cache
+
+    private var cacheKey: String { "coupley.anniversaries.\(session.coupleId)" }
+
+    private func loadCache() {
+        guard let data = UserDefaults.standard.data(forKey: cacheKey),
+              let items = try? JSONDecoder().decode([AnniversaryDTO].self, from: data),
+              !items.isEmpty else { return }
+        anniversaries = items.map(\.anniversary)
+    }
+
+    private func saveCache(_ items: [Anniversary]) {
+        guard let data = try? JSONEncoder().encode(items.map(AnniversaryDTO.init)) else { return }
+        UserDefaults.standard.set(data, forKey: cacheKey)
+    }
 }
 
 // MARK: - String helper
 
 private extension String {
     var nilIfEmpty: String? { isEmpty ? nil : self }
+}
+
+// MARK: - Cache DTO
+
+/// Plain Codable mirror of Anniversary that avoids @DocumentID encoding ambiguity.
+private struct AnniversaryDTO: Codable {
+    let id: String
+    let title: String
+    let date: Date
+    let note: String?
+    let imageURL: String?
+    let creatorTimezone: String
+    let createdBy: String
+    let createdAt: Date
+    let updatedAt: Date
+
+    init(_ a: Anniversary) {
+        id             = a.id
+        title          = a.title
+        date           = a.date
+        note           = a.note
+        imageURL       = a.imageURL
+        creatorTimezone = a.creatorTimezone
+        createdBy      = a.createdBy
+        createdAt      = a.createdAt
+        updatedAt      = a.updatedAt
+    }
+
+    var anniversary: Anniversary {
+        Anniversary(
+            id: id, title: title, date: date, note: note, imageURL: imageURL,
+            creatorTimezone: creatorTimezone, createdBy: createdBy,
+            createdAt: createdAt, updatedAt: updatedAt
+        )
+    }
 }

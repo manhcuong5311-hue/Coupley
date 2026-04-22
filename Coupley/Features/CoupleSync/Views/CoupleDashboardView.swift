@@ -4,6 +4,7 @@
 //
 
 import SwiftUI
+import FirebaseFirestore
 
 // MARK: - Couple Dashboard View
 
@@ -29,9 +30,14 @@ struct CoupleDashboardView: View {
     @State private var showMyDetail = false
     @State private var showPartnerDetail = false
     @State private var showProfileHub = false
+    @State private var showDateIdeasPaywall = false
+    @State private var showMoodSuggestionPaywall = false
+    @State private var sentReaction: ReactionKind? = nil
+    @State private var isSendingReaction = false
 
     private let reactionService: ReactionService = FirestoreReactionService()
     private let presenceService: PresenceService = FirestorePresenceService()
+    private let nudgeService: NudgeServicing = FirestoreNudgeService()
 
     // MARK: - Body
 
@@ -129,6 +135,16 @@ struct CoupleDashboardView: View {
             .presentationDetents([.large])
             .presentationDragIndicator(.visible)
             .presentationBackground(Brand.backgroundTop)
+        }
+        .sheet(isPresented: $showDateIdeasPaywall) {
+            NavigationStack { PremiumPaywallView() }
+                .environmentObject(premiumStore)
+                .presentationDragIndicator(.visible)
+        }
+        .sheet(isPresented: $showMoodSuggestionPaywall) {
+            NavigationStack { PremiumPaywallView() }
+                .environmentObject(premiumStore)
+                .presentationDragIndicator(.visible)
         }
         .onAppear { viewModel.startListening() }
         .onDisappear { viewModel.stopListening() }
@@ -352,18 +368,28 @@ struct CoupleDashboardView: View {
 
             HStack(spacing: 12) {
                 activityCard(
-                    icon: "sparkles",
+                    icon: premiumStore.hasAccess(to: .dateIdeas) ? "sparkles" : "lock.fill",
                     tint: Color(red: 1.0, green: 0.55, blue: 0.20),
                     title: "Date Ideas",
-                    subtitle: "Get suggestions"
+                    subtitle: premiumStore.hasAccess(to: .dateIdeas) ? "Get suggestions" : "Premium feature"
                 ) {
+                    if !premiumStore.hasAccess(to: .dateIdeas) {
+                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                        showDateIdeasPaywall = true
+                        return
+                    }
+                    if premiumStore.remainingUsage(for: .dateIdeas) == 0 {
+                        showDateIdeasPaywall = true
+                        return
+                    }
                     if let mood = viewModel.partnerMood {
+                        premiumStore.recordUsage(for: .dateIdeas)
                         viewModel.suggestionContext = mood.toMoodContext()
                         viewModel.showAISuggestions = true
                     }
                 }
-                .opacity(viewModel.partnerMood == nil ? 0.55 : 1)
-                .disabled(viewModel.partnerMood == nil)
+                .opacity(viewModel.partnerMood == nil && premiumStore.hasAccess(to: .dateIdeas) ? 0.55 : 1)
+                .disabled(viewModel.partnerMood == nil && premiumStore.hasAccess(to: .dateIdeas))
 
                 activityCard(
                     icon: "chart.bar.fill",
@@ -565,14 +591,26 @@ struct CoupleDashboardView: View {
 
             if entry.needsAttention {
                 Button {
-                    viewModel.openSuggestions()
                     UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                    if !premiumStore.hasAccess(to: .aiMoodSuggestions) {
+                        showMoodSuggestionPaywall = true
+                        return
+                    }
+                    premiumStore.recordUsage(for: .aiMoodSuggestions)
+                    viewModel.openSuggestions()
                 } label: {
                     HStack(spacing: 8) {
                         Image(systemName: "sparkles")
                             .font(.system(size: 14, weight: .semibold))
                         Text("Get Suggestions")
                             .font(.system(size: 15, weight: .semibold, design: .rounded))
+                        if !premiumStore.isActive {
+                            Spacer()
+                            let remaining = premiumStore.remainingUsage(for: .aiMoodSuggestions)
+                            Text("\(remaining) left today")
+                                .font(.system(size: 12, design: .rounded))
+                                .opacity(0.8)
+                        }
                     }
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
@@ -744,7 +782,15 @@ struct CoupleDashboardView: View {
         Task {
             defer { isSendingPing = false }
             do {
-                try await presenceService.sendPing(coupleId: session.coupleId, fromUserId: session.userId)
+                async let ping: () = presenceService.sendPing(coupleId: session.coupleId, fromUserId: session.userId)
+                async let nudge: () = nudgeService.send(
+                    coupleId: session.coupleId,
+                    fromUserId: session.userId,
+                    toUserId: session.partnerId,
+                    kind: .ping,
+                    reactionKind: nil
+                )
+                _ = try await (ping, nudge)
                 withAnimation { didSendPing = true }
                 try? await Task.sleep(nanoseconds: 2_500_000_000)
                 withAnimation { didSendPing = false }
@@ -761,44 +807,72 @@ struct CoupleDashboardView: View {
     // MARK: - Reaction Bar
 
     private func reactionBar(for entry: SharedMoodEntry) -> some View {
-        HStack(spacing: 8) {
+        let isPaired = sessionStore.session?.isPaired ?? false
+        return HStack(spacing: 8) {
             ForEach(ReactionKind.allCases) { kind in
+                let isSent = sentReaction == kind
                 Button {
+                    guard !isSendingReaction, isPaired else { return }
                     sendReaction(kind, to: entry)
                 } label: {
                     VStack(spacing: 4) {
                         Text(kind.emoji).font(.system(size: 22))
-                        Text(kind.label)
+                        Text(isSent ? "Sent!" : kind.label)
                             .font(.system(size: 10, weight: .medium, design: .rounded))
-                            .foregroundStyle(Brand.textSecondary)
+                            .foregroundStyle(isSent ? Brand.accentStart : Brand.textSecondary)
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 10)
                     .background(
                         RoundedRectangle(cornerRadius: 14)
-                            .fill(Brand.surfaceLight)
-                            .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Brand.divider, lineWidth: 1))
+                            .fill(isSent
+                                  ? Brand.accentStart.opacity(0.12)
+                                  : Brand.surfaceLight)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 14)
+                                    .strokeBorder(
+                                        isSent ? Brand.accentStart.opacity(0.5) : Brand.divider,
+                                        lineWidth: isSent ? 1.5 : 1
+                                    )
+                            )
                     )
+                    .opacity((!isPaired || (isSendingReaction && !isSent)) ? 0.45 : 1)
                 }
                 .buttonStyle(BouncyButtonStyle())
+                .disabled(!isPaired || isSendingReaction)
+                .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isSent)
             }
         }
     }
 
     private func sendReaction(_ kind: ReactionKind, to entry: SharedMoodEntry) {
         guard let session = sessionStore.session, session.isPaired else { return }
-        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        isSendingReaction = true
+        sentReaction = kind
         Task {
             do {
-                try await reactionService.sendReaction(
+                async let reaction: () = reactionService.sendReaction(
                     coupleId: session.coupleId,
                     moodId: entry.documentId,
                     userId: session.userId,
                     kind: kind
                 )
+                async let nudge: () = nudgeService.send(
+                    coupleId: session.coupleId,
+                    fromUserId: session.userId,
+                    toUserId: session.partnerId,
+                    kind: .reaction,
+                    reactionKind: kind
+                )
+                _ = try await (reaction, nudge)
             } catch {
                 print("[Dashboard] Failed to send reaction: \(error.localizedDescription)")
+                sentReaction = nil
             }
+            try? await Task.sleep(nanoseconds: 2_000_000_000)
+            withAnimation { sentReaction = nil }
+            isSendingReaction = false
         }
     }
 

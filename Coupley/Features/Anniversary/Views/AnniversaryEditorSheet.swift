@@ -18,7 +18,10 @@ struct AnniversaryEditorSheet: View {
     @ObservedObject var viewModel: AnniversaryViewModel
     let mode: Mode
 
+    @EnvironmentObject private var premiumStore: PremiumStore
     @Environment(\.dismiss) private var dismiss
+
+    @State private var showPaywall = false
 
     @State private var title: String
     @State private var date: Date
@@ -79,7 +82,11 @@ struct AnniversaryEditorSheet: View {
                     }
 
                     Section("Cover Photo") {
-                        imagePicker
+                        if premiumStore.hasAccess(to: .anniversaryPhoto) {
+                            imagePicker
+                        } else {
+                            lockedPhotoPicker
+                        }
                     }
 
                     Section("Note (optional)") {
@@ -143,7 +150,45 @@ struct AnniversaryEditorSheet: View {
                     }
                 }
             }
+            .sheet(isPresented: $showPaywall) {
+                NavigationStack {
+                    PremiumPaywallView()
+                }
+                .environmentObject(premiumStore)
+                .presentationDragIndicator(.visible)
+            }
         }
+    }
+
+    // MARK: - Locked Photo Picker (free users)
+
+    private var lockedPhotoPicker: some View {
+        Button {
+            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+            showPaywall = true
+        } label: {
+            HStack(spacing: 12) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Brand.accentStart.opacity(0.08))
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 100)
+                    VStack(spacing: 8) {
+                        Image(systemName: "lock.fill")
+                            .font(.system(size: 22, weight: .medium))
+                            .foregroundStyle(Brand.accentStart)
+                        Text("Premium feature")
+                            .font(.system(size: 13, weight: .semibold, design: .rounded))
+                            .foregroundStyle(Brand.accentStart)
+                        Text("Upgrade to add cover photos")
+                            .font(.system(size: 11, design: .rounded))
+                            .foregroundStyle(Brand.textTertiary)
+                    }
+                }
+            }
+        }
+        .buttonStyle(.plain)
+        .padding(.vertical, 4)
     }
 
     // MARK: - Image Picker
