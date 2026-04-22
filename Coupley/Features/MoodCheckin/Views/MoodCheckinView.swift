@@ -47,42 +47,49 @@ struct MoodCheckinView: View {
                             .opacity(appearedAt ? 1 : 0)
                             .offset(y: appearedAt ? 0 : 12)
 
-                        // Mood cards
-                        MoodSelectorView(selectedMood: $viewModel.selectedMood)
-                            .padding(.horizontal, 24)
-                            .padding(.bottom, 32)
-                            .opacity(appearedAt ? 1 : 0)
-                            .offset(y: appearedAt ? 0 : 16)
+                        if viewModel.hasReachedDailyLimit {
+                            dailyLimitBanner
+                                .padding(.horizontal, 24)
+                                .padding(.bottom, 48)
+                                .opacity(appearedAt ? 1 : 0)
+                        } else {
+                            // Mood cards
+                            MoodSelectorView(selectedMood: $viewModel.selectedMood)
+                                .padding(.horizontal, 24)
+                                .padding(.bottom, 32)
+                                .opacity(appearedAt ? 1 : 0)
+                                .offset(y: appearedAt ? 0 : 16)
 
-                        // Energy capsule
-                        EnergySelectorView(selectedEnergy: $viewModel.selectedEnergy)
-                            .padding(.horizontal, 24)
-                            .padding(.bottom, 32)
-                            .opacity(appearedAt ? 1 : 0)
-                            .offset(y: appearedAt ? 0 : 20)
+                            // Energy capsule
+                            EnergySelectorView(selectedEnergy: $viewModel.selectedEnergy)
+                                .padding(.horizontal, 24)
+                                .padding(.bottom, 32)
+                                .opacity(appearedAt ? 1 : 0)
+                                .offset(y: appearedAt ? 0 : 20)
 
-                        // Note
-                        NoteInputView(text: $viewModel.noteText)
+                            // Note
+                            NoteInputView(text: $viewModel.noteText)
+                                .padding(.horizontal, 24)
+                                .padding(.bottom, 32)
+                                .opacity(appearedAt ? 1 : 0)
+                                .offset(y: appearedAt ? 0 : 24)
+
+                            // Submit
+                            SubmitButtonView(
+                                state: viewModel.submissionState,
+                                isEnabled: viewModel.isSubmitEnabled
+                            ) {
+                                UIApplication.shared.sendAction(
+                                    #selector(UIResponder.resignFirstResponder),
+                                    to: nil, from: nil, for: nil
+                                )
+                                viewModel.submitMood()
+                            }
                             .padding(.horizontal, 24)
-                            .padding(.bottom, 32)
+                            .padding(.bottom, 48)
                             .opacity(appearedAt ? 1 : 0)
                             .offset(y: appearedAt ? 0 : 24)
-
-                        // Submit
-                        SubmitButtonView(
-                            state: viewModel.submissionState,
-                            isEnabled: viewModel.isSubmitEnabled
-                        ) {
-                            UIApplication.shared.sendAction(
-                                #selector(UIResponder.resignFirstResponder),
-                                to: nil, from: nil, for: nil
-                            )
-                            viewModel.submitMood()
                         }
-                        .padding(.horizontal, 24)
-                        .padding(.bottom, 48)
-                        .opacity(appearedAt ? 1 : 0)
-                        .offset(y: appearedAt ? 0 : 24)
                     }
                 }
                 .scrollDismissesKeyboard(.interactively)
@@ -92,6 +99,7 @@ struct MoodCheckinView: View {
                 withAnimation(.spring(response: 0.7, dampingFraction: 0.85).delay(0.05)) {
                     appearedAt = true
                 }
+                viewModel.loadTodayCount()
             }
             .sheet(isPresented: $viewModel.showSuggestions) {
                 if let context = viewModel.lastMoodContext {
@@ -114,6 +122,39 @@ struct MoodCheckinView: View {
                 .lineSpacing(2)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var dailyLimitBanner: some View {
+        VStack(spacing: 20) {
+            ZStack {
+                Circle()
+                    .fill(Brand.accentStart.opacity(0.12))
+                    .frame(width: 80, height: 80)
+                Text("✅")
+                    .font(.system(size: 38))
+            }
+
+            VStack(spacing: 8) {
+                Text("You've checked in \(MoodViewModel.dailyLimit) times today")
+                    .font(.system(size: 18, weight: .bold, design: .rounded))
+                    .foregroundStyle(Brand.textPrimary)
+                    .multilineTextAlignment(.center)
+
+                Text("Come back tomorrow to share how you're feeling. Your partner can still see your moods.")
+                    .font(.system(size: 14, weight: .regular, design: .rounded))
+                    .foregroundStyle(Brand.textSecondary)
+                    .multilineTextAlignment(.center)
+                    .lineSpacing(3)
+            }
+        }
+        .padding(28)
+        .frame(maxWidth: .infinity)
+        .background(
+            RoundedRectangle(cornerRadius: 22)
+                .fill(Brand.surfaceLight)
+                .overlay(RoundedRectangle(cornerRadius: 22).strokeBorder(Brand.divider, lineWidth: 1))
+                .shadow(color: .black.opacity(0.08), radius: 14, y: 4)
+        )
     }
 }
 

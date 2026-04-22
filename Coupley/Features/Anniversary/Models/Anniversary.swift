@@ -17,6 +17,7 @@ struct Anniversary: Identifiable, Codable, Equatable {
     var title: String
     var date: Date
     var note: String?
+    var imageURL: String?
     /// Timezone identifier of the creator. Not used for display —
     /// each device renders the countdown in its *own* timezone so the
     /// label matches the user's local wall-clock day.
@@ -32,6 +33,7 @@ struct Anniversary: Identifiable, Codable, Equatable {
         title: String,
         date: Date,
         note: String? = nil,
+        imageURL: String? = nil,
         creatorTimezone: String = TimeZone.current.identifier,
         createdBy: String,
         createdAt: Date = Date(),
@@ -41,6 +43,7 @@ struct Anniversary: Identifiable, Codable, Equatable {
         self.title = title
         self.date = date
         self.note = note
+        self.imageURL = imageURL
         self.creatorTimezone = creatorTimezone
         self.createdBy = createdBy
         self.createdAt = createdAt

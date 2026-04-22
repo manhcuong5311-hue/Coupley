@@ -149,7 +149,7 @@ final class FirestoreCoupleInsightAggregator: CoupleInsightAggregating {
     }
 
     private func primaryTrait(_ answer: ChatQuizAnswer) -> String {
-        if let first = answer.options.first { return first }
+        if !answer.options.isEmpty { return answer.options.joined(separator: ", ") }
         if let text = answer.text, !text.isEmpty { return text }
         return "—"
     }

@@ -27,51 +27,54 @@ struct AnniversaryListView: View {
     // MARK: - Body
 
     var body: some View {
-        ScrollView(showsIndicators: false) {
-            VStack(spacing: 18) {
-                Color.clear.frame(height: 12)
+        NavigationStack {
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 18) {
+                    Color.clear.frame(height: 12)
 
-                header
-                    .padding(.horizontal, 20)
+                    header
+                        .padding(.horizontal, 20)
 
-                if !session.isPaired {
-                    notPairedCard
-                        .padding(.horizontal, 20)
-                } else if viewModel.anniversaries.isEmpty {
-                    emptyState
-                        .padding(.horizontal, 20)
-                } else {
-                    ForEach(sortedAnniversaries) { item in
-                        AnniversaryCard(anniversary: item, now: viewModel.now) {
-                            editorMode = .edit(item)
-                            showingEditor = true
+                    if !session.isPaired {
+                        notPairedCard
+                            .padding(.horizontal, 20)
+                    } else if viewModel.anniversaries.isEmpty {
+                        emptyState
+                            .padding(.horizontal, 20)
+                    } else {
+                        ForEach(sortedAnniversaries) { item in
+                            AnniversaryCard(anniversary: item, now: viewModel.now) {
+                                editorMode = .edit(item)
+                                showingEditor = true
+                            }
+                            .padding(.horizontal, 20)
                         }
-                        .padding(.horizontal, 20)
+                    }
+
+                    Color.clear.frame(height: 120)
+                }
+            }
+            .background(Brand.bgGradient.ignoresSafeArea())
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                if session.isPaired {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        addButton
                     }
                 }
-
-                Color.clear.frame(height: 120)
             }
-        }
-        .background(Brand.bgGradient.ignoresSafeArea())
-        .overlay(alignment: .bottomTrailing) {
-            if session.isPaired {
-                addButton
-                    .padding(.trailing, 22)
-                    .padding(.bottom, 96) // above tab bar
+            .sheet(isPresented: $showingEditor) {
+                if let editorMode {
+                    AnniversaryEditorSheet(viewModel: viewModel, mode: editorMode)
+                        .presentationDetents([.large])
+                        .presentationDragIndicator(.visible)
+                }
             }
-        }
-        .sheet(isPresented: $showingEditor) {
-            if let editorMode {
-                AnniversaryEditorSheet(viewModel: viewModel, mode: editorMode)
-                    .presentationDetents([.large])
-                    .presentationDragIndicator(.visible)
+            .onAppear { viewModel.startListening() }
+            .onDisappear { viewModel.stopListening() }
+            .onChange(of: scenePhase) { _, phase in
+                if phase == .active { viewModel.refresh() }
             }
-        }
-        .onAppear { viewModel.startListening() }
-        .onDisappear { viewModel.stopListening() }
-        .onChange(of: scenePhase) { _, phase in
-            if phase == .active { viewModel.refresh() }
         }
     }
 
@@ -118,11 +121,10 @@ struct AnniversaryListView: View {
             ZStack {
                 Circle()
                     .fill(Brand.accentGradient)
-                    .frame(width: 58, height: 58)
-                    .shadow(color: Brand.accentStart.opacity(0.45), radius: 16, y: 6)
-
+                    .frame(width: 34, height: 34)
+                    .shadow(color: Brand.accentStart.opacity(0.35), radius: 8, y: 3)
                 Image(systemName: "plus")
-                    .font(.system(size: 22, weight: .bold))
+                    .font(.system(size: 14, weight: .bold))
                     .foregroundStyle(.white)
             }
         }

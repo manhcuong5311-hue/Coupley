@@ -12,6 +12,8 @@ import Foundation
 protocol MoodService {
     func save(entry: MoodEntry) async throws
     func fetchAll() async throws -> [MoodEntry]
+    /// Returns how many entries the current user has saved today (local time).
+    func countTodayEntries() async throws -> Int
 }
 
 // MARK: - Local Mood Service (In-Memory Mock)
@@ -29,6 +31,11 @@ final class LocalMoodService: MoodService {
     func fetchAll() async throws -> [MoodEntry] {
         try await Task.sleep(nanoseconds: 300_000_000)
         return entries.sorted { $0.timestamp > $1.timestamp }
+    }
+
+    func countTodayEntries() async throws -> Int {
+        let today = Calendar.current.startOfDay(for: Date())
+        return entries.filter { $0.timestamp >= today }.count
     }
 }
 

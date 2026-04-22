@@ -17,6 +17,9 @@ struct QuizAnswerSheet: View {
     @State private var selected: Set<String> = []
     @State private var freeText: String = ""
     @State private var submitting = false
+    @State private var lastToggled: String?
+
+    private var template: ChatQuizTemplate? { ChatQuizBank.byId(quiz.questionId) }
 
     var body: some View {
         ZStack {
@@ -43,6 +46,13 @@ struct QuizAnswerSheet: View {
                             freeTextField
                         } else {
                             optionsList
+
+                            // Hint card — animates in when an option is picked
+                            if let hint = currentHint {
+                                hintCard(hint)
+                                    .transition(.scale(scale: 0.96, anchor: .top)
+                                        .combined(with: .opacity))
+                            }
                         }
                     }
                     .padding(.horizontal, 20)
@@ -67,7 +77,6 @@ struct QuizAnswerSheet: View {
                 .font(.system(size: 15, weight: .semibold, design: .rounded))
                 .foregroundStyle(Brand.textPrimary)
             Spacer()
-            // Symmetry spacer
             Text("Cancel").opacity(0)
                 .font(.system(size: 15, weight: .medium, design: .rounded))
         }
@@ -87,9 +96,7 @@ struct QuizAnswerSheet: View {
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 6)
-        .background(
-            Capsule().fill(Brand.accentStart.opacity(0.12))
-        )
+        .background(Capsule().fill(Brand.accentStart.opacity(0.12)))
     }
 
     // MARK: - Options
@@ -104,7 +111,7 @@ struct QuizAnswerSheet: View {
                     .font(.caption)
                     .foregroundStyle(Brand.textTertiary)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.top, 4)
+                    .padding(.top, 2)
             }
         }
     }
@@ -112,29 +119,59 @@ struct QuizAnswerSheet: View {
     private func optionRow(_ option: String) -> some View {
         let isSelected = selected.contains(option)
         return Button {
-            toggle(option)
+            withAnimation(.spring(response: 0.32, dampingFraction: 0.72)) {
+                toggle(option)
+            }
         } label: {
-            HStack(spacing: 12) {
+            HStack(spacing: 14) {
+                // Checkbox / radio
                 ZStack {
-                    Circle()
-                        .strokeBorder(isSelected ? Brand.accentStart : Brand.divider,
-                                      lineWidth: 1.5)
-                        .frame(width: 22, height: 22)
-                    if isSelected {
+                    if quiz.allowsMultiple {
+                        RoundedRectangle(cornerRadius: 6)
+                            .strokeBorder(
+                                isSelected ? Brand.accentStart : Brand.divider,
+                                lineWidth: 1.5
+                            )
+                            .frame(width: 22, height: 22)
+                        if isSelected {
+                            RoundedRectangle(cornerRadius: 4)
+                                .fill(Brand.accentStart)
+                                .frame(width: 14, height: 14)
+                        }
+                    } else {
                         Circle()
-                            .fill(Brand.accentStart)
-                            .frame(width: 12, height: 12)
+                            .strokeBorder(
+                                isSelected ? Brand.accentStart : Brand.divider,
+                                lineWidth: 1.5
+                            )
+                            .frame(width: 22, height: 22)
+                        if isSelected {
+                            Circle()
+                                .fill(Brand.accentStart)
+                                .frame(width: 12, height: 12)
+                        }
                     }
                 }
+                .animation(.spring(response: 0.25, dampingFraction: 0.7), value: isSelected)
+
                 Text(option)
                     .font(.system(size: 16, weight: .medium, design: .rounded))
-                    .foregroundStyle(Brand.textPrimary)
+                    .foregroundStyle(isSelected ? Brand.textPrimary : Brand.textPrimary.opacity(0.85))
                     .multilineTextAlignment(.leading)
                     .fixedSize(horizontal: false, vertical: true)
+
                 Spacer(minLength: 0)
+
+                // Checkmark for selected
+                if isSelected {
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundStyle(Brand.accentStart)
+                        .transition(.scale.combined(with: .opacity))
+                }
             }
             .padding(.horizontal, 16)
-            .padding(.vertical, 14)
+            .padding(.vertical, 15)
             .background(
                 RoundedRectangle(cornerRadius: Brand.cardCornerRadius)
                     .fill(isSelected
@@ -142,13 +179,54 @@ struct QuizAnswerSheet: View {
                           : Brand.surfaceLight)
                     .overlay(
                         RoundedRectangle(cornerRadius: Brand.cardCornerRadius)
-                            .strokeBorder(isSelected ? Brand.accentStart.opacity(0.6)
-                                                     : Brand.divider,
-                                          lineWidth: 1)
+                            .strokeBorder(
+                                isSelected ? Brand.accentStart.opacity(0.6) : Brand.divider,
+                                lineWidth: isSelected ? 1.5 : 1
+                            )
                     )
             )
         }
         .buttonStyle(BouncyButtonStyle())
+    }
+
+    // MARK: - Hint Card
+
+    private var currentHint: String? {
+        guard let tpl = template, !tpl.optionHints.isEmpty else { return nil }
+        // For single select: hint of the one selected option
+        if !quiz.allowsMultiple, let pick = selected.first {
+            return tpl.optionHints[pick]
+        }
+        // For multi-select: hint of last toggled option
+        if let last = lastToggled, selected.contains(last) {
+            return tpl.optionHints[last]
+        }
+        return nil
+    }
+
+    private func hintCard(_ hint: String) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: "lightbulb.fill")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(Brand.accentStart)
+                .padding(.top, 1)
+
+            Text(hint)
+                .font(.system(size: 14, weight: .regular, design: .rounded))
+                .foregroundStyle(Brand.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+                .lineSpacing(2)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 14)
+                .fill(Brand.accentStart.opacity(0.07))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14)
+                        .strokeBorder(Brand.accentStart.opacity(0.20), lineWidth: 1)
+                )
+        )
     }
 
     // MARK: - Free text
@@ -198,6 +276,7 @@ struct QuizAnswerSheet: View {
     }
 
     private func toggle(_ option: String) {
+        lastToggled = option
         if quiz.allowsMultiple {
             if selected.contains(option) { selected.remove(option) }
             else { selected.insert(option) }

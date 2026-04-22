@@ -74,15 +74,21 @@ private let slides: [Slide] = [
     ),
 ]
 
+// MARK: - Onboarding Step
+
+private enum OnboardingStep { case slides, nameEntry, paywall }
+
 // MARK: - Main Onboarding View
 
 struct OnboardingView: View {
 
     // Set true after paywall dismiss — triggers RootView to show AuthView
     @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
+    @AppStorage("pendingOnboardingName") private var pendingName = ""
 
     @State private var currentSlide = 0
-    @State private var showPaywall = false
+    @State private var step: OnboardingStep = .slides
+    @State private var nameInput = ""
     @State private var iconScale: CGFloat = 1.0
     @State private var contentOffset: CGFloat = 0
 
@@ -93,8 +99,14 @@ struct OnboardingView: View {
                 .ignoresSafeArea(.all)
                 .animation(.easeInOut(duration: 0.55), value: currentSlide)
 
-            if showPaywall {
+            if step == .paywall {
                 PaywallView { hasSeenOnboarding = true }
+                    .transition(.asymmetric(
+                        insertion: .move(edge: .trailing).combined(with: .opacity),
+                        removal: .move(edge: .leading).combined(with: .opacity)
+                    ))
+            } else if step == .nameEntry {
+                nameEntryStep
                     .transition(.asymmetric(
                         insertion: .move(edge: .trailing).combined(with: .opacity),
                         removal: .move(edge: .leading).combined(with: .opacity)
@@ -104,7 +116,7 @@ struct OnboardingView: View {
             }
         }
         .fixWindowBackground()
-        .animation(.spring(response: 0.55, dampingFraction: 0.85), value: showPaywall)
+        .animation(.spring(response: 0.55, dampingFraction: 0.85), value: step)
     }
 
     // MARK: - Slide Overlay (content on top of the gradient)
@@ -269,27 +281,137 @@ struct OnboardingView: View {
         .fixedSize(horizontal: false, vertical: true)
     }
 
+    // MARK: - Name Entry Step
+
+    private var nameEntryStep: some View {
+        ZStack {
+            glowOrbs
+
+            VStack(spacing: 0) {
+                HStack {
+                    Spacer()
+                    Button("Skip") {
+                        withAnimation(.spring(response: 0.45, dampingFraction: 0.82)) {
+                            step = .paywall
+                        }
+                    }
+                    .font(.system(size: 15, weight: .medium, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.55))
+                    .padding(.trailing, 24)
+                    .padding(.top, 60)
+                }
+
+                Spacer()
+
+                ZStack {
+                    Circle().fill(.white.opacity(0.06)).frame(width: 180, height: 180)
+                    Circle().fill(.white.opacity(0.09)).frame(width: 130, height: 130)
+                    Image(systemName: "person.fill")
+                        .font(.system(size: 54, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .symbolEffect(.pulse.byLayer, options: .repeating)
+                }
+
+                Text("👋")
+                    .font(.system(size: 36))
+                    .padding(.top, 24)
+
+                Spacer()
+
+                nameEntryPanel
+            }
+        }
+    }
+
+    private var nameEntryPanel: some View {
+        GeometryReader { geo in
+            let bottomSafe = geo.safeAreaInsets.bottom
+
+            VStack(spacing: 0) {
+                Text("What's your name?")
+                    .font(.system(size: 36, weight: .bold, design: .rounded))
+                    .foregroundStyle(.white)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 28)
+                    .padding(.top, 36)
+
+                Text("We'll use it to personalize your experience.")
+                    .font(.system(size: 16, weight: .regular, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.68))
+                    .multilineTextAlignment(.center)
+                    .lineSpacing(3)
+                    .padding(.horizontal, 36)
+                    .padding(.top, 14)
+
+                TextField("Your name", text: $nameInput)
+                    .font(.system(size: 17, weight: .medium, design: .rounded))
+                    .foregroundStyle(Color.black)
+                    .tint(.black)
+                    .padding(.horizontal, 18)
+                    .padding(.vertical, 16)
+                    .background(RoundedRectangle(cornerRadius: 16).fill(.white.opacity(0.95)))
+                    .padding(.horizontal, 24)
+                    .padding(.top, 28)
+                    .autocorrectionDisabled()
+                    .textInputAutocapitalization(.words)
+                    .submitLabel(.done)
+                    .onSubmit { if !nameInput.trimmingCharacters(in: .whitespaces).isEmpty { confirmName() } }
+
+                Button(action: confirmName) {
+                    Text("Continue")
+                        .font(.system(size: 17, weight: .semibold, design: .rounded))
+                        .foregroundStyle(slides[slides.count - 1].buttonForeground)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 56)
+                        .background(nameInput.trimmingCharacters(in: .whitespaces).isEmpty
+                                    ? .white.opacity(0.45)
+                                    : .white)
+                        .clipShape(RoundedRectangle(cornerRadius: 18))
+                        .shadow(color: .black.opacity(0.18), radius: 12, y: 4)
+                }
+                .disabled(nameInput.trimmingCharacters(in: .whitespaces).isEmpty)
+                .buttonStyle(BouncyButtonStyle())
+                .padding(.horizontal, 24)
+                .padding(.top, 20)
+                .padding(.bottom, max(bottomSafe, 32))
+            }
+        }
+        .fixedSize(horizontal: false, vertical: true)
+    }
+
     // MARK: - Actions
 
     private func advance() {
         UIImpactFeedbackGenerator(style: .light).impactOccurred()
 
+        let isLastSlide = currentSlide == slides.count - 1
+
         withAnimation(.spring(response: 0.45, dampingFraction: 0.82)) {
-            if currentSlide < slides.count - 1 {
+            if !isLastSlide {
                 currentSlide += 1
             } else {
-                showPaywall = true
+                step = .nameEntry
             }
         }
 
-        // Icon bounce
-        withAnimation(.spring(response: 0.3, dampingFraction: 0.5)) {
-            iconScale = 0.88
-        }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-            withAnimation(.spring(response: 0.4, dampingFraction: 0.6)) {
-                iconScale = 1.0
+        // Icon bounce only during slide transitions
+        if !isLastSlide {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.5)) {
+                iconScale = 0.88
             }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                withAnimation(.spring(response: 0.4, dampingFraction: 0.6)) {
+                    iconScale = 1.0
+                }
+            }
+        }
+    }
+
+    private func confirmName() {
+        pendingName = nameInput.trimmingCharacters(in: .whitespaces)
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        withAnimation(.spring(response: 0.45, dampingFraction: 0.82)) {
+            step = .paywall
         }
     }
 

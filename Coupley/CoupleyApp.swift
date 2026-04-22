@@ -86,6 +86,7 @@ struct RootView: View {
             case .needsPairing(let userId, let displayName):
                 ContentView(session: UserSession.solo(userId: userId), displayName: displayName)
                     .environmentObject(notificationViewModel)
+                    .task { notificationViewModel.requestPermissionIfNeeded() }
 
             case .ready(let session):
                 ContentView(session: session, displayName: nil)

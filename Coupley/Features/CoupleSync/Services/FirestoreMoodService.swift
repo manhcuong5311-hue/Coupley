@@ -61,6 +61,21 @@ final class FirestoreMoodService: MoodService {
         return (queued + remote).sorted { $0.timestamp > $1.timestamp }
     }
 
+    // MARK: - Daily Count (one-shot, no listener)
+
+    func countTodayEntries() async throws -> Int {
+        guard !session.coupleId.isEmpty else { return 0 }
+        let startOfDay = Calendar.current.startOfDay(for: Date())
+        let snapshot = try await db
+            .collection(FirestorePath.moods(coupleId: session.coupleId))
+            .whereField("userId", isEqualTo: session.userId)
+            .whereField("timestamp", isGreaterThanOrEqualTo: Timestamp(date: startOfDay))
+            .getDocuments()
+        // Also include any locally-queued (unsynced) entries from today
+        let queued = queue.all().filter { $0.timestamp >= startOfDay }
+        return snapshot.count + queued.count
+    }
+
     // MARK: - Partner Moods
 
     func fetchPartnerMoods(limit: Int = 10) async throws -> [SharedMoodEntry] {

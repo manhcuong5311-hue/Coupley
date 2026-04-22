@@ -83,7 +83,7 @@ final class FirestoreAnniversaryService: AnniversaryService {
     }
 
     private static func payload(from a: Anniversary) -> [String: Any] {
-        [
+        var dict: [String: Any] = [
             "id":              a.id,
             "title":           a.title,
             "date":            Timestamp(date: a.date),
@@ -93,6 +93,9 @@ final class FirestoreAnniversaryService: AnniversaryService {
             "createdAt":       Timestamp(date: a.createdAt),
             "updatedAt":       Timestamp(date: a.updatedAt)
         ]
+        if let url = a.imageURL { dict["imageURL"] = url }
+        else { dict["imageURL"] = FieldValue.delete() }
+        return dict
     }
 
     private static func decode(_ doc: QueryDocumentSnapshot) -> Anniversary? {
@@ -105,6 +108,7 @@ final class FirestoreAnniversaryService: AnniversaryService {
         else { return nil }
 
         let note      = (data["note"] as? String).flatMap { $0.isEmpty ? nil : $0 }
+        let imageURL  = (data["imageURL"] as? String).flatMap { $0.isEmpty ? nil : $0 }
         let tz        = (data["creatorTimezone"] as? String) ?? TimeZone.current.identifier
         let createdAt = (data["createdAt"] as? Timestamp)?.dateValue() ?? date
         let updatedAt = (data["updatedAt"] as? Timestamp)?.dateValue() ?? createdAt
@@ -114,6 +118,7 @@ final class FirestoreAnniversaryService: AnniversaryService {
             title: title,
             date: date,
             note: note,
+            imageURL: imageURL,
             creatorTimezone: tz,
             createdBy: createdBy,
             createdAt: createdAt,

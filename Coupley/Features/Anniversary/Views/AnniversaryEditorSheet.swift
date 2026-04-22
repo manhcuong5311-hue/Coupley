@@ -4,6 +4,7 @@
 //
 
 import SwiftUI
+import PhotosUI
 
 // MARK: - Editor
 
@@ -24,19 +25,25 @@ struct AnniversaryEditorSheet: View {
     @State private var note: String
     @State private var showDeleteConfirm = false
 
+    @State private var selectedItem: PhotosPickerItem?
+    @State private var selectedImage: UIImage?
+    @State private var existingImageURL: String?
+
     init(viewModel: AnniversaryViewModel, mode: Mode) {
         self.viewModel = viewModel
         self.mode = mode
 
         switch mode {
         case .create:
-            _title = State(initialValue: "")
-            _date  = State(initialValue: Calendar.current.date(byAdding: .day, value: 30, to: Date()) ?? Date())
-            _note  = State(initialValue: "")
+            _title           = State(initialValue: "")
+            _date            = State(initialValue: Calendar.current.date(byAdding: .day, value: 30, to: Date()) ?? Date())
+            _note            = State(initialValue: "")
+            _existingImageURL = State(initialValue: nil)
         case .edit(let a):
-            _title = State(initialValue: a.title)
-            _date  = State(initialValue: a.date)
-            _note  = State(initialValue: a.note ?? "")
+            _title           = State(initialValue: a.title)
+            _date            = State(initialValue: a.date)
+            _note            = State(initialValue: a.note ?? "")
+            _existingImageURL = State(initialValue: a.imageURL)
         }
     }
 
@@ -71,6 +78,10 @@ struct AnniversaryEditorSheet: View {
                         .tint(Brand.accentStart)
                     }
 
+                    Section("Cover Photo") {
+                        imagePicker
+                    }
+
                     Section("Note (optional)") {
                         TextField("Something to remember…", text: $note, axis: .vertical)
                             .font(.system(size: 15, design: .rounded))
@@ -96,9 +107,14 @@ struct AnniversaryEditorSheet: View {
                         .foregroundStyle(Brand.textSecondary)
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button(isEditing ? "Save" : "Create") { save() }
-                        .foregroundStyle(canSave ? Brand.accentStart : Brand.textTertiary)
-                        .disabled(!canSave || viewModel.isSaving)
+                    if viewModel.isUploadingImage {
+                        ProgressView()
+                            .tint(Brand.accentStart)
+                    } else {
+                        Button(isEditing ? "Save" : "Create") { save() }
+                            .foregroundStyle(canSave ? Brand.accentStart : Brand.textTertiary)
+                            .disabled(!canSave || viewModel.isSaving)
+                    }
                 }
             }
             .confirmationDialog(
@@ -118,6 +134,93 @@ struct AnniversaryEditorSheet: View {
             } message: {
                 Text("Your partner will stop seeing it too.")
             }
+            .onChange(of: selectedItem) { _, item in
+                Task {
+                    guard let item else { return }
+                    if let data = try? await item.loadTransferable(type: Data.self),
+                       let image = UIImage(data: data) {
+                        selectedImage = image
+                    }
+                }
+            }
+        }
+    }
+
+    // MARK: - Image Picker
+
+    @ViewBuilder
+    private var imagePicker: some View {
+        VStack(spacing: 12) {
+            if let selected = selectedImage {
+                Image(uiImage: selected)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 160)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .clipped()
+            } else if let urlString = existingImageURL, let url = URL(string: urlString) {
+                AsyncImage(url: url) { phase in
+                    switch phase {
+                    case .success(let image):
+                        image
+                            .resizable()
+                            .scaledToFill()
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 160)
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                            .clipped()
+                    case .failure, .empty:
+                        imagePlaceholder
+                    @unknown default:
+                        imagePlaceholder
+                    }
+                }
+            } else {
+                imagePlaceholder
+            }
+
+            HStack(spacing: 12) {
+                PhotosPicker(selection: $selectedItem, matching: .images) {
+                    Label(
+                        (selectedImage != nil || existingImageURL != nil) ? "Change Photo" : "Add Photo",
+                        systemImage: "photo.on.rectangle"
+                    )
+                    .font(.system(size: 14, weight: .medium, design: .rounded))
+                    .foregroundStyle(Brand.accentStart)
+                }
+
+                if selectedImage != nil || existingImageURL != nil {
+                    Button(role: .destructive) {
+                        selectedImage = nil
+                        existingImageURL = nil
+                        selectedItem = nil
+                    } label: {
+                        Label("Remove", systemImage: "trash")
+                            .font(.system(size: 14, weight: .medium, design: .rounded))
+                    }
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .padding(.vertical, 4)
+    }
+
+    private var imagePlaceholder: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Brand.accentStart.opacity(0.08))
+                .frame(maxWidth: .infinity)
+                .frame(height: 160)
+
+            VStack(spacing: 8) {
+                Image(systemName: "photo")
+                    .font(.system(size: 28, weight: .light))
+                    .foregroundStyle(Brand.accentStart.opacity(0.5))
+                Text("No photo yet")
+                    .font(.system(size: 13, design: .rounded))
+                    .foregroundStyle(Brand.textTertiary)
+            }
         }
     }
 
@@ -130,9 +233,13 @@ struct AnniversaryEditorSheet: View {
         Task {
             switch mode {
             case .create:
-                await viewModel.create(title: title, date: date, note: noteValue)
-            case .edit(let existing):
-                await viewModel.update(existing, title: title, date: date, note: noteValue)
+                await viewModel.create(title: title, date: date, note: noteValue, image: selectedImage)
+            case .edit(var existing):
+                // If user removed the existing image and didn't pick a new one, clear the URL
+                if selectedImage == nil && existingImageURL == nil {
+                    existing.imageURL = nil
+                }
+                await viewModel.update(existing, title: title, date: date, note: noteValue, image: selectedImage)
             }
             dismiss()
         }

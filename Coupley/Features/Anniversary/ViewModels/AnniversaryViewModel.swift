@@ -6,6 +6,7 @@
 import Foundation
 import FirebaseFirestore
 import Combine
+import UIKit
 
 // MARK: - View Model
 
@@ -16,6 +17,7 @@ final class AnniversaryViewModel: ObservableObject {
     @Published private(set) var isListening: Bool = false
     @Published private(set) var errorMessage: String?
     @Published var isSaving: Bool = false
+    @Published var isUploadingImage: Bool = false
 
     /// Tick published every minute while the view is visible so the UI can
     /// re-render countdowns that cross midnight while the app is in the
@@ -25,6 +27,7 @@ final class AnniversaryViewModel: ObservableObject {
     private let session: UserSession
     private let service: AnniversaryService
     private let scheduler: AnniversaryNotificationScheduling
+    private let storageService: AnniversaryStorageService
 
     nonisolated(unsafe) private var listener: ListenerRegistration?
     private var tickTimer: Timer?
@@ -34,11 +37,13 @@ final class AnniversaryViewModel: ObservableObject {
     init(
         session: UserSession,
         service: AnniversaryService = FirestoreAnniversaryService(),
-        scheduler: AnniversaryNotificationScheduling = AnniversaryNotificationScheduler()
+        scheduler: AnniversaryNotificationScheduling = AnniversaryNotificationScheduler(),
+        storageService: AnniversaryStorageService = AnniversaryStorageService()
     ) {
         self.session = session
         self.service = service
         self.scheduler = scheduler
+        self.storageService = storageService
     }
 
     deinit {
@@ -89,15 +94,30 @@ final class AnniversaryViewModel: ObservableObject {
 
     // MARK: - CRUD
 
-    func create(title: String, date: Date, note: String?) async {
+    func create(title: String, date: Date, note: String?, image: UIImage? = nil) async {
         guard session.isPaired else { return }
         isSaving = true
         defer { isSaving = false }
 
+        let anniversaryId = UUID().uuidString
+        var imageURL: String?
+
+        if let image {
+            isUploadingImage = true
+            imageURL = try? await storageService.uploadCover(
+                image,
+                coupleId: session.coupleId,
+                anniversaryId: anniversaryId
+            )
+            isUploadingImage = false
+        }
+
         let anniversary = Anniversary(
+            id: anniversaryId,
             title: title.trimmingCharacters(in: .whitespacesAndNewlines),
             date: date,
             note: note?.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty,
+            imageURL: imageURL,
             creatorTimezone: TimeZone.current.identifier,
             createdBy: session.userId
         )
@@ -110,7 +130,7 @@ final class AnniversaryViewModel: ObservableObject {
         }
     }
 
-    func update(_ anniversary: Anniversary, title: String, date: Date, note: String?) async {
+    func update(_ anniversary: Anniversary, title: String, date: Date, note: String?, image: UIImage? = nil) async {
         guard session.isPaired else { return }
         isSaving = true
         defer { isSaving = false }
@@ -120,6 +140,16 @@ final class AnniversaryViewModel: ObservableObject {
         updated.date = date
         updated.note = note?.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty
         updated.updatedAt = Date()
+
+        if let image {
+            isUploadingImage = true
+            updated.imageURL = try? await storageService.uploadCover(
+                image,
+                coupleId: session.coupleId,
+                anniversaryId: anniversary.id
+            )
+            isUploadingImage = false
+        }
 
         do {
             try await service.update(coupleId: session.coupleId, anniversary: updated)
@@ -134,6 +164,9 @@ final class AnniversaryViewModel: ObservableObject {
         do {
             try await service.delete(coupleId: session.coupleId, id: anniversary.id)
             await scheduler.cancel(anniversary.id)
+            if anniversary.imageURL != nil {
+                await storageService.deleteCover(coupleId: session.coupleId, anniversaryId: anniversary.id)
+            }
         } catch {
             errorMessage = error.localizedDescription
         }

@@ -2,8 +2,6 @@
 //  NotificationService.swift
 //  Coupley
 //
-//  Created by Sam Manh Cuong on 1/4/26.
-//
 
 import Foundation
 import UserNotifications
@@ -19,6 +17,8 @@ protocol NotificationServiceProtocol {
     func registerForRemoteNotifications()
     func saveFCMToken(_ token: String, userId: String) async throws
     func updateLastActive(userId: String) async throws
+    func savePreferences(_ preferences: NotificationPreferences, userId: String) async throws
+    func loadPreferences(userId: String) async throws -> NotificationPreferences
 }
 
 // MARK: - Notification Service
@@ -56,12 +56,12 @@ final class NotificationService: NSObject, NotificationServiceProtocol {
         let settings = await UNUserNotificationCenter.current().notificationSettings()
 
         switch settings.authorizationStatus {
-        case .authorized: return .authorized
-        case .denied: return .denied
-        case .provisional: return .provisional
+        case .authorized:    return .authorized
+        case .denied:        return .denied
+        case .provisional:   return .provisional
         case .notDetermined: return .unknown
-        case .ephemeral: return .provisional
-        @unknown default: return .unknown
+        case .ephemeral:     return .provisional
+        @unknown default:    return .unknown
         }
     }
 
@@ -95,32 +95,40 @@ final class NotificationService: NSObject, NotificationServiceProtocol {
             "timezone": TimeZone.current.identifier
         ], merge: true)
     }
+
+    // MARK: - Notification Preferences
+
+    func savePreferences(_ preferences: NotificationPreferences, userId: String) async throws {
+        guard !userId.isEmpty else { return }
+        try await db.collection(FirestorePath.users).document(userId).setData([
+            "notificationPreferences": preferences.firestorePrefsDict,
+            "reminderHour": preferences.reminderHour
+        ], merge: true)
+    }
+
+    func loadPreferences(userId: String) async throws -> NotificationPreferences {
+        let snap = try await db.collection(FirestorePath.users).document(userId).getDocument()
+        guard let data = snap.data() else { return NotificationPreferences() }
+        let prefsDict = data["notificationPreferences"] as? [String: Any] ?? [:]
+        let reminderHour = data["reminderHour"] as? Int ?? 20
+        return NotificationPreferences(from: prefsDict, reminderHour: reminderHour)
+    }
 }
 
 // MARK: - UNUserNotificationCenterDelegate
 
 extension NotificationService: UNUserNotificationCenterDelegate {
 
-    /// Handle foreground notifications — show them as banners
     func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         willPresent notification: UNNotification,
         withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
     ) {
         let userInfo = notification.request.content.userInfo
-
-        // Post notification for in-app handling
-        NotificationCenter.default.post(
-            name: .didReceiveNudge,
-            object: nil,
-            userInfo: userInfo
-        )
-
-        // Show banner + badge + sound even when app is in foreground
+        NotificationCenter.default.post(name: .didReceiveNudge, object: nil, userInfo: userInfo)
         completionHandler([.banner, .badge, .sound])
     }
 
-    /// Handle notification tap — navigate to relevant screen
     func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         didReceive response: UNNotificationResponse,
@@ -129,17 +137,12 @@ extension NotificationService: UNUserNotificationCenterDelegate {
         let userInfo = response.notification.request.content.userInfo
         let typeString = userInfo["type"] as? String ?? ""
 
-        // Post navigation event
         NotificationCenter.default.post(
             name: .didTapNudge,
             object: nil,
-            userInfo: [
-                "type": typeString,
-                "userInfo": userInfo
-            ]
+            userInfo: ["type": typeString, "userInfo": userInfo]
         )
 
-        // Clear badge
         Task {
             try? await UNUserNotificationCenter.current().setBadgeCount(0)
         }
@@ -154,8 +157,6 @@ extension NotificationService: MessagingDelegate {
 
     func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
         guard let token = fcmToken else { return }
-
-        // Post token for ViewModel to pick up
         NotificationCenter.default.post(
             name: .didReceiveFCMToken,
             object: nil,
@@ -167,7 +168,7 @@ extension NotificationService: MessagingDelegate {
 // MARK: - Notification Names
 
 extension Notification.Name {
-    static let didReceiveNudge = Notification.Name("didReceiveNudge")
-    static let didTapNudge = Notification.Name("didTapNudge")
+    static let didReceiveNudge    = Notification.Name("didReceiveNudge")
+    static let didTapNudge        = Notification.Name("didTapNudge")
     static let didReceiveFCMToken = Notification.Name("didReceiveFCMToken")
 }

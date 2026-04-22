@@ -23,34 +23,56 @@ struct AnniversaryCard: View {
 
     var body: some View {
         Button(action: onTap) {
-            VStack(alignment: .leading, spacing: 18) {
-                header
+            VStack(alignment: .leading, spacing: 0) {
 
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(state.marker)
-                        .font(.system(size: 48, weight: .bold, design: .rounded))
-                        .foregroundStyle(accent)
-                        .contentTransition(.numericText())
-
-                    Text(state.caption)
-                        .font(.system(size: 14, weight: .medium, design: .rounded))
-                        .foregroundStyle(Brand.textSecondary)
+                // MARK: Hero image
+                if let urlString = anniversary.imageURL, let url = URL(string: urlString) {
+                    AsyncImage(url: url) { phase in
+                        if case .success(let image) = phase {
+                            image
+                                .resizable()
+                                .scaledToFill()
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 160)
+                                .clipped()
+                        }
+                    }
+                    .clipShape(UnevenRoundedRectangle(
+                        topLeadingRadius: 22, bottomLeadingRadius: 0,
+                        bottomTrailingRadius: 0, topTrailingRadius: 22
+                    ))
                 }
 
-                if let note = anniversary.note, !note.isEmpty {
-                    Text(note)
-                        .font(.system(size: 13, weight: .regular, design: .rounded))
-                        .foregroundStyle(Brand.textSecondary)
-                        .italic()
-                        .lineLimit(2)
-                        .multilineTextAlignment(.leading)
-                }
+                // MARK: Content
+                VStack(alignment: .leading, spacing: 18) {
+                    header
 
-                if let progress, state.isFuture {
-                    progressBar(progress)
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text(state.marker)
+                            .font(.system(size: 48, weight: .bold, design: .rounded))
+                            .foregroundStyle(accent)
+                            .contentTransition(.numericText())
+
+                        Text(state.caption)
+                            .font(.system(size: 14, weight: .medium, design: .rounded))
+                            .foregroundStyle(Brand.textSecondary)
+                    }
+
+                    if let note = anniversary.note, !note.isEmpty {
+                        Text(note)
+                            .font(.system(size: 13, weight: .regular, design: .rounded))
+                            .foregroundStyle(Brand.textSecondary)
+                            .italic()
+                            .lineLimit(2)
+                            .multilineTextAlignment(.leading)
+                    }
+
+                    if let progress, state.isFuture {
+                        progressBar(progress)
+                    }
                 }
+                .padding(20)
             }
-            .padding(20)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(
                 RoundedRectangle(cornerRadius: 22)
@@ -61,6 +83,7 @@ struct AnniversaryCard: View {
                     )
                     .shadow(color: .black.opacity(0.08), radius: 14, y: 4)
             )
+            .clipShape(RoundedRectangle(cornerRadius: 22))
         }
         .buttonStyle(BouncyButtonStyle(scale: 0.98))
     }

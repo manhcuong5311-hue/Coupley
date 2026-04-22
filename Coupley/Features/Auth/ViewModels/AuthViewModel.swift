@@ -29,6 +29,11 @@ final class AuthViewModel: ObservableObject {
 
     init(authService: (any AuthServiceProtocol)? = nil) {
         self.authService = authService ?? FirebaseAuthService()
+        let pending = UserDefaults.standard.string(forKey: "pendingOnboardingName") ?? ""
+        if !pending.isEmpty {
+            self.displayName = pending
+            self.mode = .signUp
+        }
     }
 
     // MARK: - Computed
@@ -74,6 +79,7 @@ final class AuthViewModel: ObservableObject {
                 } else {
                     let trimmedName = displayName.trimmingCharacters(in: .whitespaces)
                     try await authService.signUp(email: trimmedEmail, password: password, displayName: trimmedName)
+                    UserDefaults.standard.removeObject(forKey: "pendingOnboardingName")
                 }
                 // SessionStore auth listener fires automatically on success
             } catch {

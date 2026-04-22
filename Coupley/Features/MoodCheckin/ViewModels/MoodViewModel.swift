@@ -2,11 +2,10 @@
 //  MoodViewModel.swift
 //  Coupley
 //
-//  Created by Sam Manh Cuong on 1/4/26.
-//
 
 import Foundation
 import Combine
+
 // MARK: - Submission State
 
 enum SubmissionState: Equatable {
@@ -22,6 +21,8 @@ enum SubmissionState: Equatable {
 @MainActor
 final class MoodViewModel: ObservableObject {
 
+    static let dailyLimit = 3
+
     // MARK: - Published Properties
 
     @Published var selectedMood: Mood?
@@ -30,11 +31,14 @@ final class MoodViewModel: ObservableObject {
     @Published var submissionState: SubmissionState = .idle
     @Published var showSuggestions: Bool = false
     @Published var lastMoodContext: MoodContext?
+    @Published private(set) var todayCheckinCount: Int = 0
 
     // MARK: - Computed Properties
 
+    var hasReachedDailyLimit: Bool { todayCheckinCount >= Self.dailyLimit }
+
     var isSubmitEnabled: Bool {
-        selectedMood != nil && submissionState != .loading
+        selectedMood != nil && submissionState != .loading && !hasReachedDailyLimit
     }
 
     // MARK: - Dependencies
@@ -58,10 +62,19 @@ final class MoodViewModel: ObservableObject {
         self.session = session ?? .demo
     }
 
+    // MARK: - Lifecycle
+
+    func loadTodayCount() {
+        Task {
+            let count = (try? await moodService.countTodayEntries()) ?? 0
+            todayCheckinCount = count
+        }
+    }
+
     // MARK: - Actions
 
     func submitMood() {
-        guard let mood = selectedMood else { return }
+        guard let mood = selectedMood, !hasReachedDailyLimit else { return }
 
         let entry = MoodEntry(
             mood: mood,
@@ -74,9 +87,10 @@ final class MoodViewModel: ObservableObject {
         Task {
             do {
                 try await moodService.save(entry: entry)
+                todayCheckinCount += 1
                 submissionState = .success
             } catch let writeError as MoodWriteError where writeError.isQueued {
-                // Treat as success from the user's perspective — it's stored and will sync.
+                todayCheckinCount += 1
                 submissionState = .queued
             } catch {
                 submissionState = .error("Failed to save. Please try again.")

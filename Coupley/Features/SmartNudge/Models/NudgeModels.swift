@@ -2,39 +2,35 @@
 //  NudgeModels.swift
 //  Coupley
 //
-//  Created by Sam Manh Cuong on 1/4/26.
-//
 
 import Foundation
 
 // MARK: - Nudge Type
 
 enum NudgeType: String, Codable, CaseIterable {
-    case lowMood = "low_mood"
-    case dailySync = "daily_sync"
+    case lowMood    = "low_mood"
+    case dailySync  = "daily_sync"
     case inactivity = "inactivity"
-
-    var priority: Int {
-        switch self {
-        case .lowMood: return 1
-        case .dailySync: return 2
-        case .inactivity: return 3
-        }
-    }
+    case ping       = "ping"
+    case reaction   = "reaction"
 
     var icon: String {
         switch self {
-        case .lowMood: return "heart.fill"
-        case .dailySync: return "arrow.triangle.2.circlepath"
+        case .lowMood:    return "heart.fill"
+        case .dailySync:  return "arrow.triangle.2.circlepath"
         case .inactivity: return "clock.fill"
+        case .ping:       return "paperplane.fill"
+        case .reaction:   return "face.smiling.fill"
         }
     }
 
     var label: String {
         switch self {
-        case .lowMood: return "Partner Alert"
-        case .dailySync: return "Daily Sync"
+        case .lowMood:    return "Partner Alert"
+        case .dailySync:  return "Daily Sync"
         case .inactivity: return "Check-in Reminder"
+        case .ping:       return "Thinking of You"
+        case .reaction:   return "Reaction"
         }
     }
 }
@@ -49,9 +45,7 @@ struct NudgeRecord: Identifiable, Codable {
     let timestamp: Date
     var isRead: Bool
 
-    var nudgeType: NudgeType? {
-        NudgeType(rawValue: type)
-    }
+    var nudgeType: NudgeType? { NudgeType(rawValue: type) }
 
     init(
         id: String = UUID().uuidString,
@@ -85,4 +79,34 @@ enum NotificationPermissionState: Equatable {
     case provisional
 }
 
-// FirestorePath members (users, notifications, userDocument) are in CoupleModels.swift
+// MARK: - Notification Preferences
+
+struct NotificationPreferences: Equatable {
+    var partnerMoodAlert:   Bool = true
+    var dailySyncReminder:  Bool = true
+    var inactivityReminder: Bool = true
+    var partnerPing:        Bool = true
+    var partnerReaction:    Bool = true
+    var reminderHour:       Int  = 20
+
+    init() {}
+
+    init(from dict: [String: Any], reminderHour: Int = 20) {
+        self.partnerMoodAlert   = dict["partnerMoodAlert"]   as? Bool ?? true
+        self.dailySyncReminder  = dict["dailySyncReminder"]  as? Bool ?? true
+        self.inactivityReminder = dict["inactivityReminder"] as? Bool ?? true
+        self.partnerPing        = dict["partnerPing"]        as? Bool ?? true
+        self.partnerReaction    = dict["partnerReaction"]    as? Bool ?? true
+        self.reminderHour       = reminderHour
+    }
+
+    var firestorePrefsDict: [String: Any] {
+        [
+            "partnerMoodAlert":   partnerMoodAlert,
+            "dailySyncReminder":  dailySyncReminder,
+            "inactivityReminder": inactivityReminder,
+            "partnerPing":        partnerPing,
+            "partnerReaction":    partnerReaction,
+        ]
+    }
+}

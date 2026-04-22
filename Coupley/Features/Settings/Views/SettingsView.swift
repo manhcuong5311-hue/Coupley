@@ -8,6 +8,7 @@
 
 import SwiftUI
 import FirebaseAuth
+import FirebaseFirestore
 
 struct SettingsView: View {
 
@@ -19,6 +20,8 @@ struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var showSignOutConfirm = false
+    @State private var showEditName = false
+    @State private var currentDisplayName: String = Auth.auth().currentUser?.displayName ?? "—"
 
     let session: UserSession?
 
@@ -110,12 +113,37 @@ struct SettingsView: View {
     @ViewBuilder
     private var accountSection: some View {
         Section("Account") {
-            SettingsRow(
-                icon: "person.fill",
-                iconTint: Brand.accentStart,
-                title: "Name",
-                value: Auth.auth().currentUser?.displayName ?? "—"
-            )
+            Button {
+                showEditName = true
+            } label: {
+                HStack(spacing: 14) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(Brand.accentStart.opacity(0.15))
+                            .frame(width: 30, height: 30)
+                        Image(systemName: "person.fill")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(Brand.accentStart)
+                    }
+                    Text("Name")
+                        .font(.system(size: 15, weight: .medium, design: .rounded))
+                        .foregroundStyle(Brand.textPrimary)
+                    Spacer()
+                    Text(currentDisplayName)
+                        .font(.system(size: 14, design: .rounded))
+                        .foregroundStyle(Brand.textSecondary)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(Brand.textTertiary)
+                }
+            }
+            .sheet(isPresented: $showEditName, onDismiss: {
+                currentDisplayName = Auth.auth().currentUser?.displayName ?? "—"
+            }) {
+                EditNameSheet()
+            }
             SettingsRow(
                 icon: "envelope.fill",
                 iconTint: Brand.accentStart,
@@ -422,6 +450,79 @@ private struct SettingsRow: View {
                 .foregroundStyle(Brand.textSecondary)
                 .lineLimit(1)
                 .truncationMode(.middle)
+        }
+    }
+}
+
+// MARK: - Edit Name Sheet
+
+private struct EditNameSheet: View {
+
+    @Environment(\.dismiss) private var dismiss
+    @State private var name: String = Auth.auth().currentUser?.displayName ?? ""
+    @State private var isSaving = false
+    @State private var errorMessage: String?
+
+    private let db = Firestore.firestore()
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                Brand.bgGradient.ignoresSafeArea()
+
+                VStack(alignment: .leading, spacing: 20) {
+                    BrandField(icon: "person", placeholder: "Your name", text: $name)
+                        .autocorrectionDisabled()
+
+                    if let errorMessage {
+                        Text(errorMessage)
+                            .font(.system(size: 13, design: .rounded))
+                            .foregroundStyle(Color(red: 1.0, green: 0.42, blue: 0.42))
+                    }
+
+                    Spacer()
+                }
+                .padding(.horizontal, 24)
+                .padding(.top, 24)
+            }
+            .navigationTitle("Edit Name")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Cancel") { dismiss() }
+                        .foregroundStyle(Brand.textSecondary)
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    if isSaving {
+                        ProgressView()
+                    } else {
+                        Button("Save") { save() }
+                            .foregroundStyle(Brand.accentStart)
+                            .fontWeight(.semibold)
+                            .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
+                    }
+                }
+            }
+        }
+    }
+
+    private func save() {
+        let trimmed = name.trimmingCharacters(in: .whitespaces)
+        guard !trimmed.isEmpty, let user = Auth.auth().currentUser else { return }
+        isSaving = true
+        errorMessage = nil
+        Task {
+            do {
+                let request = user.createProfileChangeRequest()
+                request.displayName = trimmed
+                try await request.commitChanges()
+                try await db.collection(FirestorePath.users).document(user.uid)
+                    .setData(["displayName": trimmed], merge: true)
+                dismiss()
+            } catch {
+                errorMessage = error.localizedDescription
+            }
+            isSaving = false
         }
     }
 }
