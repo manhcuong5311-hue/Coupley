@@ -48,6 +48,24 @@ enum AvatarOption: Equatable, Hashable, Codable {
     static let woman2 = AvatarOption.asset("woman2")
     static let woman3 = AvatarOption.asset("Women3")
 
+    // MARK: - Pronoun
+
+    /// Best-effort pronoun inferred from the chosen preset avatar. Used by the
+    /// profile screen to attribute partner-added hints ("added by He / She").
+    /// Falls back to a gender-neutral label for custom photos where we
+    /// genuinely don't know.
+    var pronounLabel: String {
+        switch self {
+        case .asset(let name):
+            let lower = name.lowercased()
+            if lower.hasPrefix("men")   { return "He" }
+            if lower.hasPrefix("woman") || lower.hasPrefix("women") { return "She" }
+            return "Them"
+        case .custom:
+            return "Them"
+        }
+    }
+
     static let defaultsMen:    [AvatarOption] = [.men1, .men2, .men3]
     static let defaultsWomen:  [AvatarOption] = [.woman1, .woman2, .woman3]
     static let allDefaults:    [AvatarOption] = defaultsMen + defaultsWomen

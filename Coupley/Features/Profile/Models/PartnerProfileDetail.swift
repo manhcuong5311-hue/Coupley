@@ -19,6 +19,15 @@ struct PartnerProfileDetail: Equatable {
     var communicationStyle: String
     var notes: String
     var activities: [String]
+
+    /// Per-entry attribution: maps each chip value → the userId that added it.
+    /// Missing key means legacy entry — treated as added by the profile owner
+    /// (`userId`) for display purposes. Allows the partner to contribute
+    /// hints to the *other* user's profile and still attribute them correctly.
+    var likesAddedBy: [String: String]
+    var dislikesAddedBy: [String: String]
+    var activitiesAddedBy: [String: String]
+
     var updatedAt: Date
 
     var isEmpty: Bool {
@@ -37,6 +46,9 @@ struct PartnerProfileDetail: Equatable {
             communicationStyle: "",
             notes: "",
             activities: [],
+            likesAddedBy: [:],
+            dislikesAddedBy: [:],
+            activitiesAddedBy: [:],
             updatedAt: .distantPast
         )
     }
@@ -50,6 +62,9 @@ struct PartnerProfileDetail: Equatable {
         self.communicationStyle = (data["communicationStyle"] as? String) ?? ""
         self.notes              = (data["notes"] as? String) ?? ""
         self.activities         = (data["activities"] as? [String]) ?? []
+        self.likesAddedBy       = (data["likesAddedBy"]      as? [String: String]) ?? [:]
+        self.dislikesAddedBy    = (data["dislikesAddedBy"]   as? [String: String]) ?? [:]
+        self.activitiesAddedBy  = (data["activitiesAddedBy"] as? [String: String]) ?? [:]
         if let ts = data["profileUpdatedAt"] as? Timestamp {
             self.updatedAt = ts.dateValue()
         } else {
@@ -64,6 +79,9 @@ struct PartnerProfileDetail: Equatable {
         communicationStyle: String,
         notes: String,
         activities: [String],
+        likesAddedBy: [String: String] = [:],
+        dislikesAddedBy: [String: String] = [:],
+        activitiesAddedBy: [String: String] = [:],
         updatedAt: Date
     ) {
         self.userId = userId
@@ -72,6 +90,9 @@ struct PartnerProfileDetail: Equatable {
         self.communicationStyle = communicationStyle
         self.notes = notes
         self.activities = activities
+        self.likesAddedBy = likesAddedBy
+        self.dislikesAddedBy = dislikesAddedBy
+        self.activitiesAddedBy = activitiesAddedBy
         self.updatedAt = updatedAt
     }
 
@@ -82,6 +103,9 @@ struct PartnerProfileDetail: Equatable {
             "communicationStyle": communicationStyle,
             "notes": notes,
             "activities": activities,
+            "likesAddedBy": likesAddedBy,
+            "dislikesAddedBy": dislikesAddedBy,
+            "activitiesAddedBy": activitiesAddedBy,
             "profileUpdatedAt": FieldValue.serverTimestamp()
         ]
     }

@@ -106,10 +106,12 @@ struct CoupleDashboardView: View {
             NavigationStack {
                 PartnerProfileDetailView(
                     targetUserId: sessionStore.session?.userId ?? "",
+                    currentUserId: sessionStore.session?.userId ?? "",
                     mode: .mine,
                     hasPartner: sessionStore.isPaired,
                     avatar: profileViewModel.myProfile.avatar,
-                    displayName: profileViewModel.myProfile.displayName
+                    displayName: profileViewModel.myProfile.displayName,
+                    partnerPronounLabel: profileViewModel.partnerProfile.avatar.pronounLabel
                 )
             }
             .presentationDetents([.large])
@@ -120,10 +122,12 @@ struct CoupleDashboardView: View {
             NavigationStack {
                 PartnerProfileDetailView(
                     targetUserId: sessionStore.session?.partnerId ?? "",
+                    currentUserId: sessionStore.session?.userId ?? "",
                     mode: .partner,
                     hasPartner: sessionStore.isPaired,
                     avatar: profileViewModel.partnerProfile.avatar,
-                    displayName: profileViewModel.partnerProfile.displayName
+                    displayName: profileViewModel.partnerProfile.displayName,
+                    partnerPronounLabel: profileViewModel.partnerProfile.avatar.pronounLabel
                 )
             }
             .presentationDetents([.large])

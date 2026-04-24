@@ -15,6 +15,11 @@ struct PremiumPaywallView: View {
 
     @State private var selectedPlan: PremiumPlan = .yearly
 
+    /// `true` once the user taps Continue, so the paywall only auto-dismisses
+    /// after *this* purchase completes — not when a viewer who was already
+    /// subscribed opens the sheet to inspect their status.
+    @State private var didInitiatePurchase = false
+
     var body: some View {
         ZStack {
             Brand.bgGradient.ignoresSafeArea(.all)
@@ -65,6 +70,16 @@ struct PremiumPaywallView: View {
             Button("OK", role: .cancel) { premiumStore.lastError = nil }
         } message: {
             Text(premiumStore.lastError ?? "")
+        }
+        .onChange(of: premiumStore.isActive) { _, nowActive in
+            // Close the sheet once the Firestore listener reports the new
+            // entitlement. Delayed briefly so the user sees the "active"
+            // state flash in before the sheet animates away.
+            guard didInitiatePurchase, nowActive else { return }
+            Task {
+                try? await Task.sleep(nanoseconds: 600_000_000)
+                dismiss()
+            }
         }
     }
 
@@ -353,6 +368,7 @@ struct PremiumPaywallView: View {
     private var purchaseButton: some View {
         Button {
             guard !premiumStore.isActive else { return }
+            didInitiatePurchase = true
             Task { await premiumStore.purchase(plan: selectedPlan) }
         } label: {
             Group {

@@ -95,17 +95,8 @@ final class FirestorePremiumService: PremiumService {
         coupleId: String?,
         onUpdate: @escaping (PremiumEntitlement) -> Void
     ) -> ListenerRegistration {
-        // Prefer couple-level if paired. Cloud function keeps it in sync with user.
-        if let coupleId, !coupleId.isEmpty {
-            return db.collection(FirestorePath.couples).document(coupleId)
-                .addSnapshotListener { snapshot, _ in
-                    let entitlement = Self.parseEntitlement(
-                        data: snapshot?.data()?["premium"] as? [String: Any],
-                        selfUserId: userId
-                    )
-                    onUpdate(entitlement)
-                }
-        } else {
+        // Solo: the user doc is the only source.
+        guard let coupleId, !coupleId.isEmpty else {
             return db.collection(FirestorePath.users).document(userId)
                 .addSnapshotListener { snapshot, _ in
                     let entitlement = Self.parseEntitlement(
@@ -115,11 +106,32 @@ final class FirestorePremiumService: PremiumService {
                     onUpdate(entitlement)
                 }
         }
+
+        // Paired: observe both docs. The couple doc is the canonical shared
+        // source, but we also watch the user doc so a purchaser who paid
+        // while solo and then paired doesn't lose premium during the window
+        // before the cloud function migrates their entitlement. Effective
+        // entitlement = whichever side is active, with couple preferred.
+        let merger = PairedEntitlementMerger(userId: userId, onUpdate: onUpdate)
+
+        let coupleReg = db.collection(FirestorePath.couples).document(coupleId)
+            .addSnapshotListener { snapshot, _ in
+                merger.handleCouple(snapshot?.data()?["premium"] as? [String: Any])
+            }
+        let userReg = db.collection(FirestorePath.users).document(userId)
+            .addSnapshotListener { snapshot, _ in
+                merger.handleUser(snapshot?.data()?["premium"] as? [String: Any])
+            }
+
+        return MockListenerRegistration {
+            coupleReg.remove()
+            userReg.remove()
+        }
     }
 
     // MARK: - Parsing
 
-    private static func parseEntitlement(
+    fileprivate static func parseEntitlement(
         data: [String: Any]?,
         selfUserId: String
     ) -> PremiumEntitlement {
@@ -146,6 +158,53 @@ final class FirestorePremiumService: PremiumService {
             source: source,
             expiresAt: expiresAt
         )
+    }
+}
+
+// MARK: - Paired Entitlement Merger
+
+/// Combines snapshots of the couple doc and the user doc into a single
+/// effective `PremiumEntitlement`. Two reasons we need this:
+///   1. If the user paid while solo and then paired, the couple doc may
+///      briefly lack a `premium` field — we fall back to the user doc so
+///      the paying user keeps their entitlement.
+///   2. If either doc reports active, the effective entitlement is active;
+///      couple wins tie-breaks so `source` is attributed correctly for
+///      the non-purchasing partner.
+private final class PairedEntitlementMerger {
+    private let userId: String
+    private let onUpdate: (PremiumEntitlement) -> Void
+    private let queue = DispatchQueue(label: "com.coupley.premium.merger")
+    private var coupleEnt: PremiumEntitlement = .inactive
+    private var userEnt: PremiumEntitlement = .inactive
+
+    init(userId: String, onUpdate: @escaping (PremiumEntitlement) -> Void) {
+        self.userId = userId
+        self.onUpdate = onUpdate
+    }
+
+    func handleCouple(_ data: [String: Any]?) {
+        queue.async {
+            self.coupleEnt = FirestorePremiumService.parseEntitlement(data: data, selfUserId: self.userId)
+            self.emit()
+        }
+    }
+
+    func handleUser(_ data: [String: Any]?) {
+        queue.async {
+            self.userEnt = FirestorePremiumService.parseEntitlement(data: data, selfUserId: self.userId)
+            self.emit()
+        }
+    }
+
+    private func emit() {
+        if coupleEnt.isActive {
+            onUpdate(coupleEnt)
+        } else if userEnt.isActive {
+            onUpdate(userEnt)
+        } else {
+            onUpdate(.inactive)
+        }
     }
 }
 

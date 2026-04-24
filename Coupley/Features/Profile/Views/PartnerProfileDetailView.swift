@@ -2,8 +2,10 @@
 //  PartnerProfileDetailView.swift
 //  Coupley
 //
-//  Detail screen for either "Me" or "Partner". Read-only when viewing
-//  partner data, inline-editable when viewing your own.
+//  Detail screen for either "Me" or "Partner". Both viewers can add hints
+//  (attributed with a gendered "by He / by She" tag when the contributor
+//  isn't the profile owner); only the profile owner can edit free-text
+//  sections like communication style and notes.
 //
 
 import SwiftUI
@@ -15,6 +17,10 @@ struct PartnerProfileDetailView: View {
     @StateObject private var viewModel: PartnerProfileDetailViewModel
     let avatar: AvatarOption
     let displayName: String
+    /// Pronoun label for the *non-owner* contributor, used in attribution
+    /// chips ("by He / by She / by Them"). Derived from the partner's avatar
+    /// in both viewing modes.
+    let partnerPronounLabel: String
 
     @Environment(\.dismiss) private var dismiss
 
@@ -24,20 +30,24 @@ struct PartnerProfileDetailView: View {
 
     init(
         targetUserId: String,
+        currentUserId: String,
         mode: PartnerProfileDetailViewModel.Mode,
         hasPartner: Bool,
         avatar: AvatarOption,
-        displayName: String
+        displayName: String,
+        partnerPronounLabel: String
     ) {
         _viewModel = StateObject(
             wrappedValue: PartnerProfileDetailViewModel(
                 targetUserId: targetUserId,
+                currentUserId: currentUserId,
                 mode: mode,
                 hasPartner: hasPartner
             )
         )
         self.avatar = avatar
         self.displayName = displayName
+        self.partnerPronounLabel = partnerPronounLabel
     }
 
     var body: some View {
@@ -97,9 +107,7 @@ struct PartnerProfileDetailView: View {
                 .font(.system(size: 20, weight: .bold, design: .rounded))
                 .foregroundStyle(Brand.textPrimary)
 
-            Text(viewModel.mode == .mine
-                 ? "Keep this up to date — your partner sees it."
-                 : "A read-only glimpse into what matters to them.")
+            Text(headerSubtitle)
                 .font(.system(size: 13, design: .rounded))
                 .foregroundStyle(Brand.textSecondary)
                 .multilineTextAlignment(.center)
@@ -107,6 +115,15 @@ struct PartnerProfileDetailView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 20)
+    }
+
+    private var headerSubtitle: String {
+        switch viewModel.mode {
+        case .mine:
+            return "Keep this up to date — your partner sees it and can add hints too."
+        case .partner:
+            return "Add hints about what they love — they'll see who added each one."
+        }
     }
 
     // MARK: - Sections
@@ -117,7 +134,10 @@ struct PartnerProfileDetailView: View {
             icon: "heart.fill",
             tint: Brand.accentStart,
             items: viewModel.profile.likes,
-            isEditable: viewModel.mode.isEditable,
+            addedBy: viewModel.profile.likesAddedBy,
+            attributionFor: attributionFor,
+            canRemove: { viewModel.canRemove(addedBy: viewModel.profile.likesAddedBy[$0]) },
+            canAdd: viewModel.canAdd,
             draft: $likeDraft,
             placeholder: "+ Add like",
             emptyMessage: "No likes added yet",
@@ -132,7 +152,10 @@ struct PartnerProfileDetailView: View {
             icon: "hand.raised.fill",
             tint: Color(red: 1.0, green: 0.55, blue: 0.25),
             items: viewModel.profile.dislikes,
-            isEditable: viewModel.mode.isEditable,
+            addedBy: viewModel.profile.dislikesAddedBy,
+            attributionFor: attributionFor,
+            canRemove: { viewModel.canRemove(addedBy: viewModel.profile.dislikesAddedBy[$0]) },
+            canAdd: viewModel.canAdd,
             draft: $dislikeDraft,
             placeholder: "+ Add dislike",
             emptyMessage: "No dislikes added yet",
@@ -143,7 +166,7 @@ struct PartnerProfileDetailView: View {
 
     private var communicationSection: some View {
         SectionCard(title: "Communication Style", icon: "bubble.left.and.bubble.right.fill", tint: Color(red: 0.40, green: 0.70, blue: 1.0)) {
-            if viewModel.mode.isEditable {
+            if viewModel.canEditFreeText {
                 TextField(
                     "e.g. Direct, playful, needs space when stressed",
                     text: Binding(
@@ -170,7 +193,7 @@ struct PartnerProfileDetailView: View {
 
     private var notesSection: some View {
         SectionCard(title: "Notes", icon: "note.text", tint: Color(red: 0.50, green: 0.40, blue: 1.0)) {
-            if viewModel.mode.isEditable {
+            if viewModel.canEditFreeText {
                 TextField(
                     "Anything you want to remember…",
                     text: Binding(
@@ -201,13 +224,28 @@ struct PartnerProfileDetailView: View {
             icon: "sparkles",
             tint: Color(red: 1.0, green: 0.55, blue: 0.20),
             items: viewModel.profile.activities,
-            isEditable: viewModel.mode.isEditable,
+            addedBy: viewModel.profile.activitiesAddedBy,
+            attributionFor: attributionFor,
+            canRemove: { viewModel.canRemove(addedBy: viewModel.profile.activitiesAddedBy[$0]) },
+            canAdd: viewModel.canAdd,
             draft: $activityDraft,
             placeholder: "+ Add activity",
             emptyMessage: "No shared activities yet",
             onAdd: { viewModel.addActivity($0) },
             onRemove: { viewModel.removeActivity($0) }
         )
+    }
+
+    // MARK: - Attribution
+
+    /// Returns a short attribution label ("by me" / "by He" / "by She") when
+    /// the entry was added by somebody other than the profile owner. Owner-
+    /// added or legacy entries return nil and render without a tag.
+    private func attributionFor(addedBy: String?) -> String? {
+        guard let addedBy else { return nil }
+        if addedBy == viewModel.targetUserId { return nil }
+        if addedBy == viewModel.currentUserId { return "by me" }
+        return "by \(partnerPronounLabel)"
     }
 
     // MARK: - Error Banner
@@ -272,7 +310,10 @@ private struct ChipSection: View {
     let icon: String
     let tint: Color
     let items: [String]
-    let isEditable: Bool
+    let addedBy: [String: String]
+    let attributionFor: (String?) -> String?
+    let canRemove: (String) -> Bool
+    let canAdd: Bool
     @Binding var draft: String
     let placeholder: String
     let emptyMessage: String
@@ -281,7 +322,7 @@ private struct ChipSection: View {
 
     var body: some View {
         SectionCard(title: title, icon: icon, tint: tint) {
-            if items.isEmpty && !isEditable {
+            if items.isEmpty && !canAdd {
                 Text(emptyMessage)
                     .font(.system(size: 14, design: .rounded))
                     .foregroundStyle(Brand.textTertiary)
@@ -296,7 +337,7 @@ private struct ChipSection: View {
                 }
             }
 
-            if isEditable {
+            if canAdd {
                 HStack(spacing: 8) {
                     TextField(placeholder, text: $draft)
                         .font(.system(size: 14, design: .rounded))
@@ -332,12 +373,20 @@ private struct ChipSection: View {
     }
 
     private func chip(_ item: String) -> some View {
-        HStack(spacing: 6) {
-            Text(item)
-                .font(.system(size: 13, weight: .medium, design: .rounded))
-                .foregroundStyle(tint)
+        let attribution = attributionFor(addedBy[item])
+        return HStack(spacing: 6) {
+            VStack(alignment: .leading, spacing: 1) {
+                Text(item)
+                    .font(.system(size: 13, weight: .medium, design: .rounded))
+                    .foregroundStyle(tint)
+                if let attribution {
+                    Text(attribution)
+                        .font(.system(size: 10, weight: .medium, design: .rounded))
+                        .foregroundStyle(tint.opacity(0.65))
+                }
+            }
 
-            if isEditable {
+            if canRemove(item) {
                 Button {
                     onRemove(item)
                 } label: {

@@ -85,10 +85,14 @@ struct PartnerAndMeProfileView: View {
         NavigationLink {
             PartnerProfileDetailView(
                 targetUserId: userId,
+                currentUserId: session.userId,
                 mode: mode,
                 hasPartner: session.isPaired,
                 avatar: profile.avatar,
-                displayName: profile.displayName
+                displayName: profile.displayName,
+                // Non-owner contributor in both screens is always the viewer's
+                // partner, so the pronoun label is derived from their avatar.
+                partnerPronounLabel: profileViewModel.partnerProfile.avatar.pronounLabel
             )
         } label: {
             VStack(spacing: 10) {

@@ -16,10 +16,13 @@ import Combine
 final class PartnerProfileDetailViewModel: ObservableObject {
 
     enum Mode {
+        /// Viewing your own profile — you own all entries and can freely
+        /// edit/remove anything, including hints your partner added.
         case mine
+        /// Viewing your partner's profile — you may still add hints *for*
+        /// them (stored on their doc, attributed back to you) and remove
+        /// only the hints you yourself contributed.
         case partner
-
-        var isEditable: Bool { self == .mine }
     }
 
     // MARK: - Published state
@@ -31,6 +34,7 @@ final class PartnerProfileDetailViewModel: ObservableObject {
 
     let mode: Mode
     let targetUserId: String
+    let currentUserId: String
     let hasPartner: Bool
 
     // MARK: - Deps
@@ -43,11 +47,13 @@ final class PartnerProfileDetailViewModel: ObservableObject {
 
     init(
         targetUserId: String,
+        currentUserId: String,
         mode: Mode,
         hasPartner: Bool,
         service: PartnerProfileDetailService = FirestorePartnerProfileDetailService()
     ) {
         self.targetUserId = targetUserId
+        self.currentUserId = currentUserId
         self.mode = mode
         self.hasPartner = hasPartner
         self.service = service
@@ -92,58 +98,86 @@ final class PartnerProfileDetailViewModel: ObservableObject {
         listener = nil
     }
 
-    // MARK: - Mutations (only valid in .mine mode)
+    // MARK: - Edit permissions
+
+    /// Anyone in the couple may add hints to either profile. Partner-mode
+    /// adds are attributed back to the contributor via `*AddedBy`.
+    var canAdd: Bool {
+        mode == .mine || (mode == .partner && hasPartner)
+    }
+
+    /// The profile owner may remove any entry. A non-owner may only remove
+    /// hints they themselves contributed — they can't silently delete the
+    /// owner's own likes/dislikes.
+    func canRemove(addedBy: String?) -> Bool {
+        if mode == .mine { return true }
+        return addedBy == currentUserId
+    }
+
+    // MARK: - Free-text fields (communication style, notes)
+
+    /// Text fields remain owner-only — partner hints are shaped like chips,
+    /// not paragraphs. Non-owners see read-only text.
+    var canEditFreeText: Bool { mode == .mine }
+
+    // MARK: - Mutations
 
     func addLike(_ value: String) {
-        guard mode.isEditable else { return }
+        guard canAdd else { return }
         let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty, !profile.likes.contains(trimmed) else { return }
         profile.likes.append(trimmed)
+        profile.likesAddedBy[trimmed] = currentUserId
         persist()
     }
 
     func removeLike(_ value: String) {
-        guard mode.isEditable else { return }
+        guard canRemove(addedBy: profile.likesAddedBy[value]) else { return }
         profile.likes.removeAll { $0 == value }
+        profile.likesAddedBy.removeValue(forKey: value)
         persist()
     }
 
     func addDislike(_ value: String) {
-        guard mode.isEditable else { return }
+        guard canAdd else { return }
         let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty, !profile.dislikes.contains(trimmed) else { return }
         profile.dislikes.append(trimmed)
+        profile.dislikesAddedBy[trimmed] = currentUserId
         persist()
     }
 
     func removeDislike(_ value: String) {
-        guard mode.isEditable else { return }
+        guard canRemove(addedBy: profile.dislikesAddedBy[value]) else { return }
         profile.dislikes.removeAll { $0 == value }
+        profile.dislikesAddedBy.removeValue(forKey: value)
         persist()
     }
 
     func addActivity(_ value: String) {
-        guard mode.isEditable else { return }
+        guard canAdd else { return }
         let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty, !profile.activities.contains(trimmed) else { return }
         profile.activities.append(trimmed)
+        profile.activitiesAddedBy[trimmed] = currentUserId
         persist()
     }
 
     func removeActivity(_ value: String) {
-        guard mode.isEditable else { return }
+        guard canRemove(addedBy: profile.activitiesAddedBy[value]) else { return }
         profile.activities.removeAll { $0 == value }
+        profile.activitiesAddedBy.removeValue(forKey: value)
         persist()
     }
 
     func updateCommunicationStyle(_ value: String) {
-        guard mode.isEditable else { return }
+        guard canEditFreeText else { return }
         profile.communicationStyle = value
         persist(debounced: true)
     }
 
     func updateNotes(_ value: String) {
-        guard mode.isEditable else { return }
+        guard canEditFreeText else { return }
         profile.notes = value
         persist(debounced: true)
     }

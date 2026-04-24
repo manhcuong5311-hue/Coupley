@@ -26,16 +26,27 @@ struct AnniversaryCard: View {
             VStack(alignment: .leading, spacing: 0) {
 
                 // MARK: Hero image
+                // The frame is applied to the ZStack, not conditionally to the
+                // success branch — this guarantees the slot reserves 160pt of
+                // layout space so CachedAsyncImage's `.task` anchor actually
+                // fires. Without this, SwiftUI can collapse the container to
+                // zero size while `phase` is still `.empty`, and the image
+                // download never kicks off — which is why covers never
+                // appeared on the list card even though they showed up fine
+                // inside the editor (which uses a regular AsyncImage).
                 if let urlString = anniversary.imageURL, let url = URL(string: urlString) {
                     CachedAsyncImage(url: url) { phase in
-                        if case .success(let image) = phase {
-                            image
-                                .resizable()
-                                .scaledToFill()
-                                .frame(maxWidth: .infinity)
-                                .frame(height: 160)
-                                .clipped()
+                        ZStack {
+                            Brand.accentStart.opacity(0.08)
+                            if case .success(let image) = phase {
+                                image
+                                    .resizable()
+                                    .scaledToFill()
+                            }
                         }
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 160)
+                        .clipped()
                     }
                     .clipShape(UnevenRoundedRectangle(
                         topLeadingRadius: 22, bottomLeadingRadius: 0,
