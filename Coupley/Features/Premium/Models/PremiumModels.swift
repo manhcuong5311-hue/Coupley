@@ -70,6 +70,7 @@ enum PremiumFeature: String, CaseIterable {
     case fullQuizAccess        // All quiz topics (free: first half of topics)
     case dateIdeas             // Date ideas access (free: locked, premium: 25/day)
     case aiMoodSuggestions     // AI mood suggestions (free: 1/day, premium: 50/day)
+    case aiCoach               // AI Relationship Coach (free: 2 sessions/week, premium: unlimited + deep features)
 
     var label: String {
         switch self {
@@ -79,6 +80,7 @@ enum PremiumFeature: String, CaseIterable {
         case .fullQuizAccess:     return "Full quiz library"
         case .dateIdeas:          return "Date ideas (25/day)"
         case .aiMoodSuggestions:  return "AI mood suggestions (50/day)"
+        case .aiCoach:            return "AI Relationship Coach"
         }
     }
 
@@ -90,6 +92,7 @@ enum PremiumFeature: String, CaseIterable {
         case .fullQuizAccess:     return "Half the quiz library"
         case .dateIdeas:          return "Locked"
         case .aiMoodSuggestions:  return "1 per day"
+        case .aiCoach:            return "2 sessions per week"
         }
     }
 
@@ -101,6 +104,7 @@ enum PremiumFeature: String, CaseIterable {
         case .fullQuizAccess:     return "questionmark.bubble.fill"
         case .dateIdeas:          return "map.fill"
         case .aiMoodSuggestions:  return "sparkles"
+        case .aiCoach:            return "heart.text.square.fill"
         }
     }
 
@@ -109,6 +113,7 @@ enum PremiumFeature: String, CaseIterable {
         switch self {
         case .aiMoodSuggestions: return 1
         case .dateIdeas:         return 0  // locked
+        case .aiCoach:           return 1  // 1 session per day on free tier
         default:                 return nil
         }
     }

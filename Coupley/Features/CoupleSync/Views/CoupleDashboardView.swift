@@ -32,8 +32,11 @@ struct CoupleDashboardView: View {
     @State private var showProfileHub = false
     @State private var showDateIdeasPaywall = false
     @State private var showMoodSuggestionPaywall = false
+    @State private var showAICoach = false
     @State private var sentReaction: ReactionKind? = nil
     @State private var isSendingReaction = false
+
+    @StateObject private var aiCoachViewModel: AICoachViewModel = AICoachViewModel(session: .demo)
 
     private let reactionService: ReactionService = FirestoreReactionService()
     private let presenceService: PresenceService = FirestorePresenceService()
@@ -146,14 +149,31 @@ struct CoupleDashboardView: View {
                 .environmentObject(premiumStore)
                 .presentationDragIndicator(.visible)
         }
-        .onAppear { viewModel.startListening() }
+        .sheet(isPresented: $showAICoach) {
+            NavigationStack {
+                AICoachHomeView(viewModel: aiCoachViewModel)
+            }
+            .environmentObject(premiumStore)
+            .presentationDragIndicator(.visible)
+            .presentationBackground(Brand.backgroundTop)
+        }
+        .onAppear {
+            viewModel.startListening()
+            if let s = sessionStore.session { aiCoachViewModel.rebind(session: s) }
+            aiCoachViewModel.updateContext(
+                myName: profileViewModel.myProfile.displayName,
+                partnerName: profileViewModel.partnerProfile.displayName,
+                partnerProfile: nil,
+                recentMoodNote: viewModel.partnerMood?.note
+            )
+        }
         .onDisappear { viewModel.stopListening() }
     }
 
     // MARK: - Greeting Header
 
     private var greetingHeader: some View {
-        HStack(alignment: .center) {
+        HStack(alignment: .center, spacing: 10) {
             Text(greetingTitle)
                 .font(.system(size: 22, weight: .bold, design: .rounded))
                 .foregroundStyle(Brand.textPrimary)
@@ -161,6 +181,8 @@ struct CoupleDashboardView: View {
                 .minimumScaleFactor(0.8)
 
             Spacer()
+
+            aiCoachHeaderButton
 
             Button {
                 UIImpactFeedbackGenerator(style: .light).impactOccurred()
@@ -187,6 +209,46 @@ struct CoupleDashboardView: View {
             }
             .buttonStyle(BouncyButtonStyle(scale: 0.92))
         }
+    }
+
+    private var aiCoachHeaderButton: some View {
+        Button {
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            openAICoach()
+        } label: {
+            ZStack {
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                Color(red: 0.95, green: 0.55, blue: 0.72),
+                                Color(red: 0.52, green: 0.44, blue: 0.95)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 36, height: 36)
+                    .shadow(color: Color(red: 0.95, green: 0.55, blue: 0.72).opacity(0.35), radius: 10, y: 3)
+
+                Image(systemName: "sparkle")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(.white)
+            }
+        }
+        .buttonStyle(BouncyButtonStyle(scale: 0.92))
+        .accessibilityLabel("AI Relationship Coach")
+    }
+
+    private func openAICoach() {
+        if let s = sessionStore.session { aiCoachViewModel.rebind(session: s) }
+        aiCoachViewModel.updateContext(
+            myName: profileViewModel.myProfile.displayName,
+            partnerName: profileViewModel.partnerProfile.displayName,
+            partnerProfile: nil,
+            recentMoodNote: viewModel.partnerMood?.note
+        )
+        showAICoach = true
     }
 
     private var greetingTitle: String {
@@ -405,7 +467,92 @@ struct CoupleDashboardView: View {
                 title: "Profile",
                 subtitle: "Likes, dislikes & more"
             ) { showProfileHub = true }
+
+            aiCoachActivityCard
         }
+    }
+
+    private var aiCoachActivityCard: some View {
+        Button {
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            openAICoach()
+        } label: {
+            HStack(spacing: 12) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 14)
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    Color(red: 0.95, green: 0.55, blue: 0.72),
+                                    Color(red: 0.52, green: 0.44, blue: 0.95)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 48, height: 48)
+                        .shadow(color: Color(red: 0.95, green: 0.55, blue: 0.72).opacity(0.35), radius: 10, y: 3)
+                    Image(systemName: "sparkle")
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundStyle(.white)
+                }
+
+                VStack(alignment: .leading, spacing: 3) {
+                    HStack(spacing: 8) {
+                        Text("AI Relationship Coach")
+                            .font(.system(size: 15, weight: .semibold, design: .rounded))
+                            .foregroundStyle(Brand.textPrimary)
+                        Text("NEW")
+                            .font(.system(size: 9, weight: .bold, design: .rounded))
+                            .foregroundStyle(.white)
+                            .tracking(0.4)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(
+                                Capsule()
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [Brand.accentStart, Brand.accentEnd],
+                                            startPoint: .leading, endPoint: .trailing
+                                        )
+                                    )
+                            )
+                    }
+
+                    Text("Help us solve this — together")
+                        .font(.system(size: 12, weight: .regular, design: .rounded))
+                        .foregroundStyle(Brand.textSecondary)
+                        .lineLimit(1)
+                }
+
+                Spacer(minLength: 0)
+
+                Image(systemName: "arrow.right")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(Brand.accentStart)
+            }
+            .padding(14)
+            .frame(maxWidth: .infinity)
+            .background(
+                RoundedRectangle(cornerRadius: 18)
+                    .fill(Brand.surfaceLight)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 18)
+                            .strokeBorder(
+                                LinearGradient(
+                                    colors: [
+                                        Color(red: 0.95, green: 0.55, blue: 0.72).opacity(0.55),
+                                        Color(red: 0.52, green: 0.44, blue: 0.95).opacity(0.40)
+                                    ],
+                                    startPoint: .leading, endPoint: .trailing
+                                ),
+                                lineWidth: 1.5
+                            )
+                    )
+                    .shadow(color: .black.opacity(0.08), radius: 10, y: 3)
+            )
+        }
+        .buttonStyle(BouncyButtonStyle(scale: 0.96))
     }
 
     private func activityCard(

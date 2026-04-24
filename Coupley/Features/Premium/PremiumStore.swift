@@ -117,6 +117,10 @@ final class PremiumStore: ObservableObject {
             if isActive { return true }
             // Free: 1 use per day
             return dailyUsage(for: .aiMoodSuggestions) < 1
+        case .aiCoach:
+            if isActive { return true }
+            // Free: 1 coaching session per day (opens the coach, deep features still premium)
+            return dailyUsage(for: .aiCoach) < 1
         }
     }
 
