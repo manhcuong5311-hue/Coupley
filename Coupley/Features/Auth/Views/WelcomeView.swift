@@ -20,34 +20,35 @@ struct WelcomeView: View {
 
     var body: some View {
         NavigationStack {
-            GeometryReader { geo in
-                ScrollView(showsIndicators: false) {
-                    VStack(spacing: 0) {
-                        Spacer(minLength: max(geo.safeAreaInsets.top + 12, 28))
+            ZStack {
+                Image("OnboardingPic")
+                    .resizable()
+                    .scaledToFill()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .offset(x: -24)
+                    .clipped()
+                    .ignoresSafeArea()
+                    .accessibilityHidden(true)
 
-                        wordmark
-                            .padding(.top, 4)
+                VStack(spacing: 0) {
+                    wordmark
+                        .padding(.top, 12)
 
-                        tagline
-                            .padding(.top, 6)
+                    tagline
+                        .padding(.top, 6)
 
-                        heroImage
-                            .padding(.top, 18)
-                            .padding(.bottom, 28)
+                    Spacer(minLength: 0)
 
-                        providerStack
-                            .padding(.horizontal, 24)
+                    providerStack
+                        .padding(.horizontal, 24)
 
-                        legalFooter
-                            .padding(.top, 22)
-                            .padding(.bottom, max(geo.safeAreaInsets.bottom + 16, 28))
-                    }
-                    .frame(minHeight: geo.size.height)
-                    .frame(maxWidth: .infinity)
+                    legalFooter
+                        .padding(.top, 18)
                 }
-                .scrollBounceBehavior(.basedOnSize)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .padding(.bottom, 48)
             }
-            .brandBackground()
+            .preferredColorScheme(.light)
             .navigationDestination(isPresented: $showEmailAuth) {
                 EmailAuthView(viewModel: viewModel)
             }
@@ -70,10 +71,10 @@ struct WelcomeView: View {
             }
 
             HStack(spacing: 0) {
-                Text("Couple")
+                Text("Coupley")
                     .font(.system(size: 30, weight: .bold, design: .rounded))
                     .foregroundStyle(Brand.textPrimary)
-                Text("ly")
+                Text("AI")
                     .font(.system(size: 30, weight: .bold, design: .rounded))
                     .foregroundStyle(Brand.accentStart)
             }
@@ -86,17 +87,6 @@ struct WelcomeView: View {
             .foregroundStyle(Brand.textSecondary)
             .multilineTextAlignment(.center)
             .padding(.horizontal, 36)
-    }
-
-    // MARK: - Hero
-
-    private var heroImage: some View {
-        Image("OnboardingPic")
-            .resizable()
-            .scaledToFit()
-            .frame(maxWidth: 360)
-            .padding(.horizontal, 24)
-            .accessibilityLabel("Two partners using their phones together")
     }
 
     // MARK: - Providers
