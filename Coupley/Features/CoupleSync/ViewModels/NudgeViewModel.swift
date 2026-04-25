@@ -23,9 +23,9 @@ final class NudgeViewModel: ObservableObject {
     private var lastShownNudgeId: String?
 
     init(session: UserSession,
-         nudgeService: NudgeServicing = FirestoreNudgeService()) {
+         nudgeService: NudgeServicing? = nil) {
         self.session = session
-        self.nudgeService = nudgeService
+        self.nudgeService = nudgeService ?? FirestoreNudgeService()
     }
 
     deinit {

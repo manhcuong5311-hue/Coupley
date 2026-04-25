@@ -21,9 +21,9 @@ final class CoupleProfileViewModel: ObservableObject {
     private var listener: ListenerRegistration?
 
     init(coupleId: String,
-         aggregator: CoupleInsightAggregating = FirestoreCoupleInsightAggregator()) {
+         aggregator: CoupleInsightAggregating? = nil) {
         self.coupleId = coupleId
-        self.aggregator = aggregator
+        self.aggregator = aggregator ?? FirestoreCoupleInsightAggregator()
     }
 
     deinit { listener?.remove() }

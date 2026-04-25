@@ -23,9 +23,9 @@ final class CouplePersonProfileViewModel: ObservableObject {
     nonisolated(unsafe) private var myListener: ListenerRegistration?
     nonisolated(unsafe) private var partnerListener: ListenerRegistration?
 
-    init(session: UserSession, service: CoupleProfileService = FirestoreCoupleProfileService()) {
+    init(session: UserSession, service: CoupleProfileService? = nil) {
         self.session = session
-        self.service = service
+        self.service = service ?? FirestoreCoupleProfileService()
     }
 
     deinit {

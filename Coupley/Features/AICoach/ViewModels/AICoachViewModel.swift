@@ -32,12 +32,12 @@ final class AICoachViewModel: ObservableObject {
 
     init(
         session: UserSession,
-        service: AICoachService = HybridAICoachService(),
-        store: AICoachChatStoring = AICoachChatStore()
+        service: AICoachService? = nil,
+        store: AICoachChatStoring? = nil
     ) {
         self.session = session
-        self.service = service
-        self.store = store
+        self.service = service ?? HybridAICoachService()
+        self.store = store ?? AICoachChatStore()
     }
 
     /// Rebind to a fresh session (e.g. after login or when opening the coach

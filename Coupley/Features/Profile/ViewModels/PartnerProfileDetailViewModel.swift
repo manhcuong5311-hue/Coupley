@@ -50,13 +50,13 @@ final class PartnerProfileDetailViewModel: ObservableObject {
         currentUserId: String,
         mode: Mode,
         hasPartner: Bool,
-        service: PartnerProfileDetailService = FirestorePartnerProfileDetailService()
+        service: PartnerProfileDetailService? = nil
     ) {
         self.targetUserId = targetUserId
         self.currentUserId = currentUserId
         self.mode = mode
         self.hasPartner = hasPartner
-        self.service = service
+        self.service = service ?? FirestorePartnerProfileDetailService()
 
         // Prime from cache so the screen doesn't flash empty state.
         self.profile = FirestorePartnerProfileDetailService.cached(userId: targetUserId)

@@ -36,14 +36,14 @@ final class AnniversaryViewModel: ObservableObject {
 
     init(
         session: UserSession,
-        service: AnniversaryService = FirestoreAnniversaryService(),
-        scheduler: AnniversaryNotificationScheduling = AnniversaryNotificationScheduler(),
-        storageService: AnniversaryStorageService = AnniversaryStorageService()
+        service: AnniversaryService? = nil,
+        scheduler: AnniversaryNotificationScheduling? = nil,
+        storageService: AnniversaryStorageService? = nil
     ) {
         self.session = session
-        self.service = service
-        self.scheduler = scheduler
-        self.storageService = storageService
+        self.service = service ?? FirestoreAnniversaryService()
+        self.scheduler = scheduler ?? AnniversaryNotificationScheduler()
+        self.storageService = storageService ?? AnniversaryStorageService()
     }
 
     deinit {
@@ -200,7 +200,7 @@ final class AnniversaryViewModel: ObservableObject {
     private func startTicking() {
         tickTimer?.invalidate()
         tickTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
-            Task { @MainActor in self?.now = Date() }
+            Task { @MainActor [weak self] in self?.now = Date() }
         }
     }
 

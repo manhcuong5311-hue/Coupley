@@ -43,8 +43,8 @@ final class PremiumStore: ObservableObject {
 
     // MARK: - Init
 
-    init(service: PremiumService = FirestorePremiumService()) {
-        self.service = service
+    init(service: PremiumService? = nil) {
+        self.service = service ?? FirestorePremiumService()
         transactionListenerTask = Task { await listenForSKTransactions() }
         Task { await loadProducts() }
     }

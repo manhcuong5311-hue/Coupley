@@ -57,15 +57,15 @@ final class ChatViewModel: ObservableObject {
     // MARK: - Init
 
     init(session: UserSession,
-         chatService:   CoupleChatServicing   = FirestoreCoupleChatService(),
-         orchestrator:  QuizOrchestrating     = DefaultQuizOrchestrator(),
-         insightGen:    InsightGenerating     = DefaultInsightGenerator(),
-         aggregator:    CoupleInsightAggregating = FirestoreCoupleInsightAggregator()) {
+         chatService:   CoupleChatServicing? = nil,
+         orchestrator:  QuizOrchestrating? = nil,
+         insightGen:    InsightGenerating? = nil,
+         aggregator:    CoupleInsightAggregating? = nil) {
         self.session = session
-        self.chatService  = chatService
-        self.orchestrator = orchestrator
-        self.insightGen   = insightGen
-        self.aggregator   = aggregator
+        self.chatService  = chatService  ?? FirestoreCoupleChatService()
+        self.orchestrator = orchestrator ?? DefaultQuizOrchestrator()
+        self.insightGen   = insightGen   ?? DefaultInsightGenerator()
+        self.aggregator   = aggregator   ?? FirestoreCoupleInsightAggregator()
     }
 
     deinit {

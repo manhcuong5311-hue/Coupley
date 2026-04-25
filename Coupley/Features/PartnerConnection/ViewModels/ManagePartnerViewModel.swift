@@ -25,8 +25,8 @@ final class ManagePartnerViewModel: ObservableObject {
 
     private let service: ConnectionService
 
-    init(service: ConnectionService = FirestoreConnectionService()) {
-        self.service = service
+    init(service: ConnectionService? = nil) {
+        self.service = service ?? FirestoreConnectionService()
     }
 
     // MARK: - Actions

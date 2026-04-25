@@ -94,9 +94,9 @@ final class OnboardingViewModel: ObservableObject {
 
     init(userId: String,
          initialName: String = "",
-         service: OnboardingServiceProtocol = FirestoreOnboardingService()) {
+         service: OnboardingServiceProtocol? = nil) {
         self.userId = userId
-        self.service = service
+        self.service = service ?? FirestoreOnboardingService()
         self.profile.firstName = initialName
     }
 

@@ -35,16 +35,16 @@ final class MicroActionViewModel: ObservableObject {
 
     init(
         session: UserSession,
-        generator: ActionGeneratorService = RuleBasedActionGenerator(),
-        store: MicroActionStore = UserDefaultsMicroActionStore(),
-        scheduler: MicroActionReminderScheduling = MicroActionReminderScheduler(),
-        profileService: ProfileService = LocalProfileService()
+        generator: ActionGeneratorService? = nil,
+        store: MicroActionStore? = nil,
+        scheduler: MicroActionReminderScheduling? = nil,
+        profileService: ProfileService? = nil
     ) {
         self.session = session
-        self.generator = generator
-        self.store = store
-        self.scheduler = scheduler
-        self.profileService = profileService
+        self.generator = generator ?? RuleBasedActionGenerator()
+        self.store = store ?? UserDefaultsMicroActionStore()
+        self.scheduler = scheduler ?? MicroActionReminderScheduler()
+        self.profileService = profileService ?? LocalProfileService()
 
         loadFromDisk()
     }
