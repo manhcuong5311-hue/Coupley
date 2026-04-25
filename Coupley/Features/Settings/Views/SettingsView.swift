@@ -24,6 +24,14 @@ struct SettingsView: View {
     @State private var currentDisplayName: String = Auth.auth().currentUser?.displayName ?? "—"
     @State private var showThemePaywall = false
 
+    /// Hidden 5-tap-on-version gesture re-triggers onboarding. Flipping
+    /// this flag is the *only* side effect — premium, pairing, and any
+    /// Firestore data are untouched.
+    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
+    @State private var versionTapCount = 0
+    @State private var versionTapResetTask: Task<Void, Never>?
+    @State private var showOnboardingResetConfirm = false
+
     let session: UserSession?
 
     var body: some View {
@@ -58,6 +66,15 @@ struct SettingsView: View {
                 dismiss()
             }
             Button("Cancel", role: .cancel) {}
+        }
+        .alert("Replay onboarding?", isPresented: $showOnboardingResetConfirm) {
+            Button("Replay", role: .destructive) {
+                hasCompletedOnboarding = false
+                dismiss()
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("You'll see the onboarding flow again. Your premium, partner, and saved data won't be touched.")
         }
     }
 
@@ -95,9 +112,9 @@ struct SettingsView: View {
     private var premiumSubtitle: String {
         if !premiumStore.isActive { return "Unlock all features for both of you" }
         switch premiumStore.source {
-        case .partner: return "Shared from your partner"
-        case .self_:   return "Active — thanks for supporting Coupley"
-        case .none:    return "Active"
+        case .partnerShared: return "Shared from your partner"
+        case .selfPaid:      return "Active — thanks for supporting Coupley"
+        case .free:          return "Active"
         }
     }
 
@@ -426,6 +443,8 @@ struct SettingsView: View {
         Section("About") {
             SettingsRow(icon: "info.circle.fill", iconTint: Brand.textSecondary,
                         title: "Version", value: appVersion)
+                .contentShape(Rectangle())
+                .onTapGesture { handleVersionTap() }
             if let url = URL(string: "https://coupley.app/privacy") {
                 Link(destination: url) {
                     HStack(spacing: 14) {
@@ -480,6 +499,40 @@ struct SettingsView: View {
         let v = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
         let b = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
         return "\(v) (\(b))"
+    }
+
+    // MARK: - Hidden onboarding-reset gesture
+    //
+    // 5 taps on the Version row within ~2.5s flips
+    // `hasCompletedOnboarding` so the onboarding flow re-runs the next time
+    // RootView observes the user as `.needsPairing`. This is a developer /
+    // QA convenience: it does NOT touch premium, partner pairing, or any
+    // Firestore data. The user just sees their existing onboarding screens
+    // again and can step through or skip.
+
+    private func handleVersionTap() {
+        versionTapCount += 1
+
+        // Light haptic on every tap; medium on the final unlock so the
+        // user feels the gesture commit.
+        if versionTapCount >= 5 {
+            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+            versionTapCount = 0
+            versionTapResetTask?.cancel()
+            versionTapResetTask = nil
+            showOnboardingResetConfirm = true
+            return
+        }
+
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+
+        // Reset the count if no further taps land within the window.
+        versionTapResetTask?.cancel()
+        versionTapResetTask = Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 2_500_000_000)
+            guard !Task.isCancelled else { return }
+            versionTapCount = 0
+        }
     }
 }
 

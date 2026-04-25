@@ -10,6 +10,65 @@
 import Foundation
 import FirebaseFirestore
 
+// MARK: - Custom Quiz Answer
+
+/// A user-authored quiz captured on the profile: a custom question, the options
+/// the user defined, and the subset they chose as their own answer. Shown as a
+/// Q&A card on the profile. Created behind the `customQuizzes` premium gate.
+struct CustomQuizAnswer: Equatable, Identifiable {
+    let id: String
+    var question: String
+    var options: [String]
+    var selectedOptions: [String]
+    var createdBy: String
+    var createdAt: Date
+
+    init(
+        id: String = UUID().uuidString,
+        question: String,
+        options: [String],
+        selectedOptions: [String],
+        createdBy: String,
+        createdAt: Date = Date()
+    ) {
+        self.id = id
+        self.question = question
+        self.options = options
+        self.selectedOptions = selectedOptions
+        self.createdBy = createdBy
+        self.createdAt = createdAt
+    }
+
+    init?(dict: [String: Any]) {
+        guard let id = dict["id"] as? String,
+              let question = dict["question"] as? String,
+              let options = dict["options"] as? [String] else { return nil }
+        self.id = id
+        self.question = question
+        self.options = options
+        self.selectedOptions = (dict["selectedOptions"] as? [String]) ?? []
+        self.createdBy = (dict["createdBy"] as? String) ?? ""
+        if let ts = dict["createdAt"] as? Timestamp {
+            self.createdAt = ts.dateValue()
+        } else if let date = dict["createdAt"] as? Date {
+            self.createdAt = date
+        } else {
+            self.createdAt = Date()
+        }
+    }
+
+    func dictionary() -> [String: Any] {
+        [
+            "id": id,
+            "question": question,
+            "options": options,
+            "selectedOptions": selectedOptions,
+            "createdBy": createdBy,
+            "createdAt": Timestamp(date: createdAt)
+        ]
+    }
+}
+
 // MARK: - Profile Detail Model
 
 struct PartnerProfileDetail: Equatable {
@@ -28,6 +87,10 @@ struct PartnerProfileDetail: Equatable {
     var dislikesAddedBy: [String: String]
     var activitiesAddedBy: [String: String]
 
+    /// User-authored Q&A entries (premium). Owner-only — partner can't add or
+    /// remove these because they're personal reflections rather than hints.
+    var customAnswers: [CustomQuizAnswer]
+
     var updatedAt: Date
 
     var isEmpty: Bool {
@@ -36,6 +99,7 @@ struct PartnerProfileDetail: Equatable {
         && communicationStyle.isEmpty
         && notes.isEmpty
         && activities.isEmpty
+        && customAnswers.isEmpty
     }
 
     static func empty(userId: String) -> PartnerProfileDetail {
@@ -49,6 +113,7 @@ struct PartnerProfileDetail: Equatable {
             likesAddedBy: [:],
             dislikesAddedBy: [:],
             activitiesAddedBy: [:],
+            customAnswers: [],
             updatedAt: .distantPast
         )
     }
@@ -65,6 +130,8 @@ struct PartnerProfileDetail: Equatable {
         self.likesAddedBy       = (data["likesAddedBy"]      as? [String: String]) ?? [:]
         self.dislikesAddedBy    = (data["dislikesAddedBy"]   as? [String: String]) ?? [:]
         self.activitiesAddedBy  = (data["activitiesAddedBy"] as? [String: String]) ?? [:]
+        let rawCustom = (data["customAnswers"] as? [[String: Any]]) ?? []
+        self.customAnswers      = rawCustom.compactMap { CustomQuizAnswer(dict: $0) }
         if let ts = data["profileUpdatedAt"] as? Timestamp {
             self.updatedAt = ts.dateValue()
         } else {
@@ -82,6 +149,7 @@ struct PartnerProfileDetail: Equatable {
         likesAddedBy: [String: String] = [:],
         dislikesAddedBy: [String: String] = [:],
         activitiesAddedBy: [String: String] = [:],
+        customAnswers: [CustomQuizAnswer] = [],
         updatedAt: Date
     ) {
         self.userId = userId
@@ -93,6 +161,7 @@ struct PartnerProfileDetail: Equatable {
         self.likesAddedBy = likesAddedBy
         self.dislikesAddedBy = dislikesAddedBy
         self.activitiesAddedBy = activitiesAddedBy
+        self.customAnswers = customAnswers
         self.updatedAt = updatedAt
     }
 
@@ -106,6 +175,7 @@ struct PartnerProfileDetail: Equatable {
             "likesAddedBy": likesAddedBy,
             "dislikesAddedBy": dislikesAddedBy,
             "activitiesAddedBy": activitiesAddedBy,
+            "customAnswers": customAnswers.map { $0.dictionary() },
             "profileUpdatedAt": FieldValue.serverTimestamp()
         ]
     }

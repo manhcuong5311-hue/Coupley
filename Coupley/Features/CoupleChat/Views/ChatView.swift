@@ -13,6 +13,7 @@ struct ChatView: View {
 
     @StateObject private var viewModel: ChatViewModel
     @ObservedObject var profileViewModel: CouplePersonProfileViewModel
+    @EnvironmentObject private var premiumStore: PremiumStore
     let session: UserSession
     @State private var showProfile = false
     @State private var showPartnerAndMe = false
@@ -20,6 +21,7 @@ struct ChatView: View {
     @State private var photosPickerItem: PhotosPickerItem? = nil
     @State private var pendingPhotoPopup: ChatMessage? = nil
     @State private var seenPhotoMessageIds: Set<String> = []
+    @State private var showPhotoPaywall = false
 
     init(session: UserSession, profileViewModel: CouplePersonProfileViewModel) {
         self.session = session
@@ -94,12 +96,29 @@ struct ChatView: View {
             .onDisappear { viewModel.stop() }
             .onChange(of: photosPickerItem) { _, item in
                 guard let item else { return }
+                // Re-check access at load time in case the user already sent
+                // their one free photo earlier in the same day.
+                guard premiumStore.hasAccess(to: .chatPhotos) else {
+                    photosPickerItem = nil
+                    showPhotoPaywall = true
+                    return
+                }
                 Task {
                     guard let data = try? await item.loadTransferable(type: Data.self),
                           let image = UIImage(data: data) else { return }
                     viewModel.sendPhoto(image)
+                    // Only count against the free daily quota — unlimited
+                    // sends for premium shouldn't consume the counter.
+                    if !premiumStore.isActive {
+                        premiumStore.recordUsage(for: .chatPhotos)
+                    }
                     await MainActor.run { photosPickerItem = nil }
                 }
+            }
+            .sheet(isPresented: $showPhotoPaywall) {
+                NavigationStack { PremiumPaywallView() }
+                    .environmentObject(premiumStore)
+                    .presentationDragIndicator(.visible)
             }
             .onChange(of: viewModel.messages) { _, messages in
                 checkForIncomingPhoto(in: messages)
@@ -232,27 +251,8 @@ struct ChatView: View {
             .buttonStyle(BouncyButtonStyle())
             .accessibilityLabel("Pick a quiz")
 
-            PhotosPicker(selection: $photosPickerItem, matching: .images) {
-                ZStack {
-                    if viewModel.isUploadingPhoto {
-                        ProgressView()
-                            .tint(Brand.accentStart)
-                            .controlSize(.small)
-                    } else {
-                        Image(systemName: "photo")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundStyle(Brand.accentStart)
-                    }
-                }
-                .frame(width: 38, height: 38)
-                .background(
-                    Circle()
-                        .fill(Brand.surfaceLight)
-                        .overlay(Circle().strokeBorder(Brand.divider, lineWidth: 1))
-                )
-            }
-            .disabled(viewModel.isUploadingPhoto)
-            .accessibilityLabel("Send a photo")
+            photoButton
+                .accessibilityLabel("Send a photo")
 
             TextField("Message", text: $viewModel.draftText, axis: .vertical)
                 .lineLimit(1...5)
@@ -295,6 +295,48 @@ struct ChatView: View {
     private var canSend: Bool {
         !viewModel.draftText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         && !viewModel.isSending
+    }
+
+    // MARK: - Photo button (gated by `chatPhotos` premium)
+
+    /// Free users can send 1 photo per day. When their quota is spent we
+    /// swap the `PhotosPicker` for a plain `Button` that surfaces the paywall
+    /// — mirrors the `AvatarPickerSheet` pattern so gating feels consistent.
+    @ViewBuilder
+    private var photoButton: some View {
+        if premiumStore.hasAccess(to: .chatPhotos) {
+            PhotosPicker(selection: $photosPickerItem, matching: .images) {
+                photoButtonLabel(locked: false)
+            }
+            .disabled(viewModel.isUploadingPhoto)
+        } else {
+            Button {
+                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                showPhotoPaywall = true
+            } label: {
+                photoButtonLabel(locked: true)
+            }
+        }
+    }
+
+    private func photoButtonLabel(locked: Bool) -> some View {
+        ZStack {
+            if viewModel.isUploadingPhoto {
+                ProgressView()
+                    .tint(Brand.accentStart)
+                    .controlSize(.small)
+            } else {
+                Image(systemName: locked ? "lock.fill" : "photo")
+                    .font(.system(size: locked ? 13 : 16, weight: .semibold))
+                    .foregroundStyle(locked ? Brand.textTertiary : Brand.accentStart)
+            }
+        }
+        .frame(width: 38, height: 38)
+        .background(
+            Circle()
+                .fill(Brand.surfaceLight)
+                .overlay(Circle().strokeBorder(Brand.divider, lineWidth: 1))
+        )
     }
 }
 

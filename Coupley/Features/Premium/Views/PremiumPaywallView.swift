@@ -173,11 +173,7 @@ struct PremiumPaywallView: View {
     }
 
     private var activeTitle: String {
-        switch premiumStore.source {
-        case .partner: return "Premium — shared from your partner"
-        case .self_:   return "Premium — active"
-        case .none:    return "Premium — active"
-        }
+        premiumStore.source.displayLabel
     }
 
     // MARK: - Plan Picker
@@ -302,11 +298,7 @@ struct PremiumPaywallView: View {
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(Brand.accentStart)
                     .frame(width: 18)
-                Text(feature == .aiMoodSuggestions ? "AI suggestions" :
-                     feature == .anniversaryPhoto ? "Anniversary photos" :
-                     feature == .fullQuizAccess ? "Quiz library" :
-                     feature == .customAvatar ? "Custom avatar" :
-                     feature == .allThemes ? "All themes" : "Date ideas")
+                Text(shortLabel(for: feature))
                     .font(.system(size: 13, weight: .medium, design: .rounded))
                     .foregroundStyle(Brand.textPrimary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -323,8 +315,7 @@ struct PremiumPaywallView: View {
                 Image(systemName: "checkmark")
                     .font(.system(size: 11, weight: .bold))
                     .foregroundStyle(Color(red: 0.25, green: 0.80, blue: 0.50))
-                Text(feature == .aiMoodSuggestions ? "50/day" :
-                     feature == .dateIdeas ? "25/day" : "Unlocked")
+                Text(premiumLabel(for: feature))
                     .font(.system(size: 11, weight: .semibold, design: .rounded))
                     .foregroundStyle(Color(red: 0.25, green: 0.80, blue: 0.50))
             }
@@ -332,6 +323,29 @@ struct PremiumPaywallView: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
+    }
+
+    private func shortLabel(for feature: PremiumFeature) -> String {
+        switch feature {
+        case .aiMoodSuggestions: return "AI suggestions"
+        case .anniversaryPhoto:  return "Anniversary photos"
+        case .fullQuizAccess:    return "Quiz library"
+        case .customQuizzes:     return "Custom quizzes"
+        case .customAvatar:      return "Custom avatar"
+        case .allThemes:         return "All themes"
+        case .dateIdeas:         return "Date ideas"
+        case .aiCoach:           return "AI Coach"
+        case .chatPhotos:        return "Chat photos"
+        }
+    }
+
+    private func premiumLabel(for feature: PremiumFeature) -> String {
+        switch feature {
+        case .aiMoodSuggestions: return "50/day"
+        case .dateIdeas:         return "25/day"
+        case .chatPhotos:        return "Unlimited"
+        default:                 return "Unlocked"
+        }
     }
 
     // MARK: - Partner Badge
@@ -345,7 +359,7 @@ struct PremiumPaywallView: View {
                 Text("Both partners get Premium")
                     .font(.system(size: 14, weight: .semibold, design: .rounded))
                     .foregroundStyle(Brand.textPrimary)
-                Text("One purchase covers you and your partner. Disconnect returns both to free.")
+                Text("One purchase shares Premium with your partner. If you disconnect, you keep it — your partner returns to free.")
                     .font(.system(size: 12, design: .rounded))
                     .foregroundStyle(Brand.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)

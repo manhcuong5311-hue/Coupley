@@ -68,7 +68,12 @@ struct RootView: View {
     @EnvironmentObject var sessionStore: SessionStore
     @EnvironmentObject var notificationViewModel: NotificationViewModel
     @EnvironmentObject var premiumStore: PremiumStore
-    @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
+
+    /// Per-user gate. Survives sign-out (deliberate — no need to re-onboard
+    /// the same human between sessions) and is the *only* flag that gates
+    /// the onboarding flow. The 5-tap reset gesture in Settings flips this
+    /// without touching premium, pairing, or any Firestore data.
+    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
 
     var body: some View {
         Group {
@@ -77,16 +82,21 @@ struct RootView: View {
                 SplashView()
 
             case .unauthenticated:
-                if hasSeenOnboarding {
-                    AuthView()
-                } else {
-                    OnboardingView()
-                }
+                WelcomeView()
 
             case .needsPairing(let userId, let displayName):
-                ContentView(session: UserSession.solo(userId: userId), displayName: displayName)
-                    .environmentObject(notificationViewModel)
-                    .task { notificationViewModel.requestPermissionIfNeeded() }
+                if hasCompletedOnboarding {
+                    ContentView(session: UserSession.solo(userId: userId), displayName: displayName)
+                        .environmentObject(notificationViewModel)
+                        .task { notificationViewModel.requestPermissionIfNeeded() }
+                } else {
+                    OnboardingFlowView(userId: userId, initialName: displayName) {
+                        // Closure runs on the main actor after `complete()`
+                        // lands — flips the local flag, which RootView
+                        // re-renders against.
+                        hasCompletedOnboarding = true
+                    }
+                }
 
             case .ready(let session):
                 ContentView(session: session, displayName: nil)

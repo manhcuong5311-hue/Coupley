@@ -108,7 +108,7 @@ final class PremiumStore: ObservableObject {
 
     func hasAccess(to feature: PremiumFeature) -> Bool {
         switch feature {
-        case .customAvatar, .anniversaryPhoto, .allThemes, .fullQuizAccess:
+        case .customAvatar, .anniversaryPhoto, .allThemes, .fullQuizAccess, .customQuizzes:
             return isActive
         case .dateIdeas:
             // Free: totally locked
@@ -121,6 +121,10 @@ final class PremiumStore: ObservableObject {
             if isActive { return true }
             // Free: 1 coaching session per day (opens the coach, deep features still premium)
             return dailyUsage(for: .aiCoach) < 1
+        case .chatPhotos:
+            if isActive { return true }
+            // Free: 1 photo per day
+            return dailyUsage(for: .chatPhotos) < 1
         }
     }
 

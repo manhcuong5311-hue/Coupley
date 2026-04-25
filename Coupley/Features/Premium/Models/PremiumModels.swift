@@ -52,12 +52,29 @@ enum PremiumPlan: String, CaseIterable, Identifiable, Codable {
 
 // MARK: - Premium Source
 
-/// Indicates *why* this user has premium — via their own purchase or inherited
-/// from a paired partner.
+/// Why this user has premium. Derived from the stored `purchaserId` — NOT
+/// persisted separately, so there's a single source of truth:
+///   - `.selfPaid`       → users/{uid}.premium.purchaserId == uid
+///   - `.partnerShared`  → couples/{cid}.premium.purchaserId == partnerUid
+///                          (and this user is not self-paid)
+///   - `.free`           → neither doc reports an active, valid entitlement
+///
+/// This is the *ownership model*: only `.selfPaid` survives a disconnect.
+/// Shared access evaporates the moment the couple doc is deleted or its
+/// premium is cleared.
 enum PremiumSource: String, Codable {
-    case none
-    case self_   = "self"
-    case partner
+    case free = "none"           // raw values kept for backward compat with
+    case selfPaid = "self"       // any previously-written Firestore snapshots
+    case partnerShared = "partner"
+
+    /// User-facing label for premium state rows (Settings, Paywall).
+    var displayLabel: String {
+        switch self {
+        case .selfPaid:       return "Premium (Your Plan)"
+        case .partnerShared:  return "Premium (via Partner)"
+        case .free:           return "Free Plan"
+        }
+    }
 }
 
 // MARK: - Premium Feature
@@ -68,9 +85,11 @@ enum PremiumFeature: String, CaseIterable {
     case anniversaryPhoto      // Upload cover photo for anniversaries (free: none)
     case allThemes             // All theme styles (free: default only)
     case fullQuizAccess        // All quiz topics (free: first half of topics)
+    case customQuizzes         // Create custom quizzes with your own question + options (free: locked)
     case dateIdeas             // Date ideas access (free: locked, premium: 25/day)
     case aiMoodSuggestions     // AI mood suggestions (free: 1/day, premium: 50/day)
     case aiCoach               // AI Relationship Coach (free: 2 sessions/week, premium: unlimited + deep features)
+    case chatPhotos            // Send pictures in chat (free: 1/day, premium: unlimited)
 
     var label: String {
         switch self {
@@ -78,9 +97,11 @@ enum PremiumFeature: String, CaseIterable {
         case .anniversaryPhoto:   return "Anniversary cover photos"
         case .allThemes:          return "All themes & styles"
         case .fullQuizAccess:     return "Full quiz library"
+        case .customQuizzes:      return "Create your own quizzes"
         case .dateIdeas:          return "Date ideas (25/day)"
         case .aiMoodSuggestions:  return "AI mood suggestions (50/day)"
         case .aiCoach:            return "AI Relationship Coach"
+        case .chatPhotos:         return "Unlimited chat photos"
         }
     }
 
@@ -90,9 +111,11 @@ enum PremiumFeature: String, CaseIterable {
         case .anniversaryPhoto:   return "No cover photos"
         case .allThemes:          return "Default theme only"
         case .fullQuizAccess:     return "Half the quiz library"
+        case .customQuizzes:      return "Locked"
         case .dateIdeas:          return "Locked"
         case .aiMoodSuggestions:  return "1 per day"
         case .aiCoach:            return "2 sessions per week"
+        case .chatPhotos:         return "1 photo per day"
         }
     }
 
@@ -102,9 +125,11 @@ enum PremiumFeature: String, CaseIterable {
         case .anniversaryPhoto:   return "photo.fill"
         case .allThemes:          return "paintpalette.fill"
         case .fullQuizAccess:     return "questionmark.bubble.fill"
+        case .customQuizzes:      return "pencil.and.list.clipboard"
         case .dateIdeas:          return "map.fill"
         case .aiMoodSuggestions:  return "sparkles"
         case .aiCoach:            return "heart.text.square.fill"
+        case .chatPhotos:         return "camera.fill"
         }
     }
 
@@ -114,6 +139,7 @@ enum PremiumFeature: String, CaseIterable {
         case .aiMoodSuggestions: return 1
         case .dateIdeas:         return 0  // locked
         case .aiCoach:           return 1  // 1 session per day on free tier
+        case .chatPhotos:        return 1  // 1 photo per day on free tier
         default:                 return nil
         }
     }
@@ -137,7 +163,7 @@ struct PremiumEntitlement: Codable, Equatable {
     let expiresAt: Date?
 
     static let inactive = PremiumEntitlement(
-        active: false, plan: nil, source: .none, expiresAt: nil
+        active: false, plan: nil, source: .free, expiresAt: nil
     )
 
     var isActive: Bool {

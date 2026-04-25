@@ -72,6 +72,14 @@ final class FirestoreConnectionService: ConnectionService {
             ConnectionField.disconnectedBy: session.userId
         ], forDocument: coupleRef, merge: true)
 
+        // Clear the shared premium slot atomically with the disconnect so the
+        // non-paying partner drops to free the instant the batch commits.
+        // The paying user's `/users/{uid}.premium` is NOT touched here —
+        // their real subscription must survive disconnect (ownership rule).
+        batch.setData([
+            "premium": ["active": false]
+        ], forDocument: coupleRef, merge: true)
+
         // Archive the link on the initiator's doc.
         batch.setData([
             ConnectionField.coupleId:      FieldValue.delete(),

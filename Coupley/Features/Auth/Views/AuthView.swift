@@ -2,13 +2,22 @@
 //  AuthView.swift
 //  Coupley
 //
+//  Email + password sub-flow, pushed onto WelcomeView's NavigationStack
+//  when the user taps "Continue with Email". Shares an `AuthViewModel`
+//  with WelcomeView so loading/error state is coherent across providers.
+//
+//  Two visual modes: `.login` (existing user) and `.signUp` (new user).
+//  The toggle row at the bottom flips between them with a soft spring;
+//  fields and CTA copy animate accordingly.
+//
 
 import SwiftUI
 
-struct AuthView: View {
+struct EmailAuthView: View {
 
-    @StateObject private var viewModel = AuthViewModel()
+    @ObservedObject var viewModel: AuthViewModel
     @FocusState private var focusedField: Field?
+    @Environment(\.dismiss) private var dismiss
 
     private enum Field { case name, email, password, confirm }
 
@@ -18,6 +27,7 @@ struct AuthView: View {
                 headerSection
                 formSection
                 submitSection
+                Spacer(minLength: 24)
                 toggleSection
                 Spacer(minLength: 60)
             }
@@ -25,41 +35,54 @@ struct AuthView: View {
         .scrollBounceBehavior(.basedOnSize)
         .scrollDismissesKeyboard(.interactively)
         .brandBackground()
+        .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(false)
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                Text(viewModel.mode == .login ? "Sign In" : "Create Account")
+                    .font(.system(size: 16, weight: .semibold, design: .rounded))
+                    .foregroundStyle(Brand.textPrimary)
+            }
+        }
         .animation(.spring(response: 0.38, dampingFraction: 0.85), value: viewModel.mode)
     }
 
     // MARK: - Header
 
     private var headerSection: some View {
-        VStack(spacing: 14) {
+        VStack(spacing: 12) {
             ZStack {
                 Circle()
-                    .fill(Brand.accentStart.opacity(0.15))
-                    .frame(width: 110, height: 110)
-                    .blur(radius: 30)
+                    .fill(Brand.accentStart.opacity(0.12))
+                    .frame(width: 90, height: 90)
+                    .blur(radius: 22)
 
                 Circle()
                     .fill(Brand.surfaceLight)
-                    .frame(width: 80, height: 80)
+                    .frame(width: 70, height: 70)
                     .overlay(Circle().strokeBorder(Brand.divider, lineWidth: 1))
-                    .overlay { Text("💑").font(.system(size: 34)) }
+                    .overlay {
+                        Image(systemName: viewModel.mode == .login ? "lock.open.fill" : "person.fill.badge.plus")
+                            .font(.system(size: 26, weight: .semibold))
+                            .foregroundStyle(Brand.accentStart)
+                    }
             }
-            .padding(.top, 90)
+            .padding(.top, 28)
 
             Text(viewModel.mode == .login ? "Welcome back" : "Create your account")
-                .font(.system(size: 30, weight: .bold, design: .rounded))
+                .font(.system(size: 26, weight: .bold, design: .rounded))
                 .foregroundStyle(Brand.textPrimary)
                 .multilineTextAlignment(.center)
 
             Text(viewModel.mode == .login
                  ? "Sign in to reconnect with your partner."
                  : "Start your journey together.")
-                .font(.system(size: 16, weight: .regular, design: .rounded))
+                .font(.system(size: 15, weight: .regular, design: .rounded))
                 .foregroundStyle(Brand.textSecondary)
                 .multilineTextAlignment(.center)
         }
         .padding(.horizontal, 28)
-        .padding(.bottom, 44)
+        .padding(.bottom, 32)
     }
 
     // MARK: - Form
@@ -72,35 +95,33 @@ struct AuthView: View {
                     .transition(.move(edge: .top).combined(with: .opacity))
             }
 
-            BrandField(icon: "envelope", placeholder: "Email address",
-                       text: $viewModel.email, keyboardType: .emailAddress, textContentType: .emailAddress)
+            BrandField(icon: "envelope",
+                       placeholder: "Email address",
+                       text: $viewModel.email,
+                       keyboardType: .emailAddress,
+                       textContentType: .emailAddress)
                 .focused($focusedField, equals: .email)
 
-            BrandField(icon: "lock", placeholder: "Password",
+            BrandField(icon: "lock",
+                       placeholder: "Password",
                        text: $viewModel.password,
                        textContentType: viewModel.mode == .login ? .password : .newPassword,
                        isSecure: true)
                 .focused($focusedField, equals: .password)
 
             if viewModel.mode == .signUp {
-                BrandField(icon: "lock.fill", placeholder: "Confirm password",
+                BrandField(icon: "lock.fill",
+                           placeholder: "Confirm password",
                            text: $viewModel.confirmPassword,
-                           textContentType: .newPassword, isSecure: true)
+                           textContentType: .newPassword,
+                           isSecure: true)
                     .focused($focusedField, equals: .confirm)
                     .transition(.move(edge: .top).combined(with: .opacity))
             }
 
-            if let error = viewModel.errorMessage {
-                HStack(spacing: 8) {
-                    Image(systemName: "exclamationmark.circle.fill").font(.system(size: 14))
-                    Text(error).font(.system(size: 13, weight: .medium, design: .rounded))
-                }
-                .foregroundStyle(Color(red: 1.0, green: 0.42, blue: 0.42))
-                .padding(14)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color(red: 1.0, green: 0.25, blue: 0.25).opacity(0.12))
-                .clipShape(RoundedRectangle(cornerRadius: 12))
-                .transition(.move(edge: .top).combined(with: .opacity))
+            if let error = viewModel.errorMessage, !error.isEmpty {
+                ErrorBanner(message: error)
+                    .transition(.move(edge: .top).combined(with: .opacity))
             }
         }
         .padding(.horizontal, 24)
@@ -110,13 +131,13 @@ struct AuthView: View {
 
     private var submitSection: some View {
         PrimaryButton(title: viewModel.submitTitle,
-                      isLoading: viewModel.isLoading,
+                      isLoading: viewModel.loadingProvider == .email,
                       isEnabled: viewModel.canSubmit) {
             focusedField = nil
-            viewModel.submit()
+            viewModel.submitEmail()
         }
         .padding(.horizontal, 24)
-        .padding(.top, 28)
+        .padding(.top, 24)
     }
 
     // MARK: - Toggle
@@ -128,10 +149,11 @@ struct AuthView: View {
                 withAnimation(.spring(response: 0.38, dampingFraction: 0.85)) { viewModel.toggleMode() }
                 UIImpactFeedbackGenerator(style: .light).impactOccurred()
             }
-            .foregroundStyle(Brand.accentStart).fontWeight(.semibold)
+            .foregroundStyle(Brand.accentStart)
+            .fontWeight(.semibold)
         }
         .font(.system(size: 14, weight: .regular, design: .rounded))
-        .padding(.top, 24)
+        .padding(.top, 12)
     }
 }
 
@@ -183,5 +205,11 @@ struct BrandField: View {
                 .animation(.easeInOut(duration: 0.2), value: isFocused)
         )
         .onTapGesture { isFocused = true }
+    }
+}
+
+#Preview {
+    NavigationStack {
+        EmailAuthView(viewModel: AuthViewModel())
     }
 }

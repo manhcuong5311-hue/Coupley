@@ -817,10 +817,44 @@ exports.onUserPremiumChanged = onDocumentWritten(
     if (!coupleId) return; // solo users — nothing to propagate
     if (!nextPremium.active) return; // on cancellation, the client also clears the couple doc
 
-    await db.collection("couples").doc(coupleId).set(
-      { premium: nextPremium },
-      { merge: true }
-    );
+    // Ownership sanity check: /users/{uid}.premium is only valid when its
+    // purchaserId matches uid. Refuse to propagate any other shape so a
+    // malformed write, a stale migration, or a future schema bug can never
+    // grant shared access to a couple from a foreign purchase slot.
+    if (nextPremium.purchaserId !== event.params.userId) {
+      console.warn(
+        `Refusing to propagate premium from user ${event.params.userId}: ` +
+        `purchaserId=${nextPremium.purchaserId} does not match uid.`
+      );
+      return;
+    }
+
+    // Safe-overwrite: only write to the couple slot when it's empty,
+    // expired, or already ours. If the partner currently holds a valid
+    // active subscription there, leave it — both partners end up self-paid
+    // on their own user docs and the merger will attribute correctly.
+    const coupleRef = db.collection("couples").doc(coupleId);
+    await db.runTransaction(async (txn) => {
+      const snap = await txn.get(coupleRef);
+      const existing = snap.data()?.premium || {};
+      const existingActive = existing.active === true;
+      const existingExpiry = existing.expiresAt?.toMillis?.() || 0;
+      const existingStillValid = existingActive &&
+        (existingExpiry === 0 || existingExpiry > Date.now());
+
+      let shouldOverwrite;
+      if (!existingStillValid) {
+        shouldOverwrite = true;
+      } else if (existing.purchaserId === event.params.userId) {
+        shouldOverwrite = true;
+      } else {
+        shouldOverwrite = false;
+      }
+
+      if (shouldOverwrite) {
+        txn.set(coupleRef, { premium: nextPremium }, { merge: true });
+      }
+    });
     console.log(`Propagated premium to couple ${coupleId} from user ${event.params.userId}`);
   }
 );
