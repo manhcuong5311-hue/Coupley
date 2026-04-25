@@ -105,6 +105,8 @@ struct RootView: View {
         }
         .animation(.easeInOut(duration: 0.38), value: stateID)
         .brandBackground()        // fills the full screen, no black bars
+        .attachWidgetSync()       // bind WidgetSyncService to session changes
+        .handleWidgetDeepLinks()  // route coupley:// URLs from the widget
         .onChange(of: stateID) { _, _ in syncPremiumBinding() }
         .onAppear { syncPremiumBinding() }
     }

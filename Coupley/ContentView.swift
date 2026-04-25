@@ -20,6 +20,7 @@ struct ContentView: View {
 
     @EnvironmentObject var sessionStore: SessionStore
     @EnvironmentObject var notificationViewModel: NotificationViewModel
+    @ObservedObject private var deepLinkRouter = WidgetDeepLinkRouter.shared
     @State private var selectedTab: AppTab = .home
     @State private var showPairingSheet = false
     @State private var showStatsSheet = false
@@ -159,6 +160,10 @@ struct ContentView: View {
             .onChange(of: notificationViewModel.navigateToDashboard) { _, navigate in
                 if navigate { selectedTab = .home; notificationViewModel.navigateToDashboard = false }
             }
+            .onChange(of: deepLinkRouter.pendingDestination) { _, destination in
+                handleWidgetDestination(destination)
+            }
+            .onAppear { handleWidgetDestination(deepLinkRouter.pendingDestination) }
             .onChange(of: sessionStore.isPaired) { _, paired in
                 if paired {
                     coupleViewModel.startListening()
@@ -167,6 +172,30 @@ struct ContentView: View {
                     nudgeViewModel.startListening()
                 }
             }
+    }
+
+    // MARK: - Widget Deep Link Routing
+
+    /// Translates an incoming widget destination into tab + sheet state.
+    /// Calling with `nil` is a no-op so this is safe to invoke on appear.
+    private func handleWidgetDestination(_ destination: WidgetDeepLink?) {
+        guard let destination else { return }
+        switch destination {
+        case .home:
+            selectedTab = .home
+        case .anniversary:
+            selectedTab = .anniversary
+        case .mood:
+            selectedTab = .mood
+        case .partner:
+            // Surface the pairing sheet only when the user can act on it.
+            if !session.isPaired {
+                showPairingSheet = true
+            } else {
+                selectedTab = .home
+            }
+        }
+        deepLinkRouter.consume()
     }
 
     // MARK: - Connect Partner Banner

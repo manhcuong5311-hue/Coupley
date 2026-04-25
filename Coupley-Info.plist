@@ -26,6 +26,16 @@
 				<string>com.googleusercontent.apps.210474027136-76t0ivckn409mkn8pulrpn139boonscs</string>
 			</array>
 		</dict>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>com.SamCorp.Coupley.widget</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>coupley</string>
+			</array>
+		</dict>
 	</array>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>

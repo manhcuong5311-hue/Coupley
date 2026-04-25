@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0D1D33A62F9CA34B006E7363 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0D1D33A52F9CA34B006E7363 /* WidgetKit.framework */; };
+		0D1D33A82F9CA34B006E7363 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0D1D33A72F9CA34B006E7363 /* SwiftUI.framework */; };
+		0D1D33B92F9CA34C006E7363 /* CoupleyWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 0D1D33A32F9CA34B006E7363 /* CoupleyWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		0D552E342F7D2FC4007A7BAD /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 0D552E332F7D2FC4007A7BAD /* FirebaseAnalytics */; };
 		0D552E362F7D2FC4007A7BAD /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 0D552E352F7D2FC4007A7BAD /* FirebaseAuth */; };
 		0D552E382F7D2FC4007A7BAD /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 0D552E372F7D2FC4007A7BAD /* FirebaseFirestore */; };
@@ -14,19 +17,79 @@
 		0DE88DC92F987061002BCB01 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 0DE88DC82F987061002BCB01 /* FirebaseStorage */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		0D1D33B72F9CA34C006E7363 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 0D552DF52F7D2C55007A7BAD /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 0D1D33A22F9CA34B006E7363;
+			remoteInfo = CoupleyWidgetExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		0D1D33BE2F9CA34C006E7363 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				0D1D33B92F9CA34C006E7363 /* CoupleyWidgetExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		0D1D33A32F9CA34B006E7363 /* CoupleyWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = CoupleyWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		0D1D33A52F9CA34B006E7363 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		0D1D33A72F9CA34B006E7363 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		0D1D33DE2F9CA393006E7363 /* CoupleyWidgetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = CoupleyWidgetExtension.entitlements; sourceTree = "<group>"; };
 		0D552DFD2F7D2C55007A7BAD /* Coupley.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Coupley.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		0D1D33BA2F9CA34C006E7363 /* Exceptions for "CoupleyWidget" folder in "CoupleyWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 0D1D33A22F9CA34B006E7363 /* CoupleyWidgetExtension */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		0D1D33A92F9CA34B006E7363 /* CoupleyWidget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				0D1D33BA2F9CA34C006E7363 /* Exceptions for "CoupleyWidget" folder in "CoupleyWidgetExtension" target */,
+			);
+			path = CoupleyWidget;
+			sourceTree = "<group>";
+		};
 		0D552DFF2F7D2C55007A7BAD /* Coupley */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = Coupley;
 			sourceTree = "<group>";
 		};
+		0DAAAA012F9CA34C006E7363 /* Shared */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Shared;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		0D1D33A02F9CA34B006E7363 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0D1D33A82F9CA34B006E7363 /* SwiftUI.framework in Frameworks */,
+				0D1D33A62F9CA34B006E7363 /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		0D552DFA2F7D2C55007A7BAD /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -42,10 +105,23 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		0D1D33A42F9CA34B006E7363 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				0D1D33A52F9CA34B006E7363 /* WidgetKit.framework */,
+				0D1D33A72F9CA34B006E7363 /* SwiftUI.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		0D552DF42F7D2C55007A7BAD = {
 			isa = PBXGroup;
 			children = (
+				0D1D33DE2F9CA393006E7363 /* CoupleyWidgetExtension.entitlements */,
 				0D552DFF2F7D2C55007A7BAD /* Coupley */,
+				0DAAAA012F9CA34C006E7363 /* Shared */,
+				0D1D33A92F9CA34B006E7363 /* CoupleyWidget */,
+				0D1D33A42F9CA34B006E7363 /* Frameworks */,
 				0D552DFE2F7D2C55007A7BAD /* Products */,
 			);
 			sourceTree = "<group>";
@@ -54,6 +130,7 @@
 			isa = PBXGroup;
 			children = (
 				0D552DFD2F7D2C55007A7BAD /* Coupley.app */,
+				0D1D33A32F9CA34B006E7363 /* CoupleyWidgetExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -61,6 +138,29 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		0D1D33A22F9CA34B006E7363 /* CoupleyWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 0D1D33BB2F9CA34C006E7363 /* Build configuration list for PBXNativeTarget "CoupleyWidgetExtension" */;
+			buildPhases = (
+				0D1D339F2F9CA34B006E7363 /* Sources */,
+				0D1D33A02F9CA34B006E7363 /* Frameworks */,
+				0D1D33A12F9CA34B006E7363 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				0D1D33A92F9CA34B006E7363 /* CoupleyWidget */,
+				0DAAAA012F9CA34C006E7363 /* Shared */,
+			);
+			name = CoupleyWidgetExtension;
+			packageProductDependencies = (
+			);
+			productName = CoupleyWidgetExtension;
+			productReference = 0D1D33A32F9CA34B006E7363 /* CoupleyWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		0D552DFC2F7D2C55007A7BAD /* Coupley */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 0D552E082F7D2C55007A7BAD /* Build configuration list for PBXNativeTarget "Coupley" */;
@@ -68,13 +168,16 @@
 				0D552DF92F7D2C55007A7BAD /* Sources */,
 				0D552DFA2F7D2C55007A7BAD /* Frameworks */,
 				0D552DFB2F7D2C55007A7BAD /* Resources */,
+				0D1D33BE2F9CA34C006E7363 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				0D1D33B82F9CA34C006E7363 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				0D552DFF2F7D2C55007A7BAD /* Coupley */,
+				0DAAAA012F9CA34C006E7363 /* Shared */,
 			);
 			name = Coupley;
 			packageProductDependencies = (
@@ -98,6 +201,9 @@
 				LastSwiftUpdateCheck = 2610;
 				LastUpgradeCheck = 2610;
 				TargetAttributes = {
+					0D1D33A22F9CA34B006E7363 = {
+						CreatedOnToolsVersion = 26.1.1;
+					};
 					0D552DFC2F7D2C55007A7BAD = {
 						CreatedOnToolsVersion = 26.1.1;
 					};
@@ -121,11 +227,19 @@
 			projectRoot = "";
 			targets = (
 				0D552DFC2F7D2C55007A7BAD /* Coupley */,
+				0D1D33A22F9CA34B006E7363 /* CoupleyWidgetExtension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		0D1D33A12F9CA34B006E7363 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		0D552DFB2F7D2C55007A7BAD /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -136,6 +250,13 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		0D1D339F2F9CA34B006E7363 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		0D552DF92F7D2C55007A7BAD /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -145,7 +266,79 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		0D1D33B82F9CA34C006E7363 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 0D1D33A22F9CA34B006E7363 /* CoupleyWidgetExtension */;
+			targetProxy = 0D1D33B72F9CA34C006E7363 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		0D1D33BC2F9CA34C006E7363 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = CoupleyWidgetExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 553U32259K;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = CoupleyWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = CoupleyWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.SamCorp.Coupley.CoupleyWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		0D1D33BD2F9CA34C006E7363 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = CoupleyWidgetExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 553U32259K;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = CoupleyWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = CoupleyWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.SamCorp.Coupley.CoupleyWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 		0D552E062F7D2C55007A7BAD /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -342,6 +535,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		0D1D33BB2F9CA34C006E7363 /* Build configuration list for PBXNativeTarget "CoupleyWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0D1D33BC2F9CA34C006E7363 /* Debug */,
+				0D1D33BD2F9CA34C006E7363 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		0D552DF82F7D2C55007A7BAD /* Build configuration list for PBXProject "Coupley" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
