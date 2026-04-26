@@ -101,11 +101,6 @@ struct MoodCheckinView: View {
                 }
                 viewModel.loadTodayCount()
             }
-            .sheet(isPresented: $viewModel.showSuggestions) {
-                if let context = viewModel.lastMoodContext {
-                    SuggestionView(moodContext: context, partnerProfile: .samplePartner)
-                }
-            }
         }
     }
 

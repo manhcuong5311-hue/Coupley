@@ -110,6 +110,9 @@ final class PremiumStore: ObservableObject {
         switch feature {
         case .customAvatar, .anniversaryPhoto, .allThemes, .fullQuizAccess, .customQuizzes:
             return isActive
+        case .memoryCapsule:
+            // Free: locked. Capsules are an emotional premium hook.
+            return isActive
         case .dateIdeas:
             // Free: totally locked
             return isActive

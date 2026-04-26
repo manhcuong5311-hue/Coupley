@@ -79,8 +79,8 @@ struct ContentView: View {
                     .tabItem { Label("Mood", systemImage: "heart.fill") }
                     .tag(AppTab.mood)
 
-                AnniversaryListView(session: session)
-                    .tabItem { Label("Anniversary", systemImage: "calendar.badge.clock") }
+                TimeTreeView(session: session, displayName: displayName)
+                    .tabItem { Label("Time Tree", systemImage: "leaf.fill") }
                     .tag(AppTab.anniversary)
 
                 ChatView(session: session, profileViewModel: profileViewModel)

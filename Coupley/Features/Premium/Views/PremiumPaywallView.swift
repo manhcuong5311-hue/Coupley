@@ -328,7 +328,7 @@ struct PremiumPaywallView: View {
     private func shortLabel(for feature: PremiumFeature) -> String {
         switch feature {
         case .aiMoodSuggestions: return "AI suggestions"
-        case .anniversaryPhoto:  return "Anniversary photos"
+        case .anniversaryPhoto:  return "Memory photos"
         case .fullQuizAccess:    return "Quiz library"
         case .customQuizzes:     return "Custom quizzes"
         case .customAvatar:      return "Custom avatar"
@@ -336,6 +336,7 @@ struct PremiumPaywallView: View {
         case .dateIdeas:         return "Date ideas"
         case .aiCoach:           return "AI Coach"
         case .chatPhotos:        return "Chat photos"
+        case .memoryCapsule:     return "Memory Capsules"
         }
     }
 

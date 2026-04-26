@@ -15,14 +15,17 @@ rules_version = '2';
 //     /anniversaries/{id}                              — anniversary events
 //     /pings/{pingId}                                  — presence heartbeats
 //     /notifications/{id}                              — in-app notifications
+//   /ai_usage_daily/{docId}                            — server-only usage counters
+//   /ai_coach_sessions/{sessionId}                     — coach session logs (owner-read)
+//   /abuse_logs/{logId}                                — server-only abuse records
+//   /notifications/{id}                                — global push-notification log (server-write)
+//   /aiSuggestionLogs/{id}                             — server-only analytics
 //
 // Security model:
-//   * Couple membership is the primary gate: `isCoupleMember(coupleId)`
-//     checks userIds on the parent couple doc.
-//   * Pairing (cross-user write) and soft-disconnect (partner-scoped write)
-//     are explicit carve-outs on /users/{uid}.
-//   * Hard-delete of shared data is ONLY allowed when the couple doc's
-//     status is "disconnected" — prevents accidental wipe of an active pairing.
+//   * Couple membership is the primary gate on all couple sub-collections.
+//   * ai_usage_daily, abuse_logs, aiSuggestionLogs are server-admin only (deny all client).
+//   * ai_coach_sessions are owner-readable (the authenticated user whose userId matches).
+//   * Hard-delete of shared data is ONLY allowed when the couple doc status == "disconnected".
 
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -52,15 +55,11 @@ service cloud.firestore {
         && request.auth.uid in coupleDoc(coupleId).userIds;
     }
 
-    // True iff the couple has already been soft-disconnected. Used to gate
-    // hard-delete: we never allow destructive writes on an active pairing.
     function isDisconnectedCouple(coupleId) {
       return isCoupleMember(coupleId)
         && coupleDoc(coupleId).get('status', 'active') == 'disconnected';
     }
 
-    // A user is "unpaired" if their doc carries no live coupleId. We treat
-    // missing / null / "" as unpaired so the pairing join write is safe.
     function isUnpaired(userData) {
       return !('coupleId' in userData)
         || userData.coupleId == null
@@ -71,34 +70,31 @@ service cloud.firestore {
     // /users/{userId}
     // ------------------------------------------------------------------
     //
-    // Reads: any signed-in user (pairing preview, partner lookup, presence).
-    // Create: owner only.
-    // Update: owner, OR joiner attaching themselves to an unpaired creator
-    //   during pairing, OR the current partner flipping disconnect fields.
-    // Delete: owner only.
+    // Read: self, or a verified couple-member doing a partner lookup.
+    // This is tightened from the original "any signed-in user" to prevent
+    // unauthenticated enumeration of all user profiles.
 
     match /users/{userId} {
-      allow read:   if isSignedIn();
+      // Allow read if the requester is the owner, OR is already in the same
+      // couple (partner lookup), OR the target is still unpaired (pairing flow).
+      allow read: if isSelf(userId)
+                  || (isSignedIn() && resource.data.get('coupleId', '') != ''
+                      && isCoupleMember(resource.data.coupleId))
+                  || (isSignedIn() && isUnpaired(resource.data));
+
       allow create: if isSelf(userId);
 
       allow update: if isSignedIn() && (
-        // 1. Owner updates their own doc.
         isSelf(userId)
 
-        // 2. Pairing join — the caller is attaching as the partner of
-        //    a currently-unpaired user. We require:
-        //      - the target is unpaired (no live coupleId)
-        //      - incoming.partnerId == auth.uid (you name yourself as partner)
-        //    The matching couple create happens atomically in the same batch.
+        // Pairing join — attaching as the partner of an unpaired user.
         || (
           isUnpaired(resource.data)
           && 'partnerId' in incoming()
           && incoming().partnerId == request.auth.uid
         )
 
-        // 3. Disconnect — the caller is the current partner of the target.
-        //    Permits clearing coupleId/partnerId and setting lastCoupleId /
-        //    lastPartnerId / pendingDisconnectNotice / lastPartnerName.
+        // Disconnect — the current partner clearing the pairing fields.
         || (
           'partnerId' in resource.data
           && resource.data.partnerId == request.auth.uid
@@ -122,9 +118,6 @@ service cloud.firestore {
                     && resource.data.creatorId == request.auth.uid
                     && incoming().creatorId == request.auth.uid;
 
-      // Deletion happens either when the creator revokes or when the
-      // joining user consumes the code in the pairing batch. Both are
-      // authenticated flows; codes are single-use 6-char secrets.
       allow delete: if isSignedIn();
     }
 
@@ -139,15 +132,11 @@ service cloud.firestore {
                        && 'userIds' in resource.data
                        && request.auth.uid in resource.data.userIds;
 
-      // Create: any signed-in user may create the doc during pairing,
-      // but it must name exactly two participants including themself.
       allow create: if isSignedIn()
                     && incoming().userIds is list
                     && incoming().userIds.size() == 2
                     && request.auth.uid in incoming().userIds;
 
-      // Update: requester must already be a member, and the participant
-      // list (if present) must still contain both original members.
       allow update: if isSignedIn()
                     && request.auth.uid in resource.data.userIds
                     && (
@@ -158,32 +147,22 @@ service cloud.firestore {
                       )
                     );
 
-      // Delete: only after soft-disconnect, and only by a member.
-      // The client calls this as the final step of deleteSharedData().
       allow delete: if isSignedIn()
                     && request.auth.uid in resource.data.userIds
                     && resource.data.get('status', 'active') == 'disconnected';
 
-      // ----------------------------------------------------------------
-      // Sub-collections
-      // ----------------------------------------------------------------
-
       // ---- Shared mood feed ----
       match /moods/{moodId} {
         allow read: if isCoupleMember(coupleId);
-
         allow create: if isCoupleMember(coupleId)
                       && incoming().userId == request.auth.uid;
         allow update: if isCoupleMember(coupleId)
                       && resource.data.userId == request.auth.uid;
-        // Author can delete their own; either member can delete once the
-        // couple is disconnected (hard-cleanup sweep).
         allow delete: if isCoupleMember(coupleId) && (
           resource.data.userId == request.auth.uid
           || isDisconnectedCouple(coupleId)
         );
 
-        // ---- Reactions on a mood entry ----
         match /reactions/{reactionId} {
           allow read: if isCoupleMember(coupleId);
           allow create: if isCoupleMember(coupleId)
@@ -208,24 +187,17 @@ service cloud.firestore {
       // ---- Chat messages ----
       match /messages/{messageId} {
         allow read: if isCoupleMember(coupleId);
-
-        // User-authored messages must carry the sender's uid. System /
-        // quiz / result cards are authored with senderId == null.
         allow create: if isCoupleMember(coupleId)
                       && (
                         !('senderId' in incoming())
                         || incoming().senderId == null
                         || incoming().senderId == request.auth.uid
                       );
-
-        // Either partner may mark a message read (readBy updates).
         allow update: if isCoupleMember(coupleId);
-
-        // Hard-cleanup only.
         allow delete: if isDisconnectedCouple(coupleId);
       }
 
-      // ---- Chat quizzes (path: quizzes) ----
+      // ---- Chat quizzes ----
       match /quizzes/{quizId} {
         allow read:   if isCoupleMember(coupleId);
         allow create: if isCoupleMember(coupleId);
@@ -253,6 +225,26 @@ service cloud.firestore {
         allow delete: if isCoupleMember(coupleId);
       }
 
+      // ---- Time Tree memories (past moments + capsules) ----
+      match /memories/{memoryId} {
+        allow read:   if isCoupleMember(coupleId);
+        allow create: if isCoupleMember(coupleId)
+                      && (
+                        !('createdBy' in incoming())
+                        || incoming().createdBy == request.auth.uid
+                      );
+        allow update: if isCoupleMember(coupleId);
+        allow delete: if isCoupleMember(coupleId);
+      }
+
+      // ---- Time Tree metadata (relationship anchor + future tree config) ----
+      match /timeTreeMeta/{docId} {
+        allow read:   if isCoupleMember(coupleId);
+        allow create: if isCoupleMember(coupleId);
+        allow update: if isCoupleMember(coupleId);
+        allow delete: if isCoupleMember(coupleId);
+      }
+
       // ---- Presence / ping firehose ----
       match /pings/{pingId} {
         allow read: if isCoupleMember(coupleId);
@@ -272,6 +264,57 @@ service cloud.firestore {
         allow update: if isCoupleMember(coupleId);
         allow delete: if isCoupleMember(coupleId);
       }
+    }
+
+    // ------------------------------------------------------------------
+    // /ai_usage_daily/{docId}
+    // ------------------------------------------------------------------
+    // Written and read exclusively by Cloud Functions (Admin SDK).
+    // Clients cannot read, write, or infer their own quota state from here —
+    // the 429 response from the function is the only signal they get.
+
+    match /ai_usage_daily/{docId} {
+      allow read, write: if false;
+    }
+
+    // ------------------------------------------------------------------
+    // /ai_coach_sessions/{sessionId}
+    // ------------------------------------------------------------------
+    // Clients may read their own session logs (for history / stats) but
+    // may never write — the server is the only writer.
+
+    match /ai_coach_sessions/{sessionId} {
+      allow read:  if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow write: if false;
+    }
+
+    // ------------------------------------------------------------------
+    // /abuse_logs/{logId}
+    // ------------------------------------------------------------------
+    // Strictly server-only. Never exposed to clients.
+
+    match /abuse_logs/{logId} {
+      allow read, write: if false;
+    }
+
+    // ------------------------------------------------------------------
+    // /aiSuggestionLogs/{logId}
+    // ------------------------------------------------------------------
+    // Analytics — server-only.
+
+    match /aiSuggestionLogs/{logId} {
+      allow read, write: if false;
+    }
+
+    // ------------------------------------------------------------------
+    // /notifications/{id}  (global push-notification log)
+    // ------------------------------------------------------------------
+    // Written by Cloud Functions via Admin SDK.
+    // Not exposed to clients (couple-scoped in-app notifications live
+    // under couples/{id}/notifications instead).
+
+    match /notifications/{notifId} {
+      allow read, write: if false;
     }
 
     // ------------------------------------------------------------------

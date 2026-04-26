@@ -82,7 +82,7 @@ enum PremiumSource: String, Codable {
 /// Features gated behind premium. Use `PremiumStore.hasAccess(to:)` at call sites.
 enum PremiumFeature: String, CaseIterable {
     case customAvatar          // Upload custom photo as avatar (free: preset only)
-    case anniversaryPhoto      // Upload cover photo for anniversaries (free: none)
+    case anniversaryPhoto      // Upload cover photo for anniversaries / memories (free: none)
     case allThemes             // All theme styles (free: default only)
     case fullQuizAccess        // All quiz topics (free: first half of topics)
     case customQuizzes         // Create custom quizzes with your own question + options (free: locked)
@@ -90,11 +90,12 @@ enum PremiumFeature: String, CaseIterable {
     case aiMoodSuggestions     // AI mood suggestions (free: 1/day, premium: 50/day)
     case aiCoach               // AI Relationship Coach (free: 2 sessions/week, premium: unlimited + deep features)
     case chatPhotos            // Send pictures in chat (free: 1/day, premium: unlimited)
+    case memoryCapsule         // Time Tree memory capsules — write a memory that unlocks later (free: locked)
 
     var label: String {
         switch self {
         case .customAvatar:       return "Custom avatar photo"
-        case .anniversaryPhoto:   return "Anniversary cover photos"
+        case .anniversaryPhoto:   return "Memory & anniversary photos"
         case .allThemes:          return "All themes & styles"
         case .fullQuizAccess:     return "Full quiz library"
         case .customQuizzes:      return "Create your own quizzes"
@@ -102,13 +103,14 @@ enum PremiumFeature: String, CaseIterable {
         case .aiMoodSuggestions:  return "AI mood suggestions (50/day)"
         case .aiCoach:            return "AI Relationship Coach"
         case .chatPhotos:         return "Unlimited chat photos"
+        case .memoryCapsule:      return "Memory Capsules"
         }
     }
 
     var freeLabel: String {
         switch self {
         case .customAvatar:       return "Preset avatars only"
-        case .anniversaryPhoto:   return "No cover photos"
+        case .anniversaryPhoto:   return "No memory photos"
         case .allThemes:          return "Default theme only"
         case .fullQuizAccess:     return "Half the quiz library"
         case .customQuizzes:      return "Locked"
@@ -116,6 +118,7 @@ enum PremiumFeature: String, CaseIterable {
         case .aiMoodSuggestions:  return "1 per day"
         case .aiCoach:            return "2 sessions per week"
         case .chatPhotos:         return "1 photo per day"
+        case .memoryCapsule:      return "Locked"
         }
     }
 
@@ -130,6 +133,7 @@ enum PremiumFeature: String, CaseIterable {
         case .aiMoodSuggestions:  return "sparkles"
         case .aiCoach:            return "heart.text.square.fill"
         case .chatPhotos:         return "camera.fill"
+        case .memoryCapsule:      return "lock.shield.fill"
         }
     }
 

@@ -29,8 +29,6 @@ final class MoodViewModel: ObservableObject {
     @Published var selectedEnergy: EnergyLevel = .medium
     @Published var noteText: String = ""
     @Published var submissionState: SubmissionState = .idle
-    @Published var showSuggestions: Bool = false
-    @Published var lastMoodContext: MoodContext?
     @Published private(set) var todayCheckinCount: Int = 0
 
     // MARK: - Computed Properties
@@ -100,15 +98,7 @@ final class MoodViewModel: ObservableObject {
             // Update activity timestamps for nudge system
             try? await notificationService.updateLastActive(userId: session.userId)
 
-            let context = MoodContext(from: entry)
             resetForm()
-
-            // Trigger AI suggestions for low moods
-            if context.isLowMood {
-                lastMoodContext = context
-                try? await Task.sleep(nanoseconds: 800_000_000)
-                showSuggestions = true
-            }
 
             try? await Task.sleep(nanoseconds: 1_500_000_000)
             if submissionState == .success || submissionState == .queued {
