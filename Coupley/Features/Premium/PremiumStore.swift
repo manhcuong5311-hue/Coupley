@@ -128,6 +128,13 @@ final class PremiumStore: ObservableObject {
             if isActive { return true }
             // Free: 1 photo per day
             return dailyUsage(for: .chatPhotos) < 1
+        case .togetherGoalsUnlimited,
+             .togetherChallengesUnlimited,
+             .togetherDreamBoard,
+             .togetherCoach:
+            // Together features are binary — quotas are enforced inside the
+            // tab's view model rather than as daily-counter rate limits.
+            return isActive
         }
     }
 

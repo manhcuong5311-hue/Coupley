@@ -95,6 +95,11 @@ final class MoodViewModel: ObservableObject {
                 return
             }
 
+            // Mirror to the on-device journal so the monthly insight view
+            // has data even when the Firestore round-trip is queued or the
+            // user is fully solo. Idempotent on entry.id.
+            MoodLocalHistoryStore.shared.append(.init(from: entry))
+
             // Update activity timestamps for nudge system
             try? await notificationService.updateLastActive(userId: session.userId)
 

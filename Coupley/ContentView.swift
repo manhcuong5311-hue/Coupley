@@ -8,7 +8,7 @@ import SwiftUI
 // MARK: - Tab Selection
 
 enum AppTab: Hashable {
-    case home, mood, anniversary, chat
+    case home, mood, together, anniversary, chat
 }
 
 // MARK: - Content View
@@ -79,8 +79,12 @@ struct ContentView: View {
                     .tabItem { Label("Mood", systemImage: "heart.fill") }
                     .tag(AppTab.mood)
 
+                TogetherView(session: session)
+                    .tabItem { Label("Together", systemImage: "infinity") }
+                    .tag(AppTab.together)
+
                 TimeTreeView(session: session, displayName: displayName)
-                    .tabItem { Label("Time Tree", systemImage: "leaf.fill") }
+                    .tabItem { Label("Journey", systemImage: "leaf.fill") }
                     .tag(AppTab.anniversary)
 
                 ChatView(session: session, profileViewModel: profileViewModel)

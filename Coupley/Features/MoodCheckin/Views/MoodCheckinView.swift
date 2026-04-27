@@ -9,6 +9,7 @@ struct MoodCheckinView: View {
 
     @ObservedObject var viewModel: MoodViewModel
     @State private var appearedAt = false
+    @State private var showInsights = false
 
     private var greeting: String {
         let hour = Calendar.current.component(.hour, from: Date())
@@ -101,22 +102,55 @@ struct MoodCheckinView: View {
                 }
                 viewModel.loadTodayCount()
             }
+            .sheet(isPresented: $showInsights) {
+                MonthlyMoodInsightView()
+                    .presentationDetents([.large])
+                    .presentationDragIndicator(.visible)
+            }
         }
     }
 
     private var headerSection: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(greeting)
-                .font(.subheadline)
-                .fontWeight(.medium)
-                .foregroundStyle(Brand.textSecondary)
+        HStack(alignment: .top) {
+            VStack(alignment: .leading, spacing: 6) {
+                Text(greeting)
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .foregroundStyle(Brand.textSecondary)
 
-            Text("How are you\nfeeling today?")
-                .font(.system(size: 34, weight: .bold, design: .rounded))
-                .foregroundStyle(Brand.textPrimary)
-                .lineSpacing(2)
+                Text("How are you\nfeeling today?")
+                    .font(.system(size: 34, weight: .bold, design: .rounded))
+                    .foregroundStyle(Brand.textPrimary)
+                    .lineSpacing(2)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            insightsButton
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    /// Top-right button that opens the monthly mood journal. Sized to align
+    /// with the first line of the headline so it visually anchors against
+    /// "Good morning" rather than floating in the corner.
+    private var insightsButton: some View {
+        Button(action: {
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            showInsights = true
+        }) {
+            ZStack {
+                Circle()
+                    .fill(Brand.surfaceLight)
+                    .overlay(Circle().strokeBorder(Brand.divider, lineWidth: 1))
+                    .frame(width: 42, height: 42)
+                    .shadow(color: .black.opacity(0.06), radius: 6, y: 2)
+                Image(systemName: "chart.bar.xaxis")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(Brand.accentStart)
+            }
+        }
+        .buttonStyle(BouncyButtonStyle(scale: 0.92))
+        .accessibilityLabel("Open mood journal")
+        .padding(.top, 6)
     }
 
     private var dailyLimitBanner: some View {

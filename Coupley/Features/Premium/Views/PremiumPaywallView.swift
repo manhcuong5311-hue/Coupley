@@ -327,25 +327,32 @@ struct PremiumPaywallView: View {
 
     private func shortLabel(for feature: PremiumFeature) -> String {
         switch feature {
-        case .aiMoodSuggestions: return "AI suggestions"
-        case .anniversaryPhoto:  return "Memory photos"
-        case .fullQuizAccess:    return "Quiz library"
-        case .customQuizzes:     return "Custom quizzes"
-        case .customAvatar:      return "Custom avatar"
-        case .allThemes:         return "All themes"
-        case .dateIdeas:         return "Date ideas"
-        case .aiCoach:           return "AI Coach"
-        case .chatPhotos:        return "Chat photos"
-        case .memoryCapsule:     return "Memory Capsules"
+        case .aiMoodSuggestions:           return "AI suggestions"
+        case .anniversaryPhoto:            return "Memory photos"
+        case .fullQuizAccess:              return "Quiz library"
+        case .customQuizzes:               return "Custom quizzes"
+        case .customAvatar:                return "Custom avatar"
+        case .allThemes:                   return "All themes"
+        case .dateIdeas:                   return "Date ideas"
+        case .aiCoach:                     return "AI Coach"
+        case .chatPhotos:                  return "Chat photos"
+        case .memoryCapsule:               return "Memory Capsules"
+        case .togetherGoalsUnlimited:      return "Shared goals"
+        case .togetherChallengesUnlimited: return "Couple challenges"
+        case .togetherDreamBoard:          return "Dream Board"
+        case .togetherCoach:               return "Couple Coach"
         }
     }
 
     private func premiumLabel(for feature: PremiumFeature) -> String {
         switch feature {
-        case .aiMoodSuggestions: return "50/day"
-        case .dateIdeas:         return "25/day"
-        case .chatPhotos:        return "Unlimited"
-        default:                 return "Unlocked"
+        case .aiMoodSuggestions:           return "50/day"
+        case .dateIdeas:                   return "25/day"
+        case .chatPhotos:                  return "Unlimited"
+        case .togetherGoalsUnlimited:      return "Unlimited"
+        case .togetherChallengesUnlimited: return "Unlimited"
+        case .togetherDreamBoard:          return "Unlimited"
+        default:                           return "Unlocked"
         }
     }
 
