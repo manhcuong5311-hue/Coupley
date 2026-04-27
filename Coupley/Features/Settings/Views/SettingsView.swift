@@ -445,7 +445,7 @@ struct SettingsView: View {
                         title: "Version", value: appVersion)
                 .contentShape(Rectangle())
                 .onTapGesture { handleVersionTap() }
-            if let url = URL(string: "https://coupley.app/privacy") {
+            if let url = URL(string: "https://manhcuong5311-hue.github.io/Coupley/") {
                 Link(destination: url) {
                     HStack(spacing: 14) {
                         ZStack {
@@ -456,6 +456,26 @@ struct SettingsView: View {
                                 .foregroundStyle(Brand.textSecondary)
                         }
                         Text("Privacy Policy")
+                            .font(.system(size: 15, weight: .medium, design: .rounded))
+                            .foregroundStyle(Brand.textPrimary)
+                        Spacer()
+                        Image(systemName: "arrow.up.right.square")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(Brand.textTertiary)
+                    }
+                }
+            }
+            if let url = URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/") {
+                Link(destination: url) {
+                    HStack(spacing: 14) {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 8).fill(Brand.textSecondary.opacity(0.15))
+                                .frame(width: 30, height: 30)
+                            Image(systemName: "doc.text.fill")
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundStyle(Brand.textSecondary)
+                        }
+                        Text("Terms of Use (EULA)")
                             .font(.system(size: 15, weight: .medium, design: .rounded))
                             .foregroundStyle(Brand.textPrimary)
                         Spacer()

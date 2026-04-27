@@ -85,55 +85,71 @@ enum PremiumFeature: String, CaseIterable {
     case anniversaryPhoto      // Upload cover photo for anniversaries / memories (free: none)
     case allThemes             // All theme styles (free: default only)
     case fullQuizAccess        // All quiz topics (free: first half of topics)
-    case customQuizzes         // Create custom quizzes with your own question + options (free: locked)
+    case customQuizzes         // Create custom chat quizzes (free: 1/day, premium: unlimited)
     case dateIdeas             // Date ideas access (free: locked, premium: 25/day)
     case aiMoodSuggestions     // AI mood suggestions (free: 1/day, premium: 50/day)
     case aiCoach               // AI Relationship Coach (free: 2 sessions/week, premium: unlimited + deep features)
     case chatPhotos            // Send pictures in chat (free: 1/day, premium: unlimited)
     case memoryCapsule         // Time Tree memory capsules — write a memory that unlocks later (free: locked)
+    case togetherGoalsUnlimited      // Together: unlimited active goals (free: 2 max)
+    case togetherChallengesUnlimited // Together: unlimited challenges (free: 1 max)
+    case togetherDreamBoard          // Together: full Dream Board (free: 1 dream max, no photos)
+    case togetherCoach               // Together: AI Couple Coach insights (free: locked)
 
     var label: String {
         switch self {
-        case .customAvatar:       return "Custom avatar photo"
-        case .anniversaryPhoto:   return "Memory & anniversary photos"
-        case .allThemes:          return "All themes & styles"
-        case .fullQuizAccess:     return "Full quiz library"
-        case .customQuizzes:      return "Create your own quizzes"
-        case .dateIdeas:          return "Date ideas (25/day)"
-        case .aiMoodSuggestions:  return "AI mood suggestions (50/day)"
-        case .aiCoach:            return "AI Relationship Coach"
-        case .chatPhotos:         return "Unlimited chat photos"
-        case .memoryCapsule:      return "Memory Capsules"
+        case .customAvatar:                return "Custom avatar photo"
+        case .anniversaryPhoto:            return "Memory & anniversary photos"
+        case .allThemes:                   return "All themes & styles"
+        case .fullQuizAccess:              return "Full quiz library"
+        case .customQuizzes:               return "Custom quizzes (unlimited)"
+        case .dateIdeas:                   return "Date ideas (25/day)"
+        case .aiMoodSuggestions:           return "AI mood suggestions (50/day)"
+        case .aiCoach:                     return "AI Relationship Coach"
+        case .chatPhotos:                  return "Unlimited chat photos"
+        case .memoryCapsule:               return "Memory Capsules"
+        case .togetherGoalsUnlimited:      return "Unlimited shared goals"
+        case .togetherChallengesUnlimited: return "Unlimited couple challenges"
+        case .togetherDreamBoard:          return "Full Dream Board"
+        case .togetherCoach:               return "AI Couple Coach"
         }
     }
 
     var freeLabel: String {
         switch self {
-        case .customAvatar:       return "Preset avatars only"
-        case .anniversaryPhoto:   return "No memory photos"
-        case .allThemes:          return "Default theme only"
-        case .fullQuizAccess:     return "Half the quiz library"
-        case .customQuizzes:      return "Locked"
-        case .dateIdeas:          return "Locked"
-        case .aiMoodSuggestions:  return "1 per day"
-        case .aiCoach:            return "2 sessions per week"
-        case .chatPhotos:         return "1 photo per day"
-        case .memoryCapsule:      return "Locked"
+        case .customAvatar:                return "Preset avatars only"
+        case .anniversaryPhoto:            return "No memory photos"
+        case .allThemes:                   return "Default theme only"
+        case .fullQuizAccess:              return "Half the quiz library"
+        case .customQuizzes:               return "1 per day"
+        case .dateIdeas:                   return "Locked"
+        case .aiMoodSuggestions:           return "1 per day"
+        case .aiCoach:                     return "2 sessions per week"
+        case .chatPhotos:                  return "1 photo per day"
+        case .memoryCapsule:               return "Locked"
+        case .togetherGoalsUnlimited:      return "2 active goals"
+        case .togetherChallengesUnlimited: return "1 active challenge"
+        case .togetherDreamBoard:          return "1 dream"
+        case .togetherCoach:               return "Locked"
         }
     }
 
     var icon: String {
         switch self {
-        case .customAvatar:       return "person.crop.circle.fill"
-        case .anniversaryPhoto:   return "photo.fill"
-        case .allThemes:          return "paintpalette.fill"
-        case .fullQuizAccess:     return "questionmark.bubble.fill"
-        case .customQuizzes:      return "pencil.and.list.clipboard"
-        case .dateIdeas:          return "map.fill"
-        case .aiMoodSuggestions:  return "sparkles"
-        case .aiCoach:            return "heart.text.square.fill"
-        case .chatPhotos:         return "camera.fill"
-        case .memoryCapsule:      return "lock.shield.fill"
+        case .customAvatar:                return "person.crop.circle.fill"
+        case .anniversaryPhoto:            return "photo.fill"
+        case .allThemes:                   return "paintpalette.fill"
+        case .fullQuizAccess:              return "questionmark.bubble.fill"
+        case .customQuizzes:               return "pencil.and.list.clipboard"
+        case .dateIdeas:                   return "map.fill"
+        case .aiMoodSuggestions:           return "sparkles"
+        case .aiCoach:                     return "heart.text.square.fill"
+        case .chatPhotos:                  return "camera.fill"
+        case .memoryCapsule:               return "lock.shield.fill"
+        case .togetherGoalsUnlimited:      return "target"
+        case .togetherChallengesUnlimited: return "flame.fill"
+        case .togetherDreamBoard:          return "sparkles.rectangle.stack.fill"
+        case .togetherCoach:               return "wand.and.stars"
         }
     }
 
@@ -144,6 +160,7 @@ enum PremiumFeature: String, CaseIterable {
         case .dateIdeas:         return 0  // locked
         case .aiCoach:           return 1  // 1 session per day on free tier
         case .chatPhotos:        return 1  // 1 photo per day on free tier
+        case .customQuizzes:     return 1  // 1 custom chat quiz per day on free tier
         default:                 return nil
         }
     }

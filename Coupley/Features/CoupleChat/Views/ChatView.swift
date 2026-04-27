@@ -17,7 +17,7 @@ struct ChatView: View {
     let session: UserSession
     @State private var showProfile = false
     @State private var showPartnerAndMe = false
-    @State private var showQuizPicker = false
+    @State private var showQuizHub = false
     @State private var photosPickerItem: PhotosPickerItem? = nil
     @State private var pendingPhotoPopup: ChatMessage? = nil
     @State private var seenPhotoMessageIds: Set<String> = []
@@ -44,7 +44,31 @@ struct ChatView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    HStack(spacing: 14) {
+                    HStack(spacing: 12) {
+                        // Quiz Hub — primary entry point for the Daily / AI /
+                        // Custom / History flows. Replaces the previous
+                        // single-picker shortcut.
+                        Button {
+                            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                            showQuizHub = true
+                        } label: {
+                            HStack(spacing: 4) {
+                                Image(systemName: "sparkles")
+                                    .font(.system(size: 11, weight: .semibold))
+                                Text("Quiz")
+                                    .font(.system(size: 13, weight: .bold, design: .rounded))
+                            }
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 5)
+                            .background(
+                                Capsule()
+                                    .fill(Brand.accentGradient)
+                                    .shadow(color: Brand.accentStart.opacity(0.30), radius: 6, y: 2)
+                            )
+                        }
+                        .accessibilityLabel("Open Quiz Hub")
+
                         Button { showPartnerAndMe = true } label: {
                             Image(systemName: "heart.text.square")
                                 .foregroundStyle(Brand.accentStart)
@@ -84,13 +108,12 @@ struct ChatView: View {
                 .presentationDetents([.medium, .large])
                 .presentationBackground(Brand.backgroundTop)
             }
-            .sheet(isPresented: $showQuizPicker) {
-                QuizPickerSheet { template in
-                    viewModel.sendQuiz(template: template)
-                }
-                .presentationDetents([.large])
-                .presentationDragIndicator(.visible)
-                .presentationBackground(Brand.backgroundTop)
+            .sheet(isPresented: $showQuizHub) {
+                QuizHubView(viewModel: viewModel)
+                    .environmentObject(premiumStore)
+                    .presentationDetents([.large])
+                    .presentationDragIndicator(.visible)
+                    .presentationBackground(Brand.backgroundTop)
             }
             .onAppear   { viewModel.start() }
             .onDisappear { viewModel.stop() }
@@ -236,7 +259,7 @@ struct ChatView: View {
         HStack(spacing: 10) {
             Button {
                 UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                showQuizPicker = true
+                showQuizHub = true
             } label: {
                 Image(systemName: "sparkles")
                     .font(.system(size: 16, weight: .semibold))
@@ -249,7 +272,7 @@ struct ChatView: View {
                     )
             }
             .buttonStyle(BouncyButtonStyle())
-            .accessibilityLabel("Pick a quiz")
+            .accessibilityLabel("Open Quiz Hub")
 
             photoButton
                 .accessibilityLabel("Send a photo")

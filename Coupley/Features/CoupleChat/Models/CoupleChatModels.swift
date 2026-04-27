@@ -163,6 +163,14 @@ struct ChatQuizAnswer: Codable, Equatable {
 
 /// A quiz instance posted into the chat. The question body itself comes from
 /// the curated bank (or AI) and is identified by `questionId`.
+///
+/// `authorId` is non-nil only for user-authored *custom* quizzes — the renderer
+/// uses its presence to switch on a "Custom from {name}" badge. Curated /
+/// AI-suggested quizzes leave it nil.
+///
+/// `customNote` is the optional romantic note attached to a custom quiz. It's
+/// rendered on the quiz card above the question, and again at the top of the
+/// answer sheet, so the recipient sees the personal touch before the question.
 struct ChatQuiz: Identifiable, Codable, Equatable {
     @DocumentID var firestoreId: String?
     let id: String
@@ -178,6 +186,17 @@ struct ChatQuiz: Identifiable, Codable, Equatable {
 
     // Populated once both answered
     var result: ChatQuizResult?
+
+    // Custom quiz fields — both nil for curated/AI quizzes.
+    /// Author of this quiz (only set for user-authored custom quizzes).
+    var authorId: String?
+    /// Author's "correct" answer (their own pick). When the partner picks
+    /// matching options, the result card celebrates a match.
+    var authorAnswer: [String]?
+    /// Optional romantic note attached to a custom quiz.
+    var customNote: String?
+
+    var isCustom: Bool { authorId != nil }
 
     func answer(for userId: String) -> ChatQuizAnswer? {
         answers[userId]

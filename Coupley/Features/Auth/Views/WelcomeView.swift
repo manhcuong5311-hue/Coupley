@@ -131,9 +131,9 @@ struct WelcomeView: View {
                 .font(.system(size: 11, design: .rounded))
                 .foregroundStyle(Brand.textTertiary)
             HStack(spacing: 4) {
-                legalLink("Terms", url: "https://coupley.app/terms")
+                legalLink("Terms (EULA)", url: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")
                 Text("·").foregroundStyle(Brand.textTertiary)
-                legalLink("Privacy Policy", url: "https://coupley.app/privacy")
+                legalLink("Privacy Policy", url: "https://manhcuong5311-hue.github.io/Coupley/")
             }
             .font(.system(size: 11, weight: .medium, design: .rounded))
         }

@@ -1,0 +1,79 @@
+rules_version = '2';
+
+// Firebase Storage security rules for Coupley.
+//
+// Object layout (all photos are couple-scoped):
+//   /couples/{coupleId}/memories/{memoryId}/photo.jpg        — Time Tree
+//   /couples/{coupleId}/anniversaries/{anniversaryId}/cover.jpg
+//   /couples/{coupleId}/chat-photos/{messageId}.jpg          — chat attachments
+//
+// Security model:
+//   * A user may read/write any object under /couples/{coupleId}/...
+//     iff they are a member of that couple in Firestore (couples doc has
+//     their UID in `userIds`).
+//   * Uploads must be images and capped at 10 MB to prevent abuse.
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // ----------------------------------------------------------------
+    // Helpers
+    // ----------------------------------------------------------------
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isCoupleMember(coupleId) {
+      return isSignedIn()
+        && firestore.exists(/databases/(default)/documents/couples/$(coupleId))
+        && request.auth.uid in firestore.get(
+             /databases/(default)/documents/couples/$(coupleId)
+           ).data.userIds;
+    }
+
+    function isImageUpload() {
+      return request.resource != null
+        && request.resource.contentType.matches('image/.*')
+        && request.resource.size < 10 * 1024 * 1024;
+    }
+
+    // ----------------------------------------------------------------
+    // /couples/{coupleId}/memories/{memoryId}/{file}
+    // ----------------------------------------------------------------
+
+    match /couples/{coupleId}/memories/{memoryId}/{file} {
+      allow read:   if isCoupleMember(coupleId);
+      allow write:  if isCoupleMember(coupleId) && isImageUpload();
+      allow delete: if isCoupleMember(coupleId);
+    }
+
+    // ----------------------------------------------------------------
+    // /couples/{coupleId}/anniversaries/{anniversaryId}/{file}
+    // ----------------------------------------------------------------
+
+    match /couples/{coupleId}/anniversaries/{anniversaryId}/{file} {
+      allow read:   if isCoupleMember(coupleId);
+      allow write:  if isCoupleMember(coupleId) && isImageUpload();
+      allow delete: if isCoupleMember(coupleId);
+    }
+
+    // ----------------------------------------------------------------
+    // /couples/{coupleId}/chat-photos/{file}
+    // ----------------------------------------------------------------
+
+    match /couples/{coupleId}/chat-photos/{file} {
+      allow read:   if isCoupleMember(coupleId);
+      allow write:  if isCoupleMember(coupleId) && isImageUpload();
+      allow delete: if isCoupleMember(coupleId);
+    }
+
+    // ----------------------------------------------------------------
+    // Catch-all: deny everything not explicitly allowed above.
+    // ----------------------------------------------------------------
+
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

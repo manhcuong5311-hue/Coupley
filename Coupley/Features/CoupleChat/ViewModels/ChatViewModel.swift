@@ -203,6 +203,9 @@ final class ChatViewModel: ObservableObject {
             defer { Task { @MainActor in self.isUploadingPhoto = false } }
             do {
                 let url = try await photoStorage.upload(image, coupleId: session.coupleId, messageId: messageId)
+                if let parsed = URL(string: url) {
+                    ImageCache.shared.store(image, for: parsed)
+                }
                 try await chatService.sendPhoto(url, coupleId: session.coupleId, senderId: session.userId)
             } catch {
                 await MainActor.run { self.errorMessage = error.localizedDescription }
@@ -296,7 +299,10 @@ final class ChatViewModel: ObservableObject {
                 createdAt: Date(),
                 status: .pending,
                 answers: [:],
-                result: nil
+                result: nil,
+                authorId: nil,
+                authorAnswer: nil,
+                customNote: nil
             )
             do {
                 try await chatService.postSystemMessage(
@@ -308,6 +314,82 @@ final class ChatViewModel: ObservableObject {
                 await MainActor.run { self.errorMessage = error.localizedDescription }
             }
         }
+    }
+
+    // MARK: - Custom quiz (user-authored)
+
+    /// Post a custom quiz authored by the current user. Pre-records the
+    /// author's own answer (so the result-card match logic has the correct
+    /// answer to compare against on the partner's side).
+    ///
+    /// - Parameters:
+    ///   - title: optional human title (e.g. "Just for you ❤️"). Stored in
+    ///     `subtitle` so the existing card layout renders it without changes.
+    ///   - question: required body text.
+    ///   - options: 2-6 answer choices.
+    ///   - authorAnswer: which option(s) the author picked as "correct."
+    ///   - allowsMultiple: whether the partner can pick more than one option.
+    ///   - note: optional romantic note shown above the question.
+    func sendCustomQuiz(
+        title: String?,
+        question: String,
+        options: [String],
+        authorAnswer: [String],
+        allowsMultiple: Bool,
+        note: String?
+    ) {
+        Task {
+            let trimmedNote = note?.trimmingCharacters(in: .whitespacesAndNewlines)
+            let trimmedTitle = title?.trimmingCharacters(in: .whitespacesAndNewlines)
+            let now = Date()
+
+            // Pre-record the author's answer so the partner sees a match
+            // calculation right after they answer (no need for the author to
+            // tap "answer" on their own card).
+            var prefilledAnswers: [String: ChatQuizAnswer] = [:]
+            if !authorAnswer.isEmpty {
+                prefilledAnswers[session.userId] = ChatQuizAnswer(
+                    options: authorAnswer,
+                    text: nil,
+                    answeredAt: now
+                )
+            }
+
+            let quiz = ChatQuiz(
+                id: UUID().uuidString,
+                questionId: "custom_\(UUID().uuidString)",
+                topic: .loveLanguage,    // custom quizzes default to the love bucket — author's note carries the real flavor
+                question: question.trimmingCharacters(in: .whitespacesAndNewlines),
+                subtitle: trimmedTitle?.isEmpty == false ? trimmedTitle! : "From your partner ❤️",
+                options: options,
+                allowsMultiple: allowsMultiple,
+                createdAt: now,
+                status: prefilledAnswers.isEmpty ? .pending : .partial,
+                answers: prefilledAnswers,
+                result: nil,
+                authorId: session.userId,
+                authorAnswer: authorAnswer.isEmpty ? nil : authorAnswer,
+                customNote: trimmedNote?.isEmpty == false ? trimmedNote : nil
+            )
+
+            do {
+                try await chatService.postSystemMessage(
+                    "Custom quiz from \(authorDisplayLabel())",
+                    coupleId: session.coupleId
+                )
+                try await chatService.postQuiz(quiz, coupleId: session.coupleId)
+            } catch {
+                await MainActor.run { self.errorMessage = error.localizedDescription }
+            }
+        }
+    }
+
+    /// Short label for the system-line attribution. Falls back to "your
+    /// partner" when we don't have a stored display name — the chat view
+    /// model intentionally doesn't depend on the profile view model so this
+    /// is a deliberate, lightweight phrasing.
+    private func authorDisplayLabel() -> String {
+        "your partner ❤️"
     }
 
     // MARK: - Read receipts

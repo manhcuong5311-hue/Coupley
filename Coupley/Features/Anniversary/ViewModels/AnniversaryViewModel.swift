@@ -112,6 +112,9 @@ final class AnniversaryViewModel: ObservableObject {
                 anniversaryId: anniversaryId
             )
             isUploadingImage = false
+            if let urlString = imageURL, let url = URL(string: urlString) {
+                ImageCache.shared.store(image, for: url)
+            }
         }
 
         let anniversary = Anniversary(
@@ -151,6 +154,9 @@ final class AnniversaryViewModel: ObservableObject {
                 anniversaryId: anniversary.id
             )
             isUploadingImage = false
+            if let urlString = updated.imageURL, let url = URL(string: urlString) {
+                ImageCache.shared.store(image, for: url)
+            }
         }
 
         do {

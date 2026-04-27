@@ -28,8 +28,6 @@ struct PartnerProfileDetailView: View {
     @State private var likeDraft: String = ""
     @State private var dislikeDraft: String = ""
     @State private var activityDraft: String = ""
-    @State private var showCreateCustomQuiz = false
-    @State private var showCustomQuizPaywall = false
 
     init(
         targetUserId: String,
@@ -68,7 +66,6 @@ struct PartnerProfileDetailView: View {
                     communicationSection
                     notesSection
                     activitiesSection
-                    customQuizSection
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 12)
@@ -90,17 +87,6 @@ struct PartnerProfileDetailView: View {
         }
         .onAppear  { viewModel.start() }
         .onDisappear { viewModel.stop() }
-        .sheet(isPresented: $showCreateCustomQuiz) {
-            CreateCustomQuizSheet { question, options, selected in
-                viewModel.addCustomAnswer(question: question, options: options, selected: selected)
-            }
-            .presentationDragIndicator(.visible)
-        }
-        .sheet(isPresented: $showCustomQuizPaywall) {
-            NavigationStack { PremiumPaywallView() }
-                .environmentObject(premiumStore)
-                .presentationDragIndicator(.visible)
-        }
     }
 
     // MARK: - Header
@@ -248,135 +234,6 @@ struct PartnerProfileDetailView: View {
             emptyMessage: "No shared activities yet",
             onAdd: { viewModel.addActivity($0) },
             onRemove: { viewModel.removeActivity($0) }
-        )
-    }
-
-    // MARK: - Custom Q&A (premium)
-
-    @ViewBuilder
-    private var customQuizSection: some View {
-        SectionCard(
-            title: "Custom Q&A",
-            icon: "pencil.and.list.clipboard",
-            tint: Color(red: 0.85, green: 0.40, blue: 0.80)
-        ) {
-            VStack(alignment: .leading, spacing: 12) {
-                if viewModel.profile.customAnswers.isEmpty {
-                    Text(customEmptyMessage)
-                        .font(.system(size: 14, design: .rounded))
-                        .foregroundStyle(Brand.textTertiary)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                } else {
-                    ForEach(viewModel.profile.customAnswers) { entry in
-                        customAnswerCard(entry)
-                    }
-                }
-
-                if viewModel.canEditCustomAnswers {
-                    createCustomButton
-                }
-            }
-        }
-    }
-
-    private var customEmptyMessage: String {
-        switch viewModel.mode {
-        case .mine:    return "Write your own questions and share what you love."
-        case .partner: return "\(displayName) hasn't added any custom Q&A yet."
-        }
-    }
-
-    private var createCustomButton: some View {
-        Button {
-            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-            if premiumStore.hasAccess(to: .customQuizzes) {
-                showCreateCustomQuiz = true
-            } else {
-                showCustomQuizPaywall = true
-            }
-        } label: {
-            HStack(spacing: 8) {
-                Image(systemName: premiumStore.hasAccess(to: .customQuizzes) ? "plus.circle.fill" : "lock.fill")
-                    .font(.system(size: 15, weight: .semibold))
-                Text(premiumStore.hasAccess(to: .customQuizzes) ? "Create a quiz" : "Create a quiz — Premium")
-                    .font(.system(size: 14, weight: .semibold, design: .rounded))
-                Spacer()
-                if !premiumStore.hasAccess(to: .customQuizzes) {
-                    Text("PRO")
-                        .font(.system(size: 10, weight: .bold, design: .rounded))
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 3)
-                        .background(Capsule().fill(Color.white.opacity(0.25)))
-                }
-            }
-            .foregroundStyle(.white)
-            .padding(.horizontal, 14)
-            .padding(.vertical, 12)
-            .frame(maxWidth: .infinity)
-            .background(Brand.accentGradient)
-            .clipShape(RoundedRectangle(cornerRadius: 14))
-            .shadow(color: Brand.accentStart.opacity(0.30), radius: 10, y: 4)
-        }
-        .buttonStyle(BouncyButtonStyle(scale: 0.97))
-    }
-
-    private func customAnswerCard(_ entry: CustomQuizAnswer) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .top, spacing: 8) {
-                Text(entry.question)
-                    .font(.system(size: 14, weight: .semibold, design: .rounded))
-                    .foregroundStyle(Brand.textPrimary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-
-                if viewModel.canEditCustomAnswers {
-                    Button {
-                        viewModel.removeCustomAnswer(id: entry.id)
-                    } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.system(size: 18))
-                            .foregroundStyle(Brand.textTertiary)
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-
-            ChipFlow(spacing: 6) {
-                ForEach(entry.options, id: \.self) { option in
-                    let isPicked = entry.selectedOptions.contains(option)
-                    Text(option)
-                        .font(.system(size: 12, weight: isPicked ? .semibold : .regular, design: .rounded))
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 5)
-                        .background(
-                            Capsule().fill(
-                                isPicked
-                                    ? Color(red: 0.85, green: 0.40, blue: 0.80).opacity(0.18)
-                                    : Brand.backgroundTop.opacity(0.6)
-                            )
-                        )
-                        .overlay(
-                            Capsule().strokeBorder(
-                                isPicked
-                                    ? Color(red: 0.85, green: 0.40, blue: 0.80).opacity(0.4)
-                                    : Brand.divider,
-                                lineWidth: 1
-                            )
-                        )
-                        .foregroundStyle(
-                            isPicked
-                                ? Color(red: 0.75, green: 0.30, blue: 0.70)
-                                : Brand.textSecondary
-                        )
-                }
-            }
-        }
-        .padding(14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: 14)
-                .fill(Brand.backgroundTop.opacity(0.55))
-                .overlay(RoundedRectangle(cornerRadius: 14)
-                    .strokeBorder(Brand.divider, lineWidth: 1))
         )
     }
 

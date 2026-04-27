@@ -13,7 +13,13 @@ rules_version = '2';
 //     /quizzes/{quizId}                                — chat quizzes
 //     /coupleProfile/{docId}                           — aggregated insights
 //     /anniversaries/{id}                              — anniversary events
+//     /memories/{id}                                   — Time Tree memories
+//     /timeTreeMeta/{id}                               — Time Tree config
 //     /pings/{pingId}                                  — presence heartbeats
+//     /nudges/{nudgeId}                                — author: fromUserId
+//     /togetherGoals/{id}                              — author: createdBy
+//     /coupleChallenges/{id}                           — author: createdBy
+//     /dreams/{id}                                     — author: createdBy
 //     /notifications/{id}                              — in-app notifications
 //   /ai_usage_daily/{docId}                            — server-only usage counters
 //   /ai_coach_sessions/{sessionId}                     — coach session logs (owner-read)
@@ -261,6 +267,54 @@ service cloud.firestore {
       match /notifications/{notifId} {
         allow read:   if isCoupleMember(coupleId);
         allow create: if isCoupleMember(coupleId);
+        allow update: if isCoupleMember(coupleId);
+        allow delete: if isCoupleMember(coupleId);
+      }
+
+      // ---- Nudges (poke-style messages between partners) ----
+      match /nudges/{nudgeId} {
+        allow read: if isCoupleMember(coupleId);
+        allow create: if isCoupleMember(coupleId)
+                      && (
+                        !('fromUserId' in incoming())
+                        || incoming().fromUserId == request.auth.uid
+                      );
+        allow update: if isCoupleMember(coupleId);
+        allow delete: if isCoupleMember(coupleId);
+      }
+
+      // ---- Together goals ----
+      match /togetherGoals/{goalId} {
+        allow read: if isCoupleMember(coupleId);
+        allow create: if isCoupleMember(coupleId)
+                      && (
+                        !('createdBy' in incoming())
+                        || incoming().createdBy == request.auth.uid
+                      );
+        allow update: if isCoupleMember(coupleId);
+        allow delete: if isCoupleMember(coupleId);
+      }
+
+      // ---- Couple challenges (shared streak / check-in tracking) ----
+      match /coupleChallenges/{challengeId} {
+        allow read: if isCoupleMember(coupleId);
+        allow create: if isCoupleMember(coupleId)
+                      && (
+                        !('createdBy' in incoming())
+                        || incoming().createdBy == request.auth.uid
+                      );
+        allow update: if isCoupleMember(coupleId);
+        allow delete: if isCoupleMember(coupleId);
+      }
+
+      // ---- Dream board ----
+      match /dreams/{dreamId} {
+        allow read: if isCoupleMember(coupleId);
+        allow create: if isCoupleMember(coupleId)
+                      && (
+                        !('createdBy' in incoming())
+                        || incoming().createdBy == request.auth.uid
+                      );
         allow update: if isCoupleMember(coupleId);
         allow delete: if isCoupleMember(coupleId);
       }

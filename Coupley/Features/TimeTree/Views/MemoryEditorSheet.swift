@@ -137,7 +137,7 @@ struct MemoryEditorSheet: View {
                 }
             }
             .onChange(of: selectedItem) { _, item in
-                Task {
+                Task { @MainActor in
                     guard let item else { return }
                     if let data = try? await item.loadTransferable(type: Data.self),
                        let image = UIImage(data: data) {
@@ -290,22 +290,20 @@ struct MemoryEditorSheet: View {
                     .clipShape(RoundedRectangle(cornerRadius: 14))
                     .clipped()
             } else if let urlString = existingPhotoURL, !clearPhoto, let url = URL(string: urlString) {
-                AsyncImage(url: url) { phase in
-                    switch phase {
-                    case .success(let image):
-                        image
-                            .resizable()
-                            .scaledToFill()
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 180)
-                            .clipShape(RoundedRectangle(cornerRadius: 14))
-                            .clipped()
-                    case .empty, .failure:
-                        photoPlaceholder
-                    @unknown default:
-                        photoPlaceholder
+                CachedAsyncImage(url: url) { phase in
+                    ZStack {
+                        Brand.accentStart.opacity(0.06)
+                        if case .success(let image) = phase {
+                            image
+                                .resizable()
+                                .scaledToFill()
+                        }
                     }
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 180)
+                    .clipped()
                 }
+                .clipShape(RoundedRectangle(cornerRadius: 14))
             } else {
                 photoPlaceholder
             }

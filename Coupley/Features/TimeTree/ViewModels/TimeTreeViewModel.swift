@@ -188,6 +188,11 @@ final class TimeTreeViewModel: ObservableObject {
                 memoryId: memoryId
             )
             isUploadingPhoto = false
+            // Pre-warm the disk cache so the uploader doesn't re-download
+            // the photo it just sent up.
+            if let urlString = photoURL, let url = URL(string: urlString) {
+                ImageCache.shared.store(photo, for: url)
+            }
         }
 
         let memory = TimeMemory(
@@ -248,6 +253,9 @@ final class TimeTreeViewModel: ObservableObject {
                 memoryId: memory.id
             )
             isUploadingPhoto = false
+            if let urlString = updated.photoURL, let url = URL(string: urlString) {
+                ImageCache.shared.store(photo, for: url)
+            }
         } else if clearPhoto {
             updated.photoURL = nil
             await storageService.deletePhoto(coupleId: session.coupleId, memoryId: memory.id)

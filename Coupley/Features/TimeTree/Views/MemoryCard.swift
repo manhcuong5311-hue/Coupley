@@ -38,11 +38,11 @@ struct MemoryCard: View {
     // MARK: - Open (standard) body
 
     private var openBody: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            if let urlString = memory.photoURL, let url = URL(string: urlString) {
-                heroPhoto(url: url)
-            }
-
+        // Side-by-side layout: text content fills the left column, photo
+        // (when present) sits on the right as a tall thumbnail. When there's
+        // no photo, the text simply takes the full width — the card adapts
+        // gracefully without a photo placeholder.
+        HStack(alignment: .top, spacing: 14) {
             VStack(alignment: .leading, spacing: 14) {
                 header
 
@@ -71,39 +71,46 @@ struct MemoryCard: View {
                     }
                 }
             }
-            .padding(18)
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            if let urlString = memory.photoURL, let url = URL(string: urlString) {
+                sidePhoto(url: url)
+            }
         }
+        .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
         .shadow(color: .black.opacity(0.08), radius: 14, y: 4)
     }
 
-    // MARK: - Hero photo
+    // MARK: - Side photo (right-hand thumbnail)
 
-    private func heroPhoto(url: URL) -> some View {
+    /// Square-ish thumbnail anchored to the top-right of the text column.
+    /// Sized to roughly match the height of the header + note block so the
+    /// card reads as a balanced two-column composition.
+    private func sidePhoto(url: URL) -> some View {
         CachedAsyncImage(url: url) { phase in
             ZStack {
                 Brand.accentStart.opacity(0.06)
                 if case .success(let image) = phase {
                     image.resizable().scaledToFill()
                 }
+                // Subtle inner-edge sheen so the thumb doesn't feel pasted on.
                 LinearGradient(
-                    colors: [.clear, .black.opacity(0.32)],
-                    startPoint: .center,
-                    endPoint: .bottom
+                    colors: [.white.opacity(0.10), .clear, .black.opacity(0.18)],
+                    startPoint: .top, endPoint: .bottom
                 )
             }
-            .frame(maxWidth: .infinity)
-            .frame(height: 180)
+            .frame(width: 110, height: 130)
             .clipped()
         }
-        .clipShape(UnevenRoundedRectangle(
-            topLeadingRadius: 22,
-            bottomLeadingRadius: 0,
-            bottomTrailingRadius: 0,
-            topTrailingRadius: 22
-        ))
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .strokeBorder(Brand.divider, lineWidth: 0.5)
+        )
+        .shadow(color: .black.opacity(0.10), radius: 6, y: 2)
     }
 
     // MARK: - Header (title + kind badge + date)

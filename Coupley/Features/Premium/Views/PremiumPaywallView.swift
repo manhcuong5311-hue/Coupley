@@ -50,7 +50,10 @@ struct PremiumPaywallView: View {
 
                     purchaseButton
                         .padding(.horizontal, 20)
-                        .padding(.bottom, 8)
+                        .padding(.bottom, 12)
+
+                    legalLinks
+                        .padding(.bottom, 10)
 
                     restoreButton
                         .padding(.bottom, 8)
@@ -327,25 +330,33 @@ struct PremiumPaywallView: View {
 
     private func shortLabel(for feature: PremiumFeature) -> String {
         switch feature {
-        case .aiMoodSuggestions: return "AI suggestions"
-        case .anniversaryPhoto:  return "Memory photos"
-        case .fullQuizAccess:    return "Quiz library"
-        case .customQuizzes:     return "Custom quizzes"
-        case .customAvatar:      return "Custom avatar"
-        case .allThemes:         return "All themes"
-        case .dateIdeas:         return "Date ideas"
-        case .aiCoach:           return "AI Coach"
-        case .chatPhotos:        return "Chat photos"
-        case .memoryCapsule:     return "Memory Capsules"
+        case .aiMoodSuggestions:           return "AI suggestions"
+        case .anniversaryPhoto:            return "Memory photos"
+        case .fullQuizAccess:              return "Quiz library"
+        case .customQuizzes:               return "Custom quizzes"
+        case .customAvatar:                return "Custom avatar"
+        case .allThemes:                   return "All themes"
+        case .dateIdeas:                   return "Date ideas"
+        case .aiCoach:                     return "AI Coach"
+        case .chatPhotos:                  return "Chat photos"
+        case .memoryCapsule:               return "Memory Capsules"
+        case .togetherGoalsUnlimited:      return "Shared goals"
+        case .togetherChallengesUnlimited: return "Couple challenges"
+        case .togetherDreamBoard:          return "Dream Board"
+        case .togetherCoach:               return "Couple Coach"
         }
     }
 
     private func premiumLabel(for feature: PremiumFeature) -> String {
         switch feature {
-        case .aiMoodSuggestions: return "50/day"
-        case .dateIdeas:         return "25/day"
-        case .chatPhotos:        return "Unlimited"
-        default:                 return "Unlocked"
+        case .aiMoodSuggestions:           return "50/day"
+        case .dateIdeas:                   return "25/day"
+        case .chatPhotos:                  return "Unlimited"
+        case .customQuizzes:               return "Unlimited"
+        case .togetherGoalsUnlimited:      return "Unlimited"
+        case .togetherChallengesUnlimited: return "Unlimited"
+        case .togetherDreamBoard:          return "Unlimited"
+        default:                           return "Unlocked"
         }
     }
 
@@ -417,14 +428,37 @@ struct PremiumPaywallView: View {
         .foregroundStyle(Brand.textSecondary)
     }
 
-    // MARK: - Fine print
+    // MARK: - Legal links (Apple Guideline 3.1.2)
+
+    private var legalLinks: some View {
+        HStack(spacing: 6) {
+            if let url = URL(string: "https://manhcuong5311-hue.github.io/Coupley/") {
+                Link("Privacy Policy", destination: url)
+            }
+            Text("·").foregroundStyle(Brand.textTertiary)
+            if let url = URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/") {
+                Link("Terms of Use (EULA)", destination: url)
+            }
+        }
+        .font(.system(size: 12, weight: .medium, design: .rounded))
+        .foregroundStyle(Brand.textSecondary)
+    }
+
+    // MARK: - Fine print (Apple Guideline 3.1.2 — Auto-Renewable Subscriptions)
 
     private var fineprint: some View {
-        Text("Payment charged to your Apple ID at confirmation. Subscription auto-renews unless cancelled at least 24 hours before the end of the current period. Manage in Settings → Apple ID → Subscriptions.")
-            .font(.system(size: 11, design: .rounded))
-            .foregroundStyle(Brand.textTertiary)
-            .multilineTextAlignment(.center)
-            .lineSpacing(2)
+        Text(
+            "Coupley Premium is an auto-renewable subscription. " +
+            "Monthly: \(PremiumPlan.monthly.priceLabel). Yearly: \(PremiumPlan.yearly.priceLabel). " +
+            "Payment is charged to your Apple ID at confirmation of purchase. " +
+            "Your subscription automatically renews at the same price for the same period unless auto-renew is turned off at least 24 hours before the end of the current period. " +
+            "Your account will be charged for renewal within 24 hours prior to the end of the current period. " +
+            "You can manage your subscription and turn off auto-renewal in Settings → Apple ID → Subscriptions after purchase."
+        )
+        .font(.system(size: 11, design: .rounded))
+        .foregroundStyle(Brand.textTertiary)
+        .multilineTextAlignment(.center)
+        .lineSpacing(2)
     }
 }
 

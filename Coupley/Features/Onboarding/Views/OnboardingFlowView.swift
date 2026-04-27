@@ -418,11 +418,11 @@ struct OnboardingPaywallStepView: View {
                     Task { await premiumStore.restorePurchases() }
                 }
                 Text("·").foregroundStyle(Brand.textTertiary)
-                if let url = URL(string: "https://coupley.app/terms") {
-                    Link("Terms", destination: url)
+                if let url = URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/") {
+                    Link("Terms (EULA)", destination: url)
                 }
                 Text("·").foregroundStyle(Brand.textTertiary)
-                if let url = URL(string: "https://coupley.app/privacy") {
+                if let url = URL(string: "https://manhcuong5311-hue.github.io/Coupley/") {
                     Link("Privacy", destination: url)
                 }
             }
