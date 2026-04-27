@@ -349,6 +349,7 @@ struct PremiumPaywallView: View {
         case .aiMoodSuggestions:           return "50/day"
         case .dateIdeas:                   return "25/day"
         case .chatPhotos:                  return "Unlimited"
+        case .customQuizzes:               return "Unlimited"
         case .togetherGoalsUnlimited:      return "Unlimited"
         case .togetherChallengesUnlimited: return "Unlimited"
         case .togetherDreamBoard:          return "Unlimited"

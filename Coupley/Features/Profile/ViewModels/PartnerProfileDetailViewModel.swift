@@ -182,38 +182,6 @@ final class PartnerProfileDetailViewModel: ObservableObject {
         persist(debounced: true)
     }
 
-    // MARK: - Custom Q&A (owner-only)
-
-    /// Custom quizzes are personal reflections — only the profile owner can
-    /// create or remove them. Premium gate is enforced at the call site
-    /// (create button presents the paywall).
-    var canEditCustomAnswers: Bool { mode == .mine }
-
-    func addCustomAnswer(question: String, options: [String], selected: [String]) {
-        guard canEditCustomAnswers else { return }
-        let trimmedQuestion = question.trimmingCharacters(in: .whitespacesAndNewlines)
-        let cleanedOptions = options
-            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-            .filter { !$0.isEmpty }
-        guard !trimmedQuestion.isEmpty, !cleanedOptions.isEmpty else { return }
-
-        let selectedInOptions = selected.filter { cleanedOptions.contains($0) }
-        let entry = CustomQuizAnswer(
-            question: trimmedQuestion,
-            options: cleanedOptions,
-            selectedOptions: selectedInOptions,
-            createdBy: currentUserId
-        )
-        profile.customAnswers.append(entry)
-        persist()
-    }
-
-    func removeCustomAnswer(id: String) {
-        guard canEditCustomAnswers else { return }
-        profile.customAnswers.removeAll { $0.id == id }
-        persist()
-    }
-
     // MARK: - Persist
 
     /// Writes the current profile to the backend. If `debounced`, waits a

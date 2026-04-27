@@ -85,7 +85,7 @@ enum PremiumFeature: String, CaseIterable {
     case anniversaryPhoto      // Upload cover photo for anniversaries / memories (free: none)
     case allThemes             // All theme styles (free: default only)
     case fullQuizAccess        // All quiz topics (free: first half of topics)
-    case customQuizzes         // Create custom quizzes with your own question + options (free: locked)
+    case customQuizzes         // Create custom chat quizzes (free: 1/day, premium: unlimited)
     case dateIdeas             // Date ideas access (free: locked, premium: 25/day)
     case aiMoodSuggestions     // AI mood suggestions (free: 1/day, premium: 50/day)
     case aiCoach               // AI Relationship Coach (free: 2 sessions/week, premium: unlimited + deep features)
@@ -102,7 +102,7 @@ enum PremiumFeature: String, CaseIterable {
         case .anniversaryPhoto:            return "Memory & anniversary photos"
         case .allThemes:                   return "All themes & styles"
         case .fullQuizAccess:              return "Full quiz library"
-        case .customQuizzes:               return "Create your own quizzes"
+        case .customQuizzes:               return "Custom quizzes (unlimited)"
         case .dateIdeas:                   return "Date ideas (25/day)"
         case .aiMoodSuggestions:           return "AI mood suggestions (50/day)"
         case .aiCoach:                     return "AI Relationship Coach"
@@ -121,7 +121,7 @@ enum PremiumFeature: String, CaseIterable {
         case .anniversaryPhoto:            return "No memory photos"
         case .allThemes:                   return "Default theme only"
         case .fullQuizAccess:              return "Half the quiz library"
-        case .customQuizzes:               return "Locked"
+        case .customQuizzes:               return "1 per day"
         case .dateIdeas:                   return "Locked"
         case .aiMoodSuggestions:           return "1 per day"
         case .aiCoach:                     return "2 sessions per week"
@@ -160,6 +160,7 @@ enum PremiumFeature: String, CaseIterable {
         case .dateIdeas:         return 0  // locked
         case .aiCoach:           return 1  // 1 session per day on free tier
         case .chatPhotos:        return 1  // 1 photo per day on free tier
+        case .customQuizzes:     return 1  // 1 custom chat quiz per day on free tier
         default:                 return nil
         }
     }

@@ -108,8 +108,12 @@ final class PremiumStore: ObservableObject {
 
     func hasAccess(to feature: PremiumFeature) -> Bool {
         switch feature {
-        case .customAvatar, .anniversaryPhoto, .allThemes, .fullQuizAccess, .customQuizzes:
+        case .customAvatar, .anniversaryPhoto, .allThemes, .fullQuizAccess:
             return isActive
+        case .customQuizzes:
+            // Custom chat quizzes: free users get 1/day, premium unlimited.
+            if isActive { return true }
+            return dailyUsage(for: .customQuizzes) < 1
         case .memoryCapsule:
             // Free: locked. Capsules are an emotional premium hook.
             return isActive
