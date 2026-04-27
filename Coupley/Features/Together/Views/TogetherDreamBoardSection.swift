@@ -231,10 +231,8 @@ struct DreamCard: View {
 
             // Photo overlay when present (premium only)
             if let url = dream.photoURL, let parsed = URL(string: url) {
-                AsyncImage(url: parsed) { phase in
-                    switch phase {
-                    case .empty: EmptyView()
-                    case .success(let image):
+                CachedAsyncImage(url: parsed) { phase in
+                    if case .success(let image) = phase {
                         image
                             .resizable()
                             .scaledToFill()
@@ -244,8 +242,6 @@ struct DreamCard: View {
                                     startPoint: .top, endPoint: .bottom
                                 )
                             )
-                    case .failure: EmptyView()
-                    @unknown default: EmptyView()
                     }
                 }
             }

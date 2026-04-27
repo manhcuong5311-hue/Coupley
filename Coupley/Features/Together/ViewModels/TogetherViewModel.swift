@@ -157,6 +157,7 @@ final class TogetherViewModel: ObservableObject {
         colorway: TogetherColorway,
         trackingMode: GoalTrackingMode,
         target: Double,
+        currencyCode: String,
         dueDate: Date?,
         note: String?,
         canExceedFreeLimit: Bool
@@ -174,6 +175,7 @@ final class TogetherViewModel: ObservableObject {
             colorway: colorway,
             trackingMode: trackingMode,
             target: target,
+            currencyCode: currencyCode,
             contribution: .empty,
             dueDate: dueDate,
             note: note?.nilIfEmpty,

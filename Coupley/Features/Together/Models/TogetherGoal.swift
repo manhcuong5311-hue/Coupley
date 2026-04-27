@@ -88,7 +88,8 @@ enum GoalCategory: String, Codable, CaseIterable, Identifiable {
 // MARK: - Goal Tracking Mode
 
 /// `count` goals tally completed checkpoints (e.g. "14 / 20 days").
-/// `currency` goals tally money toward a target (e.g. "$2,400 / $5,000").
+/// `currency` goals tally money toward a target. The exact symbol is driven by
+/// the goal's stored `currencyCode` (USD → "$5,000", VND → "5.000 ₫").
 /// We keep both code paths in one model because every other field is shared.
 enum GoalTrackingMode: String, Codable, CaseIterable {
     case count
@@ -116,6 +117,12 @@ struct TogetherGoal: Identifiable, Codable, Equatable {
     /// Target value in whatever the tracking mode dictates. Counts are integers
     /// stored as doubles so the same field works for both modes.
     var target: Double
+
+    /// ISO 4217 code chosen at create time. Locked into the document so both
+    /// partners always see the same currency for a shared goal — independent
+    /// of either viewer's device locale. Editable from the goal editor.
+    /// Ignored when `trackingMode == .count`.
+    var currencyCode: String
 
     var contribution: TogetherContribution
 
@@ -150,15 +157,6 @@ struct TogetherGoal: Identifiable, Codable, Equatable {
         completedAt != nil || progress >= 1.0
     }
 
-    /// Currency formatter we use across the goal UI. Locale-aware so a user
-    /// in EU sees €5,000 without us hardcoding $.
-    static let currencyFormatter: NumberFormatter = {
-        let f = NumberFormatter()
-        f.numberStyle = .currency
-        f.maximumFractionDigits = 0
-        return f
-    }()
-
     static let countFormatter: NumberFormatter = {
         let f = NumberFormatter()
         f.numberStyle = .decimal
@@ -166,10 +164,16 @@ struct TogetherGoal: Identifiable, Codable, Equatable {
         return f
     }()
 
+    /// Resolved currency metadata for `.currency` goals. Falls back to USD if
+    /// the stored code isn't in the catalog (legacy data, future codes, etc.).
+    var currencyInfo: CurrencyInfo {
+        CurrencyCatalog.info(for: currencyCode)
+    }
+
     func formatAmount(_ value: Double) -> String {
         switch trackingMode {
         case .currency:
-            return Self.currencyFormatter.string(from: NSNumber(value: value)) ?? "$0"
+            return CurrencyFormatting.format(value, code: currencyCode)
         case .count:
             return Self.countFormatter.string(from: NSNumber(value: value)) ?? "0"
         }

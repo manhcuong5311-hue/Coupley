@@ -189,10 +189,14 @@ struct GoalDetailSheet: View {
 
                 HStack(spacing: 10) {
                     HStack(spacing: 8) {
-                        Text(live.trackingMode == .currency ? "$" : "+")
+                        Text(live.trackingMode == .currency
+                             ? live.currencyInfo.symbol
+                             : "+")
                             .font(.system(size: 18, weight: .bold, design: .rounded))
                             .foregroundStyle(Brand.textSecondary)
-                        TextField(live.trackingMode == .currency ? "100" : "1",
+                        TextField(live.trackingMode == .currency
+                                    ? String(Int(live.currencyInfo.quickBaseUnit))
+                                    : "1",
                                   text: $contributionText)
                             .keyboardType(.numberPad)
                             .focused($contributionFocused)
@@ -228,12 +232,16 @@ struct GoalDetailSheet: View {
                     .disabled(isContributing || (Double(contributionText) ?? 0) <= 0)
                 }
 
-                // Quick contribute chips for fast taps
+                // Quick contribute chips for fast taps. Amounts scale with the
+                // goal's currency — USD shows $25/$50/$100/$250/$500 while VND
+                // shows ₫50K/₫100K/₫250K/₫500K/₫1M for the same UX feel.
                 if live.trackingMode == .currency {
+                    let base = live.currencyInfo.quickBaseUnit
+                    let ladder: [Double] = [base, 2 * base, 5 * base, 10 * base, 20 * base]
                     HStack(spacing: 8) {
-                        ForEach([25, 50, 100, 250, 500], id: \.self) { amount in
-                            quickChip(label: "$\(amount)") {
-                                contributionText = "\(amount)"
+                        ForEach(ladder, id: \.self) { amount in
+                            quickChip(label: live.formatAmount(amount)) {
+                                contributionText = "\(Int(amount))"
                                 handleContribute(live)
                             }
                         }

@@ -26,6 +26,7 @@ struct MonthlyMoodInsightView: View {
     /// First day of the currently-displayed month.
     @State private var monthAnchor: Date
 
+    @MainActor
     init(store: MoodLocalHistoryStore = .shared) {
         self.store = store
         let calendar = Calendar.current

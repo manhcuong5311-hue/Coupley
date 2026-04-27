@@ -90,10 +90,10 @@ struct DreamDetailSheet: View {
 
             // Photo (when premium + present)
             if let url = live.photoURL, let parsed = URL(string: url) {
-                AsyncImage(url: parsed) { phase in
+                CachedAsyncImage(url: parsed) { phase in
                     if case .success(let img) = phase {
                         img.resizable().scaledToFill()
-                    } else { EmptyView() }
+                    }
                 }
             }
 

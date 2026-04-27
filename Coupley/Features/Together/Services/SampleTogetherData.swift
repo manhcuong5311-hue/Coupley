@@ -25,6 +25,7 @@ enum SampleTogetherData {
                 colorway: .ocean,
                 trackingMode: .currency,
                 target: 5000,
+                currencyCode: "USD",
                 contribution: TogetherContribution(amounts: [
                     userId: 2200, partnerId: 1400
                 ]),
@@ -42,6 +43,7 @@ enum SampleTogetherData {
                 colorway: .blossom,
                 trackingMode: .currency,
                 target: 25000,
+                currencyCode: "USD",
                 contribution: TogetherContribution(amounts: [
                     userId: 5800, partnerId: 4400
                 ]),
@@ -59,6 +61,7 @@ enum SampleTogetherData {
                 colorway: .ember,
                 trackingMode: .count,
                 target: 20,
+                currencyCode: "USD",
                 contribution: TogetherContribution(amounts: [
                     userId: 7, partnerId: 7
                 ]),

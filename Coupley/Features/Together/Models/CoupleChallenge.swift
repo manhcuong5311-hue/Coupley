@@ -206,7 +206,7 @@ struct ChallengeSuggestion: Identifiable {
             blurb: "Eight weeks. Eight nights that are just for you two."
         ),
         ChallengeSuggestion(
-            title: "Save $500 Together",
+            title: "Daily Savings Habit",
             category: .savings, cadence: .daily, targetCount: 30, emoji: "💰",
             blurb: "Tiny daily wins that compound into a real fund."
         ),

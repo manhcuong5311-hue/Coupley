@@ -155,6 +155,7 @@ final class FirestoreTogetherGoalsService: TogetherGoalsService {
             "colorway":            g.colorway.rawValue,
             "trackingMode":        g.trackingMode.rawValue,
             "target":              g.target,
+            "currencyCode":        g.currencyCode,
             "contributionAmounts": g.contribution.amounts,
             "createdBy":           g.createdBy,
             "createdAt":           Timestamp(date: g.createdAt),
@@ -203,6 +204,10 @@ final class FirestoreTogetherGoalsService: TogetherGoalsService {
         let note = (data["note"] as? String).flatMap { $0.isEmpty ? nil : $0 }
         let dueDate = (data["dueDate"] as? Timestamp)?.dateValue()
         let completedAt = (data["completedAt"] as? Timestamp)?.dateValue()
+        // Legacy goals predate `currencyCode`. Best-effort default: device
+        // currency on first decode, so the existing number renders sensibly
+        // for the viewer until they edit and re-save with an explicit code.
+        let currencyCode = (data["currencyCode"] as? String) ?? CurrencyCatalog.deviceDefault().code
 
         var goal = TogetherGoal(
             id: id,
@@ -211,6 +216,7 @@ final class FirestoreTogetherGoalsService: TogetherGoalsService {
             colorway: colorway,
             trackingMode: tracking,
             target: target,
+            currencyCode: currencyCode,
             contribution: TogetherContribution(amounts: amounts),
             dueDate: dueDate,
             note: note,

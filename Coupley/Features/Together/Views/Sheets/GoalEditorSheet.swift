@@ -36,12 +36,16 @@ struct GoalEditorSheet: View {
     @State private var colorway: TogetherColorway = .sunset
     @State private var trackingMode: GoalTrackingMode = .currency
     @State private var targetText: String = ""
+    /// Defaults to the device-locale currency on first appear; the user can
+    /// pick anything in the catalog. Stored on the goal at save.
+    @State private var currencyCode: String = CurrencyCatalog.deviceDefault().code
     @State private var hasDueDate: Bool = false
     @State private var dueDate: Date = Calendar.current.date(byAdding: .month, value: 6, to: Date()) ?? Date()
     @State private var note: String = ""
 
     @State private var isSubmitting: Bool = false
     @State private var showLimitAlert: Bool = false
+    @State private var showCurrencyPicker: Bool = false
 
     @FocusState private var focusedField: Field?
 
@@ -61,6 +65,9 @@ struct GoalEditorSheet: View {
                     categoryPicker
                     colorwayPicker
                     trackingPicker
+                    if trackingMode == .currency {
+                        currencyField
+                    }
                     targetField
                     dueDateField
                     noteField
@@ -274,11 +281,55 @@ struct GoalEditorSheet: View {
         }
     }
 
+    private var currencyField: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            sectionLabel("Currency")
+            Button {
+                showCurrencyPicker = true
+            } label: {
+                let info = CurrencyCatalog.info(for: currencyCode)
+                HStack(spacing: 12) {
+                    Text(info.flag)
+                        .font(.system(size: 22))
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(info.name)
+                            .font(.system(size: 15, weight: .semibold, design: .rounded))
+                            .foregroundStyle(Brand.textPrimary)
+                        Text("\(info.code) · \(info.symbol)")
+                            .font(.system(size: 12, design: .rounded))
+                            .foregroundStyle(Brand.textSecondary)
+                    }
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(Brand.textTertiary)
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 14)
+                .background(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(Brand.surfaceLight)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                .strokeBorder(Brand.divider, lineWidth: 1)
+                        )
+                )
+            }
+            .buttonStyle(.plain)
+            .sheet(isPresented: $showCurrencyPicker) {
+                CurrencyPickerSheet(selected: $currencyCode)
+                    .presentationDetents([.large])
+            }
+        }
+    }
+
     private var targetField: some View {
         VStack(alignment: .leading, spacing: 8) {
             sectionLabel(trackingMode == .currency ? "Target amount" : "Target count")
             HStack(spacing: 8) {
-                Text(trackingMode == .currency ? "$" : "#")
+                Text(trackingMode == .currency
+                     ? CurrencyCatalog.info(for: currencyCode).symbol
+                     : "#")
                     .font(.system(size: 18, weight: .bold, design: .rounded))
                     .foregroundStyle(Brand.textSecondary)
                 TextField("0", text: $targetText)
@@ -413,6 +464,7 @@ struct GoalEditorSheet: View {
             colorway     = goal.colorway
             trackingMode = goal.trackingMode
             targetText   = String(Int(goal.target))
+            currencyCode = goal.currencyCode
             hasDueDate   = goal.dueDate != nil
             dueDate      = goal.dueDate ?? Calendar.current.date(byAdding: .month, value: 6, to: Date()) ?? Date()
             note         = goal.note ?? ""
@@ -425,6 +477,9 @@ struct GoalEditorSheet: View {
         colorway     = TogetherColorway.suggested(for: suggestion.category)
         trackingMode = suggestion.trackingMode
         targetText   = String(Int(suggestion.target))
+        // Currency keeps whatever the user has already chosen (or device default
+        // on first appear). Suggestions are USD-shaped numbers that the user
+        // adjusts after picking.
         UIImpactFeedbackGenerator(style: .light).impactOccurred()
     }
 
@@ -487,6 +542,7 @@ struct GoalEditorSheet: View {
                     colorway: colorway,
                     trackingMode: trackingMode,
                     target: target,
+                    currencyCode: currencyCode,
                     dueDate: due,
                     note: trimmedNote,
                     canExceedFreeLimit: canExceed
@@ -502,6 +558,7 @@ struct GoalEditorSheet: View {
                 goal.colorway = colorway
                 goal.trackingMode = trackingMode
                 goal.target = target
+                goal.currencyCode = currencyCode
                 goal.dueDate = due
                 goal.note = trimmedNote.isEmpty ? nil : trimmedNote
                 await viewModel.updateGoal(goal)

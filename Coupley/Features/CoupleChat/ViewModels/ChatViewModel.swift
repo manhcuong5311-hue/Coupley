@@ -203,6 +203,9 @@ final class ChatViewModel: ObservableObject {
             defer { Task { @MainActor in self.isUploadingPhoto = false } }
             do {
                 let url = try await photoStorage.upload(image, coupleId: session.coupleId, messageId: messageId)
+                if let parsed = URL(string: url) {
+                    ImageCache.shared.store(image, for: parsed)
+                }
                 try await chatService.sendPhoto(url, coupleId: session.coupleId, senderId: session.userId)
             } catch {
                 await MainActor.run { self.errorMessage = error.localizedDescription }

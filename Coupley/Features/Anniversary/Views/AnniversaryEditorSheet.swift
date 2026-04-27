@@ -142,7 +142,7 @@ struct AnniversaryEditorSheet: View {
                 Text("Your partner will stop seeing it too.")
             }
             .onChange(of: selectedItem) { _, item in
-                Task {
+                Task { @MainActor in
                     guard let item else { return }
                     if let data = try? await item.loadTransferable(type: Data.self),
                        let image = UIImage(data: data) {
@@ -205,22 +205,20 @@ struct AnniversaryEditorSheet: View {
                     .clipShape(RoundedRectangle(cornerRadius: 12))
                     .clipped()
             } else if let urlString = existingImageURL, let url = URL(string: urlString) {
-                AsyncImage(url: url) { phase in
-                    switch phase {
-                    case .success(let image):
-                        image
-                            .resizable()
-                            .scaledToFill()
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 160)
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
-                            .clipped()
-                    case .failure, .empty:
-                        imagePlaceholder
-                    @unknown default:
-                        imagePlaceholder
+                CachedAsyncImage(url: url) { phase in
+                    ZStack {
+                        Brand.accentStart.opacity(0.06)
+                        if case .success(let image) = phase {
+                            image
+                                .resizable()
+                                .scaledToFill()
+                        }
                     }
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 160)
+                    .clipped()
                 }
+                .clipShape(RoundedRectangle(cornerRadius: 12))
             } else {
                 imagePlaceholder
             }

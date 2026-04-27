@@ -13,8 +13,6 @@ struct PartnerPhotoPopupView: View {
     let imageURL: String
     let onDismiss: () -> Void
 
-    @State private var loadedImage: UIImage? = nil
-    @State private var isLoading = true
     @State private var dismissTask: Task<Void, Never>? = nil
 
     var body: some View {
@@ -42,27 +40,34 @@ struct PartnerPhotoPopupView: View {
                 }
                 .padding(.horizontal, 24)
 
-                ZStack {
-                    RoundedRectangle(cornerRadius: 20)
-                        .fill(Color.white.opacity(0.1))
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 360)
-
-                    if let img = loadedImage {
-                        Image(uiImage: img)
-                            .resizable()
-                            .scaledToFit()
-                            .clipShape(RoundedRectangle(cornerRadius: 20))
+                CachedAsyncImage(url: URL(string: imageURL)) { phase in
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 20)
+                            .fill(Color.white.opacity(0.1))
                             .frame(maxWidth: .infinity)
-                            .frame(maxHeight: 360)
-                    } else if isLoading {
-                        ProgressView()
-                            .tint(.white)
-                            .controlSize(.large)
-                    } else {
-                        Image(systemName: "photo.fill")
-                            .font(.system(size: 48))
-                            .foregroundStyle(.white.opacity(0.4))
+                            .frame(height: 360)
+
+                        switch phase {
+                        case .success(let image):
+                            image
+                                .resizable()
+                                .scaledToFit()
+                                .clipShape(RoundedRectangle(cornerRadius: 20))
+                                .frame(maxWidth: .infinity)
+                                .frame(maxHeight: 360)
+                        case .failure:
+                            Image(systemName: "photo.fill")
+                                .font(.system(size: 48))
+                                .foregroundStyle(.white.opacity(0.4))
+                        case .empty:
+                            ProgressView()
+                                .tint(.white)
+                                .controlSize(.large)
+                        @unknown default:
+                            ProgressView()
+                                .tint(.white)
+                                .controlSize(.large)
+                        }
                     }
                 }
                 .padding(.horizontal, 24)
@@ -83,13 +88,8 @@ struct PartnerPhotoPopupView: View {
                 .padding(.horizontal, 24)
             }
         }
-        .task {
-            await loadImage()
-            startAutoDismiss()
-        }
-        .onDisappear {
-            dismissTask?.cancel()
-        }
+        .task { startAutoDismiss() }
+        .onDisappear { dismissTask?.cancel() }
     }
 
     private func dismiss() {
@@ -102,23 +102,6 @@ struct PartnerPhotoPopupView: View {
             try? await Task.sleep(nanoseconds: 300_000_000_000) // 5 minutes
             guard !Task.isCancelled else { return }
             await MainActor.run { onDismiss() }
-        }
-    }
-
-    private func loadImage() async {
-        guard let url = URL(string: imageURL) else {
-            isLoading = false
-            return
-        }
-        do {
-            let (data, _) = try await URLSession.shared.data(from: url)
-            let img = UIImage(data: data)
-            await MainActor.run {
-                loadedImage = img
-                isLoading = false
-            }
-        } catch {
-            await MainActor.run { isLoading = false }
         }
     }
 }
