@@ -528,27 +528,23 @@ struct NotificationsStepView: View {
         }
     }
 
+    /// Route through the central NotificationService so APNs registration
+    /// fires on grant. Calling `UNUserNotificationCenter.requestAuthorization`
+    /// directly here was the historical bug — permission was granted but
+    /// the device never registered for remote notifications, so FCM never
+    /// got a token.
     private func requestPermission() {
         isRequesting = true
         Task {
-            let granted = await requestSystemAuthorization()
+            let state = await NotificationService.shared.requestPermission()
             await MainActor.run {
+                let granted = (state == .authorized || state == .provisional)
                 viewModel.profile.notificationsEnabled = granted
                 didRespond = true
                 isRequesting = false
                 if granted {
                     UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                 }
-            }
-        }
-    }
-
-    private func requestSystemAuthorization() async -> Bool {
-        await withCheckedContinuation { (continuation: CheckedContinuation<Bool, Never>) in
-            UNUserNotificationCenter.current().requestAuthorization(
-                options: [.alert, .badge, .sound]
-            ) { granted, _ in
-                continuation.resume(returning: granted)
             }
         }
     }
