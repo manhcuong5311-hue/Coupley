@@ -813,20 +813,39 @@ async function sendNotification(userId, type, title, body, data = {}) {
     return false;
   }
 
+  // Coerce all `data` values to strings — APNs requires this and FCM
+  // silently drops the message otherwise.
+  const stringifiedData = Object.fromEntries(
+    Object.entries({ type, ...data }).map(([k, v]) => [k, String(v ?? "")])
+  );
+
   try {
     await messaging.send({
       token,
       notification: { title, body },
-      data: { type, ...data },
+      data: stringifiedData,
       apns: {
+        // `alert` priority + `apns-push-type: alert` are the two headers
+        // APNs needs to actually wake the device with a banner. The old
+        // payload was missing both, which is why notifications would
+        // sometimes never appear on real devices.
+        headers: {
+          "apns-priority":  "10",
+          "apns-push-type": "alert",
+        },
         payload: {
           aps: {
+            alert: { title, body },
             sound: "default",
             badge: 1,
-            "mutable-content": 1,
-            "thread-id": "coupley-nudge",
+            "thread-id":      "coupley-nudge",
+            "interruption-level": "active",
           },
         },
+      },
+      android: {
+        priority: "high",
+        notification: { sound: "default" },
       },
     });
     await recordNotification(userId, type, title, body);
@@ -834,11 +853,22 @@ async function sendNotification(userId, type, title, body, data = {}) {
     return true;
   } catch (error) {
     console.error(`[Notify] Failed for ${userId}:`, error.message);
-    if (
-      error.code === "messaging/invalid-registration-token" ||
-      error.code === "messaging/registration-token-not-registered"
-    ) {
-      await db.collection("users").doc(userId).update({ fcmToken: FieldValue.delete() });
+    // Token cleanup: every error class APNs/FCM uses to signal a token is
+    // no longer valid for delivery. We delete the field so the next
+    // delivery attempt skips early; the next time the user opens the app
+    // the client's `bind(userId:)` re-saves a fresh token.
+    const dead = new Set([
+      "messaging/invalid-registration-token",
+      "messaging/registration-token-not-registered",
+      "messaging/invalid-argument",
+      "messaging/mismatched-credential",
+    ]);
+    if (dead.has(error.code)) {
+      console.warn(`[Notify] Pruning dead FCM token for ${userId}`);
+      await db.collection("users").doc(userId).update({
+        fcmToken: FieldValue.delete(),
+        tokenInvalidatedAt: FieldValue.serverTimestamp(),
+      });
     }
     return false;
   }

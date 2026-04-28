@@ -24,13 +24,14 @@ struct SettingsView: View {
     @State private var currentDisplayName: String = Auth.auth().currentUser?.displayName ?? "—"
     @State private var showThemePaywall = false
 
-    /// Hidden 5-tap-on-version gesture re-triggers onboarding. Flipping
-    /// this flag is the *only* side effect — premium, pairing, and any
-    /// Firestore data are untouched.
+    /// Hidden 5-tap-on-version gesture opens the developer DebugMenu, which
+    /// surfaces "Replay Onboarding", "Send Test Notification", token tools,
+    /// status, and logs. The DebugMenu is the *only* user-facing entry to
+    /// onboarding replay — the gesture itself doesn't mutate any state.
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @State private var versionTapCount = 0
     @State private var versionTapResetTask: Task<Void, Never>?
-    @State private var showOnboardingResetConfirm = false
+    @State private var showDebugMenu = false
 
     let session: UserSession?
 
@@ -67,14 +68,16 @@ struct SettingsView: View {
             }
             Button("Cancel", role: .cancel) {}
         }
-        .alert("Replay onboarding?", isPresented: $showOnboardingResetConfirm) {
-            Button("Replay", role: .destructive) {
-                hasCompletedOnboarding = false
-                dismiss()
-            }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text("You'll see the onboarding flow again. Your premium, partner, and saved data won't be touched.")
+        .sheet(isPresented: $showDebugMenu) {
+            DebugMenuView()
+                .environmentObject(sessionStore)
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
+        }
+        // When the DebugMenu flips `hasCompletedOnboarding` to false, the
+        // Settings sheet must dismiss so RootView can route to onboarding.
+        .onChange(of: hasCompletedOnboarding) { _, completed in
+            if !completed { dismiss() }
         }
     }
 
@@ -441,10 +444,18 @@ struct SettingsView: View {
     @ViewBuilder
     private var aboutSection: some View {
         Section("About") {
-            SettingsRow(icon: "info.circle.fill", iconTint: Brand.textSecondary,
-                        title: "Version", value: appVersion)
-                .contentShape(Rectangle())
-                .onTapGesture { handleVersionTap() }
+            // Wrapped in a Button so the entire row reliably captures taps
+            // — the previous .onTapGesture form was eaten by List row hit
+            // testing on iOS 17+, which is why the 5-tap gesture would
+            // silently fail.
+            Button {
+                handleVersionTap()
+            } label: {
+                SettingsRow(icon: "info.circle.fill", iconTint: Brand.textSecondary,
+                            title: "Version", value: appVersion)
+            }
+            .buttonStyle(.plain)
+            .contentShape(Rectangle())
             if let url = URL(string: "https://manhcuong5311-hue.github.io/Coupley/") {
                 Link(destination: url) {
                     HStack(spacing: 14) {
@@ -521,14 +532,13 @@ struct SettingsView: View {
         return "\(v) (\(b))"
     }
 
-    // MARK: - Hidden onboarding-reset gesture
+    // MARK: - Hidden DebugMenu gesture
     //
-    // 5 taps on the Version row within ~2.5s flips
-    // `hasCompletedOnboarding` so the onboarding flow re-runs the next time
-    // RootView observes the user as `.needsPairing`. This is a developer /
-    // QA convenience: it does NOT touch premium, partner pairing, or any
-    // Firestore data. The user just sees their existing onboarding screens
-    // again and can step through or skip.
+    // 5 taps on the Version row within ~2.5s opens the developer DebugMenu
+    // sheet. The menu hosts "Replay Onboarding", "Send Test Notification",
+    // "Force FCM Token Refresh", a permission/token status panel, and a
+    // log viewer. None of those actions touches premium, partner pairing,
+    // or Firestore data the user couldn't already write.
 
     private func handleVersionTap() {
         versionTapCount += 1
@@ -540,7 +550,7 @@ struct SettingsView: View {
             versionTapCount = 0
             versionTapResetTask?.cancel()
             versionTapResetTask = nil
-            showOnboardingResetConfirm = true
+            showDebugMenu = true
             return
         }
 
