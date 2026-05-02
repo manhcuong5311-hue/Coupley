@@ -20,8 +20,10 @@ struct ChatView: View {
     @State private var showQuizHub = false
     @State private var photosPickerItem: PhotosPickerItem? = nil
     @State private var pendingPhotoPopup: ChatMessage? = nil
+    @State private var pendingPhotoQueue: [ChatMessage] = []
     @State private var seenPhotoMessageIds: Set<String> = []
     @State private var showPhotoPaywall = false
+    @FocusState private var isComposerFocused: Bool
 
     init(session: UserSession, profileViewModel: CouplePersonProfileViewModel) {
         self.session = session
@@ -43,41 +45,43 @@ struct ChatView: View {
             .navigationTitle("Chat")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    HStack(spacing: 12) {
-                        // Quiz Hub — primary entry point for the Daily / AI /
-                        // Custom / History flows. Replaces the previous
-                        // single-picker shortcut.
-                        Button {
-                            UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                            showQuizHub = true
-                        } label: {
-                            HStack(spacing: 4) {
-                                Image(systemName: "sparkles")
-                                    .font(.system(size: 11, weight: .semibold))
-                                Text("Quiz")
-                                    .font(.system(size: 13, weight: .bold, design: .rounded))
+                if session.isPaired {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        HStack(spacing: 12) {
+                            // Quiz Hub — primary entry point for the Daily / AI /
+                            // Custom / History flows. Replaces the previous
+                            // single-picker shortcut.
+                            Button {
+                                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                                showQuizHub = true
+                            } label: {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "sparkles")
+                                        .font(.system(size: 11, weight: .semibold))
+                                    Text("Quiz")
+                                        .font(.system(size: 13, weight: .bold, design: .rounded))
+                                }
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 5)
+                                .background(
+                                    Capsule()
+                                        .fill(Brand.accentGradient)
+                                        .shadow(color: Brand.accentStart.opacity(0.30), radius: 6, y: 2)
+                                )
                             }
-                            .foregroundStyle(.white)
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 5)
-                            .background(
-                                Capsule()
-                                    .fill(Brand.accentGradient)
-                                    .shadow(color: Brand.accentStart.opacity(0.30), radius: 6, y: 2)
-                            )
-                        }
-                        .accessibilityLabel("Open Quiz Hub")
+                            .accessibilityLabel("Open Quiz Hub")
 
-                        Button { showPartnerAndMe = true } label: {
-                            Image(systemName: "heart.text.square")
-                                .foregroundStyle(Brand.accentStart)
-                        }
-                        .accessibilityLabel("Partner & Me Profile")
+                            Button { showPartnerAndMe = true } label: {
+                                Image(systemName: "heart.text.square")
+                                    .foregroundStyle(Brand.accentStart)
+                            }
+                            .accessibilityLabel("Partner & Me Profile")
 
-                        Button { showProfile = true } label: {
-                            Image(systemName: "sparkles.rectangle.stack")
-                                .foregroundStyle(Brand.accentStart)
+                            Button { showProfile = true } label: {
+                                Image(systemName: "sparkles.rectangle.stack")
+                                    .foregroundStyle(Brand.accentStart)
+                            }
                         }
                     }
                 }
@@ -130,11 +134,16 @@ struct ChatView: View {
                 }
                 Task {
                     guard let data = try? await item.loadTransferable(type: Data.self),
-                          let image = UIImage(data: data) else { return }
-                    viewModel.sendPhoto(image)
-                    // Only count against the free daily quota — unlimited
-                    // sends for premium shouldn't consume the counter.
-                    if !premiumStore.isActive {
+                          let image = UIImage(data: data) else {
+                        await MainActor.run { photosPickerItem = nil }
+                        return
+                    }
+                    // Only record the quota when the upload was actually
+                    // accepted — `sendPhoto` returns false if another upload
+                    // is already in flight, which would otherwise burn the
+                    // user's daily free photo without sending anything.
+                    let accepted = viewModel.sendPhoto(image)
+                    if accepted, !premiumStore.isActive {
                         premiumStore.recordUsage(for: .chatPhotos)
                     }
                     await MainActor.run { photosPickerItem = nil }
@@ -163,20 +172,26 @@ struct ChatView: View {
     }
 
     private func checkForIncomingPhoto(in messages: [ChatMessage]) {
-        // Find the newest photo message from the partner not yet shown
+        // Queue every unseen partner photo (oldest first) so a burst of
+        // photos doesn't silently drop all but the most recent one.
         let partnerPhotos = messages.filter {
             $0.kind == .photo &&
             $0.senderId == session.partnerId &&
             !seenPhotoMessageIds.contains($0.id) &&
             !$0.readBy.contains(session.userId)
         }
-        guard let newest = partnerPhotos.last else { return }
-        seenPhotoMessageIds.insert(newest.id)
-        pendingPhotoPopup = newest
+        guard !partnerPhotos.isEmpty else { return }
+        for photo in partnerPhotos {
+            seenPhotoMessageIds.insert(photo.id)
+            pendingPhotoQueue.append(photo)
+        }
+        if pendingPhotoPopup == nil {
+            pendingPhotoPopup = pendingPhotoQueue.first
+            if !pendingPhotoQueue.isEmpty { pendingPhotoQueue.removeFirst() }
+        }
     }
 
     private func markPhotoSeen(_ message: ChatMessage) {
-        pendingPhotoPopup = nil
         // Mark read in Firestore so popup won't show again after relaunch
         Task {
             try? await ChatViewModel.markMessageRead(
@@ -184,6 +199,13 @@ struct ChatView: View {
                 coupleId: session.coupleId,
                 userId: session.userId
             )
+        }
+        // Advance to the next queued photo (if any) so the user sees them all.
+        if let next = pendingPhotoQueue.first {
+            pendingPhotoQueue.removeFirst()
+            pendingPhotoPopup = next
+        } else {
+            pendingPhotoPopup = nil
         }
     }
 
@@ -284,6 +306,7 @@ struct ChatView: View {
                 .lineLimit(1...5)
                 .font(.system(size: 16, design: .rounded))
                 .foregroundStyle(Brand.textPrimary)
+                .focused($isComposerFocused)
                 .padding(.horizontal, 14)
                 .padding(.vertical, 10)
                 .background(
@@ -294,6 +317,14 @@ struct ChatView: View {
                                 .strokeBorder(Brand.divider, lineWidth: 1)
                         )
                 )
+                .toolbar {
+                    ToolbarItemGroup(placement: .keyboard) {
+                        Spacer()
+                        Button("Done") { isComposerFocused = false }
+                            .font(.system(size: 15, weight: .semibold, design: .rounded))
+                            .foregroundStyle(Brand.accentStart)
+                    }
+                }
 
             Button {
                 viewModel.sendDraft()
