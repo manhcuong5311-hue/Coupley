@@ -177,7 +177,12 @@ struct ContentView: View {
                     statsViewModel.loadStats()
                     profileViewModel.startListening()
                     nudgeViewModel.startListening()
-                    chatUnreadCounter.start(session: session)
+                    // Use the live session from sessionStore — the `session`
+                    // captured in init is a stale snapshot from when the
+                    // user was still solo (empty coupleId/partnerId).
+                    if let live = sessionStore.session {
+                        chatUnreadCounter.start(session: live)
+                    }
                 } else {
                     chatUnreadCounter.stop()
                 }

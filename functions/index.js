@@ -640,9 +640,12 @@ Respond ONLY in this exact JSON format (${dayCount} day entries):
 }`;
 
   return [
-    { role: "system",  content: coachSystemPrompt() },
-    { role: "user",    content: userPrompt },
-  ], maxTokens;
+    [
+      { role: "system", content: coachSystemPrompt() },
+      { role: "user",   content: userPrompt },
+    ],
+    maxTokens,
+  ];
 }
 
 // =============================================================================
@@ -992,7 +995,10 @@ exports.inactivityCheck = onSchedule("every 6 hours", async () => {
       const userDoc = await db.collection("users").doc(userId).get();
       if (!userDoc.exists) continue;
       const lastActive = userDoc.data().lastActive?.toDate?.();
-      if (!lastActive || lastActive < threshold) {
+      // Skip users who have never been active — they're brand new, not inactive.
+      // Inactivity nudges only make sense for users who used the app and stopped.
+      if (!lastActive) continue;
+      if (lastActive < threshold) {
         const msg = pickRandom(INACTIVITY_MESSAGES);
         await sendNotification(userId, "inactivity", msg.title, msg.body, { coupleId });
       }
@@ -1097,7 +1103,7 @@ exports.onChatMessageCreated = onDocumentCreated(
       "chat_message",
       title,
       body,
-      { coupleId, messageId: msg.id, senderId, navigateTo: "chat" },
+      { coupleId, messageId: event.params.messageId, senderId, navigateTo: "chat" },
       { skipRateLimit: true, skipDuplicateCheck: true, threadId: `coupley-chat-${coupleId}` }
     );
   }

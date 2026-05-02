@@ -195,8 +195,12 @@ final class ChatViewModel: ObservableObject {
 
     private let photoStorage = ChatPhotoStorageService()
 
-    func sendPhoto(_ image: UIImage) {
-        guard session.isPaired, !isUploadingPhoto else { return }
+    /// Returns `true` if the upload was accepted, `false` if rejected
+    /// (not paired, or another upload is already in flight). Callers use this
+    /// signal to gate side effects like daily-quota accounting.
+    @discardableResult
+    func sendPhoto(_ image: UIImage) -> Bool {
+        guard session.isPaired, !isUploadingPhoto else { return false }
         isUploadingPhoto = true
         let messageId = UUID().uuidString
         Task {
@@ -211,6 +215,7 @@ final class ChatViewModel: ObservableObject {
                 await MainActor.run { self.errorMessage = error.localizedDescription }
             }
         }
+        return true
     }
 
     // MARK: - Quiz answering
