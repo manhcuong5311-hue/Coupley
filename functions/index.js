@@ -797,12 +797,17 @@ async function findCoupleId(userId) {
   return snap.empty ? null : snap.docs[0].id;
 }
 
-async function sendNotification(userId, type, title, body, data = {}) {
-  if (!(await canSendNotification(userId))) {
+async function sendNotification(userId, type, title, body, data = {}, options = {}) {
+  // Real-time channels (chat, quiz answers) bypass the per-day cap and
+  // the duplicate-type gate — those gates exist to prevent spammy nudges,
+  // not to throttle direct partner-to-partner messages.
+  const { skipRateLimit = false, skipDuplicateCheck = false, threadId = "coupley-nudge" } = options;
+
+  if (!skipRateLimit && !(await canSendNotification(userId))) {
     console.log(`[Notify] Rate limit reached for ${userId}. Skipping.`);
     return false;
   }
-  if (await isDuplicateToday(userId, type)) {
+  if (!skipDuplicateCheck && await isDuplicateToday(userId, type)) {
     console.log(`[Notify] Duplicate ${type} for ${userId}. Skipping.`);
     return false;
   }
@@ -838,7 +843,7 @@ async function sendNotification(userId, type, title, body, data = {}) {
             alert: { title, body },
             sound: "default",
             badge: 1,
-            "thread-id":      "coupley-nudge",
+            "thread-id":      threadId,
             "interruption-level": "active",
           },
         },
@@ -848,7 +853,9 @@ async function sendNotification(userId, type, title, body, data = {}) {
         notification: { sound: "default" },
       },
     });
-    await recordNotification(userId, type, title, body);
+    if (!skipRateLimit) {
+      await recordNotification(userId, type, title, body);
+    }
     console.log(`[Notify] Sent ${type} to ${userId}`);
     return true;
   } catch (error) {
@@ -871,6 +878,18 @@ async function sendNotification(userId, type, title, body, data = {}) {
       });
     }
     return false;
+  }
+}
+
+// Resolve a friendly display name from the user doc, with a graceful fallback.
+async function getDisplayName(userId) {
+  try {
+    const doc = await db.collection("users").doc(userId).get();
+    if (!doc.exists) return "Your partner";
+    const d = doc.data() || {};
+    return d.firstName || d.displayName || "Your partner";
+  } catch {
+    return "Your partner";
   }
 }
 
@@ -1031,6 +1050,117 @@ exports.onPingCreated = onDocumentCreated(
     await sendNotification(partnerId, "ping", msg.title, msg.body, {
       coupleId, fromUserId: senderId,
     });
+  }
+);
+
+// =============================================================================
+// MARK: - 5b. CHAT MESSAGE (Firestore Trigger)
+// =============================================================================
+//
+// Triggered for every new doc in couples/{coupleId}/messages. Pushes the
+// partner a notification for `text` and `photo` messages only — system /
+// quiz / result cards have a nil senderId and are filtered out.
+//
+// Bypasses the per-day cap so chat behaves like a normal IM channel.
+
+const CHAT_MESSAGE_PREVIEW_LIMIT = 140;
+
+exports.onChatMessageCreated = onDocumentCreated(
+  "couples/{coupleId}/messages/{messageId}",
+  async (event) => {
+    const snap = event.data;
+    if (!snap) return;
+    const msg = snap.data();
+    const { coupleId } = event.params;
+
+    const senderId = msg.senderId;
+    if (!senderId) return;                          // system / quiz / result
+    const kind = msg.kind;
+    if (kind !== "text" && kind !== "photo") return;
+
+    const partnerId = await getPartnerId(coupleId, senderId);
+    if (!partnerId) return;
+
+    const senderName = await getDisplayName(senderId);
+    let title;
+    let body;
+    if (kind === "text") {
+      title = senderName;
+      body  = (msg.text || "").trim().slice(0, CHAT_MESSAGE_PREVIEW_LIMIT) || "Sent a message";
+    } else {
+      title = senderName;
+      body  = "📷 Sent a photo";
+    }
+
+    await sendNotification(
+      partnerId,
+      "chat_message",
+      title,
+      body,
+      { coupleId, messageId: msg.id, senderId, navigateTo: "chat" },
+      { skipRateLimit: true, skipDuplicateCheck: true, threadId: `coupley-chat-${coupleId}` }
+    );
+  }
+);
+
+// =============================================================================
+// MARK: - 5c. QUIZ ANSWERED (Firestore Trigger)
+// =============================================================================
+//
+// Triggered when a quiz doc is written. Detects newly-added answers in
+// `answers` map and pushes the OTHER user.  Two cases:
+//
+//   • Partner is first answerer  → user gets "your turn to answer".
+//   • Partner is second answerer → user gets "result is in".
+//
+// Skips its own write when the answer was already present in `before` (i.e.
+// the same answer-write triggers an update for unrelated field changes).
+
+exports.onQuizAnswered = onDocumentWritten(
+  "couples/{coupleId}/quizzes/{quizId}",
+  async (event) => {
+    const before = event.data?.before?.data() || {};
+    const after  = event.data?.after?.data();
+    if (!after) return;                          // doc deleted
+
+    const beforeAnswers = before.answers || {};
+    const afterAnswers  = after.answers  || {};
+
+    const newAnswerers = Object.keys(afterAnswers).filter(
+      (uid) => !beforeAnswers[uid]
+    );
+    if (newAnswerers.length === 0) return;
+
+    const { coupleId, quizId } = event.params;
+    const coupleSnap = await db.collection("couples").doc(coupleId).get();
+    if (!coupleSnap.exists) return;
+    const userIds = coupleSnap.data().userIds || [];
+    if (userIds.length !== 2) return;
+
+    const isComplete = after.status === "complete";
+    const questionPreview = (after.question || "").trim().slice(0, 80);
+
+    for (const answererId of newAnswerers) {
+      const partnerId = userIds.find((id) => id !== answererId);
+      if (!partnerId) continue;
+
+      const answererName = await getDisplayName(answererId);
+      const title = isComplete
+        ? `${answererName} just answered — see your match`
+        : `${answererName} answered the quiz`;
+      const body = isComplete
+        ? "Both of you have answered. Tap to see the result."
+        : (questionPreview ? `Your turn: ${questionPreview}` : "Tap to answer the quiz.");
+
+      await sendNotification(
+        partnerId,
+        "quiz_answered",
+        title,
+        body,
+        { coupleId, quizId, answererId, status: after.status, navigateTo: "chat" },
+        { skipRateLimit: true, skipDuplicateCheck: true, threadId: `coupley-chat-${coupleId}` }
+      );
+    }
   }
 );
 
@@ -1515,3 +1645,86 @@ exports.onCoupleCreated = onDocumentCreated(
     console.log(`[Premium] Seeded couple ${event.params.coupleId} with existing premium`);
   }
 );
+
+// =============================================================================
+// MARK: - 9. DATA CLEANUP (Scheduled — daily)
+// =============================================================================
+//
+// Deletes old data to keep Firestore lean and reduce costs.
+// Runs daily at 2 AM UTC — adjust time as needed.
+
+const PAIRING_CODE_MAX_AGE_HOURS  = 24;    // expire unused codes after 1 day
+const NOTIFICATION_MAX_AGE_DAYS    = 7;    // notification records for rate-limit tracking
+const CHAT_MESSAGE_MAX_AGE_DAYS    = 90;   // old chat messages (adjust per privacy policy)
+const OLD_PING_MAX_AGE_DAYS        = 30;   // old pings
+
+exports.cleanupOldData = onSchedule("0 2 * * *", async () => {
+  const now = Date.now();
+
+  // 1. Delete expired pairing codes
+  console.log("[Cleanup] Starting pairing code cleanup...");
+  const codeCutoff = Timestamp.fromMillis(now - PAIRING_CODE_MAX_AGE_HOURS * 60 * 60 * 1_000);
+  const codeSnap = await db.collection("pairingCodes")
+    .where("createdAt", "<", codeCutoff)
+    .get();
+  let codeCount = 0;
+  for (const doc of codeSnap.docs) {
+    await doc.ref.delete();
+    codeCount++;
+  }
+  console.log(`[Cleanup] Deleted ${codeCount} expired pairing codes`);
+
+  // 2. Delete old notification records (used for rate-limiting)
+  console.log("[Cleanup] Starting notification cleanup...");
+  const notifCutoff = Timestamp.fromDate(
+    new Date(Date.now() - NOTIFICATION_MAX_AGE_DAYS * 24 * 60 * 60 * 1_000)
+  );
+  const notifSnap = await db.collection("notifications")
+    .where("sentAt", "<", notifCutoff)
+    .get();
+  let notifCount = 0;
+  for (const doc of notifSnap.docs) {
+    await doc.ref.delete();
+    notifCount++;
+  }
+  console.log(`[Cleanup] Deleted ${notifCount} old notification records`);
+
+  // 3. Delete old chat messages from each couple (document-subcollection cleanup)
+  console.log("[Cleanup] Starting chat message cleanup...");
+  const coupleSnap = await db.collection("couples").get();
+  let messageCount = 0;
+  for (const coupleDoc of coupleSnap.docs) {
+    const coupleId = coupleDoc.id;
+    const messageCutoff = Timestamp.fromDate(
+      new Date(Date.now() - CHAT_MESSAGE_MAX_AGE_DAYS * 24 * 60 * 60 * 1_000)
+    );
+    const oldMessages = await db.collection(`couples/${coupleId}/messages`)
+      .where("createdAt", "<", messageCutoff)
+      .get();
+    for (const msg of oldMessages.docs) {
+      await msg.ref.delete();
+      messageCount++;
+    }
+  }
+  console.log(`[Cleanup] Deleted ${messageCount} old chat messages`);
+
+  // 4. Delete old pings
+  console.log("[Cleanup] Starting ping cleanup...");
+  let pingCount = 0;
+  for (const coupleDoc of coupleSnap.docs) {
+    const coupleId = coupleDoc.id;
+    const pingCutoff = Timestamp.fromDate(
+      new Date(Date.now() - OLD_PING_MAX_AGE_DAYS * 24 * 60 * 60 * 1_000)
+    );
+    const oldPings = await db.collection(`couples/${coupleId}/pings`)
+      .where("createdAt", "<", pingCutoff)
+      .get();
+    for (const ping of oldPings.docs) {
+      await ping.ref.delete();
+      pingCount++;
+    }
+  }
+  console.log(`[Cleanup] Deleted ${pingCount} old pings`);
+
+  console.log("[Cleanup] Data cleanup completed");
+});

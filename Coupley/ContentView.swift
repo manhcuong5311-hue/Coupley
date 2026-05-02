@@ -31,6 +31,7 @@ struct ContentView: View {
     @StateObject private var profileViewModel: CouplePersonProfileViewModel
     @StateObject private var microActionViewModel: MicroActionViewModel
     @StateObject private var nudgeViewModel: NudgeViewModel
+    @StateObject private var chatUnreadCounter = ChatUnreadCounter()
 
     init(session: UserSession, displayName: String?) {
         self.session = session
@@ -90,6 +91,7 @@ struct ContentView: View {
                 ChatView(session: session, profileViewModel: profileViewModel)
                     .tabItem { Label("Chat", systemImage: "bubble.left.and.bubble.right.fill") }
                     .tag(AppTab.chat)
+                    .badge(chatUnreadCounter.unreadCount)
             }
             .toolbarBackground(Brand.backgroundTop.opacity(0.96), for: .tabBar)
             .toolbarBackground(.visible, for: .tabBar)
@@ -155,6 +157,7 @@ struct ContentView: View {
                     coupleViewModel.startListening()
                     statsViewModel.loadStats()
                     nudgeViewModel.startListening()
+                    chatUnreadCounter.start(session: session)
                 }
                 notificationViewModel.setup(session: session)
             }
@@ -174,6 +177,9 @@ struct ContentView: View {
                     statsViewModel.loadStats()
                     profileViewModel.startListening()
                     nudgeViewModel.startListening()
+                    chatUnreadCounter.start(session: session)
+                } else {
+                    chatUnreadCounter.stop()
                 }
             }
     }

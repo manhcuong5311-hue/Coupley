@@ -22,6 +22,7 @@ struct ChatView: View {
     @State private var pendingPhotoPopup: ChatMessage? = nil
     @State private var seenPhotoMessageIds: Set<String> = []
     @State private var showPhotoPaywall = false
+    @FocusState private var isComposerFocused: Bool
 
     init(session: UserSession, profileViewModel: CouplePersonProfileViewModel) {
         self.session = session
@@ -284,6 +285,7 @@ struct ChatView: View {
                 .lineLimit(1...5)
                 .font(.system(size: 16, design: .rounded))
                 .foregroundStyle(Brand.textPrimary)
+                .focused($isComposerFocused)
                 .padding(.horizontal, 14)
                 .padding(.vertical, 10)
                 .background(
@@ -294,6 +296,14 @@ struct ChatView: View {
                                 .strokeBorder(Brand.divider, lineWidth: 1)
                         )
                 )
+                .toolbar {
+                    ToolbarItemGroup(placement: .keyboard) {
+                        Spacer()
+                        Button("Done") { isComposerFocused = false }
+                            .font(.system(size: 15, weight: .semibold, design: .rounded))
+                            .foregroundStyle(Brand.accentStart)
+                    }
+                }
 
             Button {
                 viewModel.sendDraft()
