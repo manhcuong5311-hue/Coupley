@@ -27,8 +27,8 @@ struct MonthlyMoodInsightView: View {
     @State private var monthAnchor: Date
 
     @MainActor
-    init(store: MoodLocalHistoryStore = .shared) {
-        self.store = store
+    init(store: MoodLocalHistoryStore? = nil) {
+        self.store = store ?? .shared
         let calendar = Calendar.current
         let now = Date()
         let start = calendar.dateInterval(of: .month, for: now)?.start ?? now
@@ -59,6 +59,7 @@ struct MonthlyMoodInsightView: View {
                         .foregroundStyle(Brand.textSecondary)
                 }
             }
+            .onAppear { store.reload() }
         }
     }
 
@@ -249,16 +250,18 @@ struct MonthlyMoodInsightView: View {
                 }
             }
 
-            // 7-column grid
+            // 7-column grid — single ForEach with globally unique IDs:
+            // cells 0..<leadingBlanks are spacers; cells leadingBlanks... are days.
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 7), spacing: 6) {
-                ForEach(0..<leadingBlanks, id: \.self) { _ in
-                    Color.clear.frame(height: 38)
-                }
-                ForEach(1...daysInMonth, id: \.self) { day in
-                    let date = calendar.date(byAdding: .day, value: day - 1, to: firstDay) ?? firstDay
-                    let key = calendar.startOfDay(for: date)
-                    let entry = dayEntries[key]
-                    calendarCell(day: day, entry: entry, isToday: calendar.isDateInToday(date))
+                ForEach(0..<(leadingBlanks + daysInMonth), id: \.self) { i in
+                    if i < leadingBlanks {
+                        Color.clear.frame(height: 38)
+                    } else {
+                        let day = i - leadingBlanks + 1
+                        let date = calendar.date(byAdding: .day, value: day - 1, to: firstDay) ?? firstDay
+                        let key = calendar.startOfDay(for: date)
+                        calendarCell(day: day, entry: dayEntries[key], isToday: calendar.isDateInToday(date))
+                    }
                 }
             }
         }

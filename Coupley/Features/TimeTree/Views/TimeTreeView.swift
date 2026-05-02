@@ -34,8 +34,8 @@ struct TimeTreeView: View {
     private let displayName: String?
 
     @State private var showMilestonePicker = false
+    @State private var stagedKind: MemoryKind?
     @State private var pendingNewKind: MemoryKind?
-    @State private var showMemoryEditor = false
     @State private var selectedMemory: TimeMemory?
     @State private var showAnchorSheet = false
 
@@ -56,6 +56,9 @@ struct TimeTreeView: View {
 
                         if !session.isPaired {
                             notPairedCard
+                                .padding(.horizontal, 20)
+                        } else if viewModel.isListening && !viewModel.hasReceivedFirstUpdate {
+                            timelineLoadingState
                                 .padding(.horizontal, 20)
                         } else {
                             // Section 1
@@ -120,20 +123,25 @@ struct TimeTreeView: View {
             .onChange(of: scenePhase) { _, phase in
                 if phase == .active { viewModel.refresh() }
             }
-            .sheet(isPresented: $showMilestonePicker) {
-                MilestonePickerSheet { kind in
+            .sheet(isPresented: $showMilestonePicker, onDismiss: {
+                // Commit the staged choice only after the picker is fully
+                // gone — presenting the editor while the picker is still
+                // dismissing causes the second sheet to render blank.
+                if let kind = stagedKind {
+                    stagedKind = nil
                     pendingNewKind = kind
-                    showMemoryEditor = true
+                }
+            }) {
+                MilestonePickerSheet { kind in
+                    stagedKind = kind
                 }
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
             }
-            .sheet(isPresented: $showMemoryEditor, onDismiss: { pendingNewKind = nil }) {
-                if let kind = pendingNewKind {
-                    MemoryEditorSheet(viewModel: viewModel, mode: .create(kind))
-                        .presentationDetents([.large])
-                        .presentationDragIndicator(.visible)
-                }
+            .sheet(item: $pendingNewKind) { kind in
+                MemoryEditorSheet(viewModel: viewModel, mode: .create(kind))
+                    .presentationDetents([.large])
+                    .presentationDragIndicator(.visible)
             }
             .sheet(item: $selectedMemory) { memory in
                 MemoryDetailSheet(viewModel: viewModel, memory: memory)
@@ -311,6 +319,22 @@ struct TimeTreeView: View {
             }
         }
         .buttonStyle(BouncyButtonStyle(scale: 0.92))
+    }
+
+    // MARK: - Initial loading state
+
+    private var timelineLoadingState: some View {
+        VStack(spacing: 16) {
+            ProgressView()
+                .progressViewStyle(.circular)
+                .scaleEffect(1.2)
+                .tint(Brand.accentStart)
+            Text("Loading your timeline…")
+                .font(.system(size: 14, weight: .regular, design: .rounded))
+                .foregroundStyle(Brand.textSecondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 60)
     }
 
     // MARK: - Not Paired

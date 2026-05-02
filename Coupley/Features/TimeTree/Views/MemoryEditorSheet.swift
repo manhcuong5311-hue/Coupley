@@ -168,6 +168,7 @@ struct MemoryEditorSheet: View {
                     PremiumPaywallView()
                 }
                 .environmentObject(premiumStore)
+                .presentationDetents([.large])
                 .presentationDragIndicator(.visible)
             }
         }

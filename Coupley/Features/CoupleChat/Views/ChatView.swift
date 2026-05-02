@@ -88,6 +88,8 @@ struct ChatView: View {
                                       userAId: session.userId,
                                       userBId: session.partnerId)
                 }
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
                 .presentationBackground(Brand.backgroundTop)
             }
             .sheet(isPresented: $showPartnerAndMe) {
@@ -141,6 +143,7 @@ struct ChatView: View {
             .sheet(isPresented: $showPhotoPaywall) {
                 NavigationStack { PremiumPaywallView() }
                     .environmentObject(premiumStore)
+                    .presentationDetents([.large])
                     .presentationDragIndicator(.visible)
             }
             .onChange(of: viewModel.messages) { _, messages in

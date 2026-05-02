@@ -46,7 +46,13 @@ struct PremiumPaywallView: View {
 
                     partnerBadge
                         .padding(.horizontal, 20)
-                        .padding(.bottom, 24)
+                        .padding(.bottom, 16)
+
+                    if !premiumStore.isActive {
+                        trialInfoBanner
+                            .padding(.horizontal, 20)
+                            .padding(.bottom, 16)
+                    }
 
                     purchaseButton
                         .padding(.horizontal, 20)
@@ -228,9 +234,15 @@ struct PremiumPaywallView: View {
                                 )
                         }
                     }
-                    Text(plan.priceLabel)
-                        .font(.system(size: 13, design: .rounded))
-                        .foregroundStyle(Brand.textSecondary)
+                    if let trial = plan.trialSubtitle {
+                        Text(trial)
+                            .font(.system(size: 13, design: .rounded))
+                            .foregroundStyle(Brand.accentStart)
+                    } else {
+                        Text(plan.priceLabel)
+                            .font(.system(size: 13, design: .rounded))
+                            .foregroundStyle(Brand.textSecondary)
+                    }
                 }
 
                 Spacer()
@@ -360,6 +372,39 @@ struct PremiumPaywallView: View {
         }
     }
 
+    // MARK: - Trial Info Banner
+
+    private var trialInfoBanner: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 8) {
+                Image(systemName: "info.circle.fill")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(Brand.accentStart)
+                Text("About your subscription")
+                    .font(.system(size: 13, weight: .semibold, design: .rounded))
+                    .foregroundStyle(Brand.textPrimary)
+            }
+            VStack(alignment: .leading, spacing: 4) {
+                Label("Yearly: 7-day free trial, then \(PremiumPlan.yearly.priceLabel). Payment charged after trial.", systemImage: "checkmark.circle")
+                    .font(.system(size: 12, design: .rounded))
+                    .foregroundStyle(Brand.textSecondary)
+                Label("Monthly: no free trial. \(PremiumPlan.monthly.priceLabel) charged immediately.", systemImage: "minus.circle")
+                    .font(.system(size: 12, design: .rounded))
+                    .foregroundStyle(Brand.textSecondary)
+            }
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 14)
+                .fill(Brand.accentStart.opacity(0.06))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14)
+                        .strokeBorder(Brand.accentStart.opacity(0.20), lineWidth: 1)
+                )
+        )
+    }
+
     // MARK: - Partner Badge
 
     private var partnerBadge: some View {
@@ -401,7 +446,7 @@ struct PremiumPaywallView: View {
                 if premiumStore.isPurchasing {
                     ProgressView().tint(.white)
                 } else {
-                    Text(premiumStore.isActive ? "Already subscribed" : "Continue with \(selectedPlan.label)")
+                    Text(purchaseButtonLabel)
                         .font(.system(size: 17, weight: .bold, design: .rounded))
                 }
             }
@@ -418,6 +463,12 @@ struct PremiumPaywallView: View {
         }
         .buttonStyle(BouncyButtonStyle())
         .disabled(premiumStore.isActive || premiumStore.isPurchasing)
+    }
+
+    private var purchaseButtonLabel: String {
+        if premiumStore.isActive { return "Already subscribed" }
+        if selectedPlan == .yearly { return "Start 7-Day Free Trial" }
+        return "Continue with \(selectedPlan.label)"
     }
 
     private var restoreButton: some View {
@@ -449,11 +500,13 @@ struct PremiumPaywallView: View {
     private var fineprint: some View {
         Text(
             "Coupley Premium is an auto-renewable subscription. " +
-            "Monthly: \(PremiumPlan.monthly.priceLabel). Yearly: \(PremiumPlan.yearly.priceLabel). " +
-            "Payment is charged to your Apple ID at confirmation of purchase. " +
-            "Your subscription automatically renews at the same price for the same period unless auto-renew is turned off at least 24 hours before the end of the current period. " +
+            "Monthly plan: \(PremiumPlan.monthly.priceLabel) — charged immediately at purchase. " +
+            "Yearly plan: \(PremiumPlan.yearly.priceLabel) — includes a 7-day free trial (new subscribers only). " +
+            "Payment for the yearly plan is charged to your Apple ID after the 7-day free trial ends. " +
+            "Monthly plan has no free trial and is charged immediately. " +
+            "Your subscription automatically renews at the same price unless auto-renew is turned off at least 24 hours before the end of the current period. " +
             "Your account will be charged for renewal within 24 hours prior to the end of the current period. " +
-            "You can manage your subscription and turn off auto-renewal in Settings → Apple ID → Subscriptions after purchase."
+            "Manage or cancel your subscription in Settings → Apple ID → Subscriptions."
         )
         .font(.system(size: 11, design: .rounded))
         .foregroundStyle(Brand.textTertiary)

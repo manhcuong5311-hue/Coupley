@@ -151,6 +151,7 @@ struct RootView: View {
         .onAppear {
             syncPremiumBinding()
             syncNotificationBinding()
+            RatingManager.shared.checkOneMonthMilestone()
         }
     }
 

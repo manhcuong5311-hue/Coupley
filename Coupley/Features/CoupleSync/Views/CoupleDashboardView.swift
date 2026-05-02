@@ -83,6 +83,8 @@ struct CoupleDashboardView: View {
         .sheet(isPresented: $viewModel.showAISuggestions) {
             if let context = viewModel.suggestionContext {
                 SuggestionView(moodContext: context, partnerProfile: .samplePartner)
+                    .presentationDetents([.large])
+                    .presentationDragIndicator(.visible)
             }
         }
         .sheet(isPresented: $showSettings) {
@@ -93,6 +95,7 @@ struct CoupleDashboardView: View {
             .environmentObject(themeManager)
             .environmentObject(premiumStore)
             .environmentObject(notificationViewModel)
+            .presentationDetents([.large])
             .presentationDragIndicator(.visible)
             .presentationBackground(Brand.backgroundTop)
         }
@@ -146,11 +149,13 @@ struct CoupleDashboardView: View {
         .sheet(isPresented: $showDateIdeasPaywall) {
             NavigationStack { PremiumPaywallView() }
                 .environmentObject(premiumStore)
+                .presentationDetents([.large])
                 .presentationDragIndicator(.visible)
         }
         .sheet(isPresented: $showMoodSuggestionPaywall) {
             NavigationStack { PremiumPaywallView() }
                 .environmentObject(premiumStore)
+                .presentationDetents([.large])
                 .presentationDragIndicator(.visible)
         }
         .sheet(isPresented: $showAICoach) {
@@ -158,6 +163,7 @@ struct CoupleDashboardView: View {
                 AICoachHomeView(viewModel: aiCoachViewModel)
             }
             .environmentObject(premiumStore)
+            .presentationDetents([.large])
             .presentationDragIndicator(.visible)
             .presentationBackground(Brand.backgroundTop)
         }

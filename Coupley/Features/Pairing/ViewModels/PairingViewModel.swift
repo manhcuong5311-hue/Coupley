@@ -82,6 +82,7 @@ final class PairingViewModel: ObservableObject {
             do {
                 try await pairingService.joinWithCode(code, userId: userId)
                 // SessionStore snapshot listener fires → appState becomes .ready automatically
+                RatingManager.shared.recordFirstPartnerConnection()
             } catch {
                 errorMessage = error.localizedDescription
             }

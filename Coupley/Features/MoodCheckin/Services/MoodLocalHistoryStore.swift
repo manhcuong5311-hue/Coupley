@@ -58,7 +58,9 @@ struct LocalMoodEntry: Codable, Identifiable, Hashable {
 @MainActor
 final class MoodLocalHistoryStore: ObservableObject {
 
-    static let shared = MoodLocalHistoryStore()
+    static let shared: MoodLocalHistoryStore = {
+        MainActor.assumeIsolated { MoodLocalHistoryStore() }
+    }()
 
     private let storageKey = "coupley.mood.localHistory"
     private let defaults: UserDefaults
@@ -222,6 +224,8 @@ final class MoodLocalHistoryStore: ObservableObject {
         else { return items }
         return items.filter { $0.timestamp >= cutoff }
     }
+
+    func reload() { load() }
 
     private func load() {
         guard let data = defaults.data(forKey: storageKey),

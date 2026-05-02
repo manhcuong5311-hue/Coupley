@@ -100,6 +100,9 @@ final class MoodViewModel: ObservableObject {
             // user is fully solo. Idempotent on entry.id.
             MoodLocalHistoryStore.shared.append(.init(from: entry))
 
+            // Prompt for an App Store review after the user's very first check-in.
+            RatingManager.shared.recordFirstMoodCheckIn()
+
             // Update activity timestamps for nudge system
             try? await notificationService.updateLastActive(userId: session.userId)
 
