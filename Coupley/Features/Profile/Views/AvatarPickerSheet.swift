@@ -62,6 +62,7 @@ struct AvatarPickerSheet: View {
                     PremiumPaywallView()
                 }
                 .environmentObject(premiumStore)
+                .presentationDetents([.large])
                 .presentationDragIndicator(.visible)
             }
         }

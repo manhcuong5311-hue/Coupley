@@ -30,6 +30,10 @@ final class TimeTreeViewModel: ObservableObject {
     @Published private(set) var anchor: RelationshipAnchor?
     @Published private(set) var memories: [TimeMemory] = []
     @Published private(set) var isListening: Bool = false
+    /// `false` until the first Firestore snapshot (or a non-empty cache) arrives.
+    /// Used by the view to show a loading indicator instead of the empty state
+    /// during the initial fetch window.
+    @Published private(set) var hasReceivedFirstUpdate: Bool = false
     @Published private(set) var errorMessage: String?
     @Published var isSavingMemory: Bool = false
     @Published var isUploadingPhoto: Bool = false
@@ -121,6 +125,7 @@ final class TimeTreeViewModel: ObservableObject {
         memoryListener?.remove(); memoryListener = nil
         anchorListener?.remove(); anchorListener = nil
         isListening = false
+        hasReceivedFirstUpdate = false
         tickTimer?.invalidate(); tickTimer = nil
     }
 
@@ -295,6 +300,7 @@ final class TimeTreeViewModel: ObservableObject {
     private func handleRemoteMemoriesUpdate(_ items: [TimeMemory]) {
         let previous = Dictionary(uniqueKeysWithValues: memories.map { ($0.id, $0) })
         memories = items
+        hasReceivedFirstUpdate = true
         saveMemoriesCache(items)
 
         Task {
@@ -359,6 +365,7 @@ final class TimeTreeViewModel: ObservableObject {
            let items = try? JSONDecoder().decode([MemoryDTO].self, from: data),
            !items.isEmpty {
             memories = items.map(\.memory)
+            hasReceivedFirstUpdate = true
         }
         if let data = UserDefaults.standard.data(forKey: anchorCacheKey),
            let dto = try? JSONDecoder().decode(AnchorDTO.self, from: data) {

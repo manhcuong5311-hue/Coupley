@@ -37,7 +37,15 @@ enum PremiumPlan: String, CaseIterable, Identifiable, Codable {
     var savingsBadge: String? {
         switch self {
         case .monthly: return nil
-        case .yearly:  return "Best Value"
+        case .yearly:  return "7-Day Free Trial"
+        }
+    }
+
+    /// Shown below the plan name in the plan picker card.
+    var trialSubtitle: String? {
+        switch self {
+        case .monthly: return nil
+        case .yearly:  return "Try free for 7 days, then $29.99 / year"
         }
     }
 

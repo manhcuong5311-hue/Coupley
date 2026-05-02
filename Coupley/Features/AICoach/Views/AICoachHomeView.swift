@@ -96,6 +96,7 @@ struct AICoachHomeView: View {
             NavigationStack {
                 AICoachChatView(viewModel: viewModel, initialIssue: selectedIssue)
             }
+            .presentationDetents([.large])
             .presentationDragIndicator(.visible)
             .presentationBackground(Brand.backgroundTop)
         }
@@ -103,6 +104,7 @@ struct AICoachHomeView: View {
             NavigationStack {
                 AICoachRewriteView(viewModel: viewModel)
             }
+            .presentationDetents([.large])
             .presentationDragIndicator(.visible)
             .presentationBackground(Brand.backgroundTop)
         }
@@ -110,6 +112,7 @@ struct AICoachHomeView: View {
             NavigationStack {
                 AICoachHealthCheckView(viewModel: viewModel)
             }
+            .presentationDetents([.large])
             .presentationDragIndicator(.visible)
             .presentationBackground(Brand.backgroundTop)
         }
@@ -117,12 +120,14 @@ struct AICoachHomeView: View {
             NavigationStack {
                 AICoachRecoveryPlanView(viewModel: viewModel)
             }
+            .presentationDetents([.large])
             .presentationDragIndicator(.visible)
             .presentationBackground(Brand.backgroundTop)
         }
         .sheet(isPresented: $showPaywall) {
             NavigationStack { PremiumPaywallView() }
                 .environmentObject(premiumStore)
+                .presentationDetents([.large])
                 .presentationDragIndicator(.visible)
         }
         .onAppear { viewModel.load() }

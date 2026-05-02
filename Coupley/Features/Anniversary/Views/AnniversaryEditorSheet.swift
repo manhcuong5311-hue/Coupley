@@ -155,6 +155,7 @@ struct AnniversaryEditorSheet: View {
                     PremiumPaywallView()
                 }
                 .environmentObject(premiumStore)
+                .presentationDetents([.large])
                 .presentationDragIndicator(.visible)
             }
         }

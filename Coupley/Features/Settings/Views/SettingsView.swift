@@ -165,6 +165,8 @@ struct SettingsView: View {
                 currentDisplayName = Auth.auth().currentUser?.displayName ?? "—"
             }) {
                 EditNameSheet()
+                    .presentationDetents([.medium, .large])
+                    .presentationDragIndicator(.visible)
             }
             SettingsRow(
                 icon: "envelope.fill",
@@ -333,6 +335,7 @@ struct SettingsView: View {
         .sheet(isPresented: $showThemePaywall) {
             NavigationStack { PremiumPaywallView() }
                 .environmentObject(premiumStore)
+                .presentationDetents([.large])
                 .presentationDragIndicator(.visible)
         }
     }

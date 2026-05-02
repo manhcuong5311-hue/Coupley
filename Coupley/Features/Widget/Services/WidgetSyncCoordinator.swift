@@ -43,8 +43,17 @@ final class WidgetSyncCoordinator: ObservableObject {
             // update even if we pass nil here at first.
             WidgetSyncService.shared.bind(session: session, partnerDisplayName: nil)
 
-        case .needsPairing, .unauthenticated, .loading:
+        case .needsPairing, .unauthenticated:
             WidgetSyncService.shared.unbind()
+
+        case .loading:
+            // Transient — auth state hasn't resolved yet. Wiping the
+            // snapshot here makes a freshly-paired user briefly see the
+            // "Connect with your partner" empty state on every cold
+            // launch, and iOS throttling can make that linger. Leave
+            // the previous snapshot in place; the next concrete state
+            // will bind or unbind explicitly.
+            break
         }
     }
 }

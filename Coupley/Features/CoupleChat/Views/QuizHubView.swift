@@ -87,6 +87,8 @@ struct QuizHubView: View {
                     }
                     dismiss()
                 }
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
             }
             .sheet(isPresented: $showHistory) {
                 QuizHistorySheet(quizzes: viewModel.quizzes,
@@ -99,6 +101,7 @@ struct QuizHubView: View {
             .sheet(isPresented: $showPaywall) {
                 NavigationStack { PremiumPaywallView() }
                     .environmentObject(premiumStore)
+                    .presentationDetents([.large])
                     .presentationDragIndicator(.visible)
             }
             .sheet(isPresented: $showAIConfirmation) {

@@ -3,10 +3,10 @@
 //  Coupley
 //
 //  Single coordinator that owns the widget snapshot. Reads live data from
-//  Firestore (anniversaries, partner mood, latest nudge), downloads the
-//  couple photo, builds a `WidgetSnapshot`, persists it to the App Group
-//  container, and triggers a widget timeline reload. The widget then
-//  reads from disk — it never touches Firebase.
+//  Firestore (TimeTree anchor + memories, partner mood, latest nudge),
+//  downloads the couple photo, builds a `WidgetSnapshot`, persists it to
+//  the App Group container, and triggers a widget timeline reload. The
+//  widget then reads from disk — it never touches Firebase.
 //
 //  Lifecycle: created and bound to a session by `WidgetSyncCoordinator`.
 //  Bind/unbind cycles match `SessionStore.appState` transitions so the
@@ -29,11 +29,18 @@ final class WidgetSyncService {
     private let db = Firestore.firestore()
     private let storage = Storage.storage()
 
+    // The TimeTree feature replaces the old Anniversary list — both
+    // "days together" and the upcoming-event countdown now come from
+    // the relationship anchor + memory collection.
+    private let anchorService: TimeTreeAnchorService = FirestoreTimeTreeAnchorService()
+    private let memoryService: TimeTreeMemoryService = FirestoreTimeTreeMemoryService()
+
     private var session: UserSession?
     private var partnerDisplayName: String?
     private var couplePhotoURLString: String?
 
-    nonisolated(unsafe) private var anniversaryListener: ListenerRegistration?
+    nonisolated(unsafe) private var anchorListener: ListenerRegistration?
+    nonisolated(unsafe) private var memoryListener: ListenerRegistration?
     nonisolated(unsafe) private var partnerMoodListener: ListenerRegistration?
     nonisolated(unsafe) private var nudgeListener: ListenerRegistration?
     nonisolated(unsafe) private var partnerProfileListener: ListenerRegistration?
@@ -45,6 +52,11 @@ final class WidgetSyncService {
     private var pendingMood: MoodSnapshot?
     private var pendingNudge: NudgeSnapshot?
     private var pendingAnniversary: AnniversarySnapshot?
+
+    // Raw inputs that feed `pendingAnniversary` — kept separately so a
+    // memory update doesn't lose the anchor and vice versa.
+    private var pendingAnchor: RelationshipAnchor?
+    private var pendingMemories: [TimeMemory] = []
 
     private init() {}
 
@@ -68,18 +80,43 @@ final class WidgetSyncService {
             return
         }
 
-        unbind()
+        // Switching sessions — drop the old listeners and pending data
+        // but DON'T wipe the snapshot to placeholder. Wiping here would
+        // make the widget flash the "Connect with your partner" empty
+        // state until the first Firestore listener fires.
+        tearDownListeners()
         self.session = session
         self.partnerDisplayName = partnerDisplayName
 
         startListening(session: session)
+
+        // Write an initial paired snapshot now so `isPaired: true` lands
+        // immediately — Firestore listeners will fill in mood/nudge/
+        // anniversary as they fire. Without this, the widget keeps
+        // rendering the previous (possibly placeholder) snapshot until
+        // the first listener completes.
+        scheduleWrite()
     }
 
     /// Detaches all listeners and writes a final unpaired snapshot so the
     /// widget shows the empty state immediately. Call on sign-out and on
     /// disconnect.
     func unbind() {
-        anniversaryListener?.remove();    anniversaryListener = nil
+        tearDownListeners()
+
+        let empty = WidgetSnapshot.placeholder
+        WidgetSnapshotStore.write(empty)
+        WidgetSnapshotStore.clearCouplePhoto()
+        reloadTimelines()
+    }
+
+    /// Removes Firestore listeners and clears in-memory pending state
+    /// without touching the on-disk snapshot. Use this when transitioning
+    /// between paired sessions; use `unbind()` when actually leaving the
+    /// paired state.
+    private func tearDownListeners() {
+        anchorListener?.remove();         anchorListener = nil
+        memoryListener?.remove();         memoryListener = nil
         partnerMoodListener?.remove();    partnerMoodListener = nil
         nudgeListener?.remove();          nudgeListener = nil
         partnerProfileListener?.remove(); partnerProfileListener = nil
@@ -91,66 +128,102 @@ final class WidgetSyncService {
         pendingMood = nil
         pendingNudge = nil
         pendingAnniversary = nil
-
-        let empty = WidgetSnapshot.placeholder
-        WidgetSnapshotStore.write(empty)
-        WidgetSnapshotStore.clearCouplePhoto()
-        reloadTimelines()
+        pendingAnchor = nil
+        pendingMemories = []
     }
 
     // MARK: - Listeners
 
     private func startListening(session: UserSession) {
-        observeAnniversaries(coupleId: session.coupleId)
+        observeRelationshipAnchor(coupleId: session.coupleId)
+        observeMemories(coupleId: session.coupleId)
         observePartnerMood(coupleId: session.coupleId, partnerId: session.partnerId)
         observeNudges(coupleId: session.coupleId, userId: session.userId)
         observePartnerProfile(partnerId: session.partnerId)
         observeCoupleDocument(coupleId: session.coupleId)
     }
 
-    // MARK: - Anniversaries
+    // MARK: - TimeTree (Anchor + Memories)
 
-    private func observeAnniversaries(coupleId: String) {
-        anniversaryListener = db
-            .collection(FirestorePath.anniversaries(coupleId: coupleId))
-            .order(by: "date", descending: false)
-            .addSnapshotListener { [weak self] snapshot, _ in
+    private func observeRelationshipAnchor(coupleId: String) {
+        anchorListener = anchorService.observe(
+            coupleId: coupleId,
+            onUpdate: { [weak self] anchor in
                 Task { @MainActor [weak self] in
                     guard let self else { return }
-                    self.pendingAnniversary = Self.makeAnniversarySnapshot(snapshot)
+                    self.pendingAnchor = anchor
+                    self.rebuildAnniversarySnapshot()
                     self.scheduleWrite()
                 }
-            }
+            },
+            onError: { _ in }
+        )
     }
 
-    private static func makeAnniversarySnapshot(_ snapshot: QuerySnapshot?) -> AnniversarySnapshot {
-        let docs = snapshot?.documents ?? []
+    private func observeMemories(coupleId: String) {
+        memoryListener = memoryService.observe(
+            coupleId: coupleId,
+            onUpdate: { [weak self] memories in
+                Task { @MainActor [weak self] in
+                    guard let self else { return }
+                    self.pendingMemories = memories
+                    self.rebuildAnniversarySnapshot()
+                    self.scheduleWrite()
+                }
+            },
+            onError: { _ in }
+        )
+    }
 
-        // Materialise minimal records — title + date are all the widget needs.
-        struct Record { let id: String; let title: String; let date: Date }
-        let records: [Record] = docs.compactMap { doc in
-            let data = doc.data()
-            guard
-                let title = data["title"] as? String,
-                let timestamp = data["date"] as? Timestamp
-            else { return nil }
-            return Record(id: doc.documentID, title: title, date: timestamp.dateValue())
+    /// Combines the latest anchor + memories into the AnniversarySnapshot
+    /// the widget consumes. The yearly anniversary is synthesized so the
+    /// widget always has a countdown to surface, even when the user hasn't
+    /// added any future-dated memories.
+    private func rebuildAnniversarySnapshot() {
+        let now = Date()
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: now)
+
+        let relationshipStart = pendingAnchor?.startDate
+
+        var upcoming: [UpcomingAnniversary] = []
+
+        // Future-dated memories or capsules whose unlock date is still ahead.
+        for memory in pendingMemories {
+            let surfaceDate = memory.unlockDate ?? memory.date
+            guard calendar.startOfDay(for: surfaceDate) >= today else { continue }
+            let title: String = {
+                if memory.kind == .custom {
+                    let trimmed = memory.title.trimmingCharacters(in: .whitespacesAndNewlines)
+                    return trimmed.isEmpty ? "Memory" : trimmed
+                }
+                return memory.kind.displayName
+            }()
+            upcoming.append(UpcomingAnniversary(
+                id: memory.id,
+                title: title,
+                date: surfaceDate
+            ))
         }
 
-        // Earliest date — drives "days together"
-        let earliest = records.map(\.date).min()
+        // Synthesize the next yearly anniversary so the widget shows a
+        // countdown beyond the engine's 7-day milestone window. The
+        // engine still picks up "1 Year Anniversary" / "2 Year Anniversary"
+        // as a celebratory milestone when it's imminent.
+        if let anchor = pendingAnchor {
+            let nextAnniversary = anchor.nextYearlyAnniversary(now: now, calendar: calendar)
+            let yearsAhead = anchor.yearsCompleted(now: now, calendar: calendar) + 1
+            upcoming.append(UpcomingAnniversary(
+                id: "anniversary-year-\(yearsAhead)",
+                title: "Anniversary",
+                date: nextAnniversary
+            ))
+        }
 
-        // Upcoming list — only future-or-today entries, sorted ascending.
-        let now = Calendar.current.startOfDay(for: Date())
-        let upcoming = records
-            .filter { Calendar.current.startOfDay(for: $0.date) >= now }
-            .sorted { $0.date < $1.date }
-            .prefix(8)
-            .map { UpcomingAnniversary(id: $0.id, title: $0.title, date: $0.date) }
-
-        return AnniversarySnapshot(
-            relationshipStart: earliest,
-            upcoming: Array(upcoming)
+        upcoming.sort { $0.date < $1.date }
+        pendingAnniversary = AnniversarySnapshot(
+            relationshipStart: relationshipStart,
+            upcoming: Array(upcoming.prefix(8))
         )
     }
 
