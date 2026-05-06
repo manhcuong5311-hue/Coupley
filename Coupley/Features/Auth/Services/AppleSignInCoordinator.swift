@@ -19,6 +19,13 @@ struct AppleSignInResult {
     let rawNonce: String
     let fullName: PersonNameComponents?
 
+    /// Apple's short-lived authorization code. Required to call
+    /// `Auth.auth().revokeToken(withAuthorizationCode:)` during account
+    /// deletion so the Apple-side token is also invalidated (Apple Guideline
+    /// 5.1.1(v) for Sign in with Apple). May be nil for older iOS versions
+    /// or when Apple omits it.
+    let authorizationCode: String?
+
     /// Concatenated formatted name suitable for `displayName`. Apple only
     /// returns `fullName` on the first sign-in for a given Apple ID, so this
     /// will be empty on subsequent attempts — call sites must handle that.
@@ -86,10 +93,14 @@ final class AppleSignInCoordinator:
             return
         }
 
+        let authCode = credential.authorizationCode
+            .flatMap { String(data: $0, encoding: .utf8) }
+
         continuation?.resume(returning: AppleSignInResult(
             idToken: idToken,
             rawNonce: rawNonce,
-            fullName: credential.fullName
+            fullName: credential.fullName,
+            authorizationCode: authCode
         ))
     }
 

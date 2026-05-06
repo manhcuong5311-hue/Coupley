@@ -49,6 +49,7 @@ struct SettingsView: View {
                 faqSection
                 aboutSection
                 signOutSection
+                deleteAccountSection
             }
             .scrollContentBackground(.hidden)
             .listRowSpacing(8)
@@ -519,6 +520,36 @@ struct SettingsView: View {
                 }
                 .foregroundStyle(Color(red: 1.0, green: 0.40, blue: 0.40))
             }
+        }
+        .listRowBackground(surfaceRowBackground)
+    }
+
+    // MARK: - Delete Account (Apple Guideline 5.1.1(v))
+
+    @ViewBuilder
+    private var deleteAccountSection: some View {
+        Section {
+            NavigationLink {
+                DeleteAccountView()
+            } label: {
+                HStack(spacing: 14) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(Color(red: 0.92, green: 0.30, blue: 0.30).opacity(0.15))
+                            .frame(width: 30, height: 30)
+                        Image(systemName: "trash.fill")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(Color(red: 0.92, green: 0.30, blue: 0.30))
+                    }
+                    Text("Delete Account")
+                        .font(.system(size: 15, weight: .semibold, design: .rounded))
+                        .foregroundStyle(Color(red: 0.92, green: 0.30, blue: 0.30))
+                    Spacer()
+                }
+            }
+        } footer: {
+            Text("Permanently delete your account and all your data. This cannot be undone.")
+                .font(.system(size: 12, design: .rounded))
         }
         .listRowBackground(surfaceRowBackground)
     }

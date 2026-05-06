@@ -262,9 +262,15 @@ struct OnboardingPaywallStepView: View {
                                 )
                         }
                     }
-                    Text(plan.priceLabel)
-                        .font(.system(size: 13, design: .rounded))
-                        .foregroundStyle(Brand.textSecondary)
+                    if let trial = premiumStore.introductoryOfferDescription(for: plan) {
+                        Text("\(trial), then \(premiumStore.priceWithPeriod(for: plan))")
+                            .font(.system(size: 13, design: .rounded))
+                            .foregroundStyle(Brand.accentStart)
+                    } else {
+                        Text(premiumStore.priceWithPeriod(for: plan))
+                            .font(.system(size: 13, design: .rounded))
+                            .foregroundStyle(Brand.textSecondary)
+                    }
                 }
 
                 Spacer()
@@ -369,8 +375,18 @@ struct OnboardingPaywallStepView: View {
 
     // MARK: - Bottom CTA
 
+    /// Apple Guideline 3.1.2(c)-compliant CTA stack:
+    ///   • Disclosure line (trial + post-trial price + cadence + cancel)
+    ///     pinned directly above the button.
+    ///   • CTA copy switches between "Start <N>-Day Free Trial" (when an
+    ///     intro offer exists for the selected plan) and
+    ///     "Subscribe — $X.XX/period" (no trial). Never says "Continue".
+    ///   • Price comes from StoreKit via `PremiumStore.priceWithPeriod` so
+    ///     localized currency / store regional prices are honored.
     private var bottomCTA: some View {
         VStack(spacing: 10) {
+            ctaDisclosure
+
             Button {
                 guard !premiumStore.isActive else { return }
                 didInitiatePurchase = true
@@ -382,7 +398,7 @@ struct OnboardingPaywallStepView: View {
                     } else {
                         Text(premiumStore.isActive
                              ? "You're already Premium"
-                             : "Start 7-Day Free Trial")
+                             : ctaButtonLabel)
                             .font(.system(size: 17, weight: .bold, design: .rounded))
                     }
                 }
@@ -400,10 +416,6 @@ struct OnboardingPaywallStepView: View {
             }
             .buttonStyle(BouncyButtonStyle())
             .disabled(premiumStore.isPurchasing || viewModel.isCompleting)
-
-            Text("then \(selectedPlan.priceLabel) · Cancel anytime")
-                .font(.system(size: 12, weight: .regular, design: .rounded))
-                .foregroundStyle(Brand.textTertiary)
 
             Button("Maybe later") {
                 UIImpactFeedbackGenerator(style: .light).impactOccurred()
@@ -433,5 +445,59 @@ struct OnboardingPaywallStepView: View {
         .padding(.horizontal, 24)
         .padding(.bottom, 22)
         .padding(.top, 10)
+    }
+
+    /// Disclosure block sourced from `PremiumStore.paywallDisclosure(for:)`
+    /// so onboarding and the standalone paywall stay in lockstep.
+    private var ctaDisclosure: some View {
+        HStack(alignment: .top, spacing: 8) {
+            Image(systemName: "info.circle.fill")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(Brand.accentStart)
+                .padding(.top, 1)
+            Text(premiumStore.paywallDisclosure(for: selectedPlan))
+                .font(.system(size: 12, design: .rounded))
+                .foregroundStyle(Brand.textSecondary)
+                .multilineTextAlignment(.leading)
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 0)
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Brand.accentStart.opacity(0.08))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .strokeBorder(Brand.accentStart.opacity(0.20), lineWidth: 1)
+                )
+        )
+    }
+
+    private var ctaButtonLabel: String {
+        if let trial = premiumStore.introductoryOfferDescription(for: selectedPlan) {
+            return "Start \(trial.titleCasedForCTA)"
+        }
+        return "Subscribe — \(premiumStore.priceWithPeriod(for: selectedPlan))"
+    }
+}
+
+// MARK: - Title case helper (mirror of PremiumPaywallView's helper)
+
+private extension String {
+    /// Title-cases a phrase, capitalizing after both spaces *and* hyphens
+    /// so `"7-day free trial"` → `"7-Day Free Trial"` for the CTA.
+    var titleCasedForCTA: String {
+        split(separator: " ", omittingEmptySubsequences: false)
+            .map { word in
+                word
+                    .split(separator: "-", omittingEmptySubsequences: false)
+                    .map { piece -> String in
+                        guard let first = piece.first else { return String(piece) }
+                        return first.uppercased() + piece.dropFirst()
+                    }
+                    .joined(separator: "-")
+            }
+            .joined(separator: " ")
     }
 }

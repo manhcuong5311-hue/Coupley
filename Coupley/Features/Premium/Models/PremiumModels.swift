@@ -20,11 +20,31 @@ enum PremiumPlan: String, CaseIterable, Identifiable, Codable {
         }
     }
 
-    var priceLabel: String {
+    /// Bundled fallback price string. Used only until StoreKit reports the
+    /// localized `Product.displayPrice` — which is the source of truth shown
+    /// in the paywall (Apple Guideline 3.1.2(c) requires the actual storefront
+    /// price). Keep these in sync with App Store Connect as a safety net.
+    var fallbackDisplayPrice: String {
         switch self {
-        case .monthly: return "$3.99 / month"
-        case .yearly:  return "$29.99 / year"
+        case .monthly: return "$3.99"
+        case .yearly:  return "$29.99"
         }
+    }
+
+    /// Period unit for the price line ("month" / "year"). Matches what
+    /// StoreKit reports via `Product.SubscriptionPeriod.unit` so fallback
+    /// copy reads the same as live copy.
+    var fallbackPeriodLabel: String {
+        switch self {
+        case .monthly: return "month"
+        case .yearly:  return "year"
+        }
+    }
+
+    /// "$3.99 / month" — pre-StoreKit fallback. Live UI prefers
+    /// `PremiumStore.priceWithPeriod(for:)`.
+    var priceLabel: String {
+        "\(fallbackDisplayPrice) / \(fallbackPeriodLabel)"
     }
 
     var perMonthLabel: String {
@@ -37,15 +57,7 @@ enum PremiumPlan: String, CaseIterable, Identifiable, Codable {
     var savingsBadge: String? {
         switch self {
         case .monthly: return nil
-        case .yearly:  return "7-Day Free Trial"
-        }
-    }
-
-    /// Shown below the plan name in the plan picker card.
-    var trialSubtitle: String? {
-        switch self {
-        case .monthly: return nil
-        case .yearly:  return "Try free for 7 days, then $29.99 / year"
+        case .yearly:  return "Best Value · Save 37%"
         }
     }
 

@@ -15,6 +15,7 @@ import Foundation
 import FirebaseFirestore
 import Combine
 import StoreKit
+import UIKit
 
 // Resolve StoreKit.SKTransaction vs FirebaseFirestore.SKTransaction ambiguity
 private typealias SKTransaction = StoreKit.Transaction
@@ -280,5 +281,112 @@ final class PremiumStore: ObservableObject {
     func cancelForTesting() async {
         guard let userId = boundUserId else { return }
         try? await service.clearEntitlement(userId: userId, coupleId: boundCoupleId)
+    }
+
+    // MARK: - Display Helpers (Apple Guideline 3.1.2(c))
+    //
+    // Every price the paywall shows must come from StoreKit's localized
+    // `Product.displayPrice` so the storefront's currency / tax rules are
+    // honored. The fallbacks below are read only when products haven't loaded
+    // yet (network blip, first launch); StoreKit overrides them the moment
+    // `loadProducts()` resolves.
+
+    /// The loaded `Product` for a plan, if available.
+    func product(for plan: PremiumPlan) -> Product? {
+        products.first { $0.id == plan.productID }
+    }
+
+    /// Localized base price (e.g. "$3.99"). Live → fallback in that order.
+    func displayPrice(for plan: PremiumPlan) -> String {
+        product(for: plan)?.displayPrice ?? plan.fallbackDisplayPrice
+    }
+
+    /// Spelled-out period unit ("month" / "year") — sourced from the
+    /// StoreKit subscription period when loaded.
+    func displayPeriod(for plan: PremiumPlan) -> String {
+        if let unit = product(for: plan)?.subscription?.subscriptionPeriod.unit {
+            switch unit {
+            case .day:   return "day"
+            case .week:  return "week"
+            case .month: return "month"
+            case .year:  return "year"
+            @unknown default: return plan.fallbackPeriodLabel
+            }
+        }
+        return plan.fallbackPeriodLabel
+    }
+
+    /// "$3.99 / month" — used in plan rows and the disclosure line.
+    func priceWithPeriod(for plan: PremiumPlan) -> String {
+        "\(displayPrice(for: plan)) / \(displayPeriod(for: plan))"
+    }
+
+    /// "7-day free trial" / "3-day free trial" — composed from StoreKit's
+    /// `IntroductoryOffer` if the product has one configured. Returns `nil`
+    /// when no intro offer is attached, which is the signal the paywall uses
+    /// to render the no-trial CTA copy.
+    func introductoryOfferDescription(for plan: PremiumPlan) -> String? {
+        guard let offer = product(for: plan)?.subscription?.introductoryOffer,
+              offer.paymentMode == .freeTrial else {
+            // Fallback to the bundled trial only on the yearly plan, so the
+            // disclosure is still present pre-StoreKit-load. Apple Review
+            // network is reliable but the safety net stops a "no trial copy"
+            // flash on slow launches.
+            return plan == .yearly ? "7-day free trial" : nil
+        }
+        let unit: String
+        switch offer.period.unit {
+        case .day:   unit = offer.period.value == 1 ? "day"   : "days"
+        case .week:  unit = offer.period.value == 1 ? "week"  : "weeks"
+        case .month: unit = offer.period.value == 1 ? "month" : "months"
+        case .year:  unit = offer.period.value == 1 ? "year"  : "years"
+        @unknown default: unit = "days"
+        }
+        return "\(offer.period.value)-\(unit) free trial"
+    }
+
+    func hasIntroductoryOffer(for plan: PremiumPlan) -> Bool {
+        introductoryOfferDescription(for: plan) != nil
+    }
+
+    /// Compliance disclosure shown directly above the CTA. Mirrors the format
+    /// Apple's review team consistently approves: trial length → renewal price
+    /// → renewal cadence → cancellation instructions, with no hedging copy.
+    func paywallDisclosure(for plan: PremiumPlan) -> String {
+        let priceLine = priceWithPeriod(for: plan)
+        if let trial = introductoryOfferDescription(for: plan) {
+            return "\(trial), then \(priceLine), auto-renewing. " +
+                   "Cancel anytime in Settings at least 24 hours before the period ends."
+        }
+        return "\(priceLine), auto-renewing. " +
+               "Cancel anytime in Settings at least 24 hours before the period ends."
+    }
+
+    // MARK: - Manage Subscription
+    //
+    // Opens the in-app Manage Subscriptions sheet StoreKit 2 provides. If
+    // the API fails (e.g. simulator without a sandbox account), fall back to
+    // the App Store deep link that always works.
+    @MainActor
+    func openManageSubscriptions() async {
+        let scene = UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .first(where: { $0.activationState == .foregroundActive })
+            ?? UIApplication.shared.connectedScenes
+                .compactMap({ $0 as? UIWindowScene })
+                .first
+
+        if let scene {
+            do {
+                try await AppStore.showManageSubscriptions(in: scene)
+                return
+            } catch {
+                // Fall through to deep link.
+            }
+        }
+
+        if let url = URL(string: "https://apps.apple.com/account/subscriptions") {
+            await UIApplication.shared.open(url)
+        }
     }
 }

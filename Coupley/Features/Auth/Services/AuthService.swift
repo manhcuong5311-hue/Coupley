@@ -91,6 +91,12 @@ final class FirebaseAuthService: NSObject, AuthServiceProtocol {
         )
     }
 
+    /// DO NOT call this directly from app code. It bypasses the
+    /// SessionStore teardown chain (PremiumStore.unbind,
+    /// NotificationViewModel.tearDownForSignOut, …) and will cause the
+    /// "Missing or insufficient permissions" log spam plus a stuck
+    /// Welcome screen on re-sign-in. Use `SessionStore.signOut()` instead.
+    /// Kept here only to satisfy `AuthServiceProtocol` for tests / mocking.
     func signOut() throws {
         try Auth.auth().signOut()
     }

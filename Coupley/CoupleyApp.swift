@@ -107,6 +107,12 @@ struct RootView: View {
     /// flow again instead of being silently routed back to the dashboard.
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
 
+    /// One-shot guard so we register the SessionStore teardown hooks
+    /// exactly once. `.onAppear` can fire on scene reactivation, and
+    /// `registerTeardown` appends — without the guard, signOut would
+    /// double-call PremiumStore.unbind / NotificationViewModel.tearDown.
+    @State private var didRegisterTeardown = false
+
     var body: some View {
         Group {
             switch sessionStore.appState {
@@ -149,9 +155,31 @@ struct RootView: View {
             syncNotificationBinding()
         }
         .onAppear {
+            registerTeardownHooksIfNeeded()
             syncPremiumBinding()
             syncNotificationBinding()
             RatingManager.shared.checkOneMonthMilestone()
+        }
+    }
+
+    /// Wires the synchronous pre-signOut teardown chain. SessionStore runs
+    /// these hooks before `Auth.auth().signOut()` so subsystem listeners
+    /// detach while the auth context is still valid — eliminating the
+    /// "Missing or insufficient permissions" log spam that used to fire
+    /// after sign-out.
+    ///
+    /// Reactive teardown via `.onChange(of: stateID)` below STILL runs;
+    /// it covers state transitions that don't go through `signOut()`
+    /// (token expiry, account deletion from another device, etc.).
+    private func registerTeardownHooksIfNeeded() {
+        guard !didRegisterTeardown else { return }
+        didRegisterTeardown = true
+
+        sessionStore.registerTeardown { [weak premiumStore] in
+            premiumStore?.unbind()
+        }
+        sessionStore.registerTeardown { [weak notificationViewModel] in
+            notificationViewModel?.tearDownForSignOut()
         }
     }
 
