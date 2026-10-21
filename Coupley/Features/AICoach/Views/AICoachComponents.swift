@@ -76,34 +76,6 @@ struct CoachSectionTitle: View {
     }
 }
 
-// MARK: - Premium Badge
-
-struct CoachPremiumBadge: View {
-    var body: some View {
-        HStack(spacing: 4) {
-            Image(systemName: "crown.fill")
-                .font(.system(size: 9, weight: .bold))
-            Text("PREMIUM")
-                .font(.system(size: 10, weight: .bold, design: .rounded))
-                .tracking(0.5)
-        }
-        .foregroundStyle(.white)
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
-        .background(
-            Capsule().fill(
-                LinearGradient(
-                    colors: [
-                        Color(red: 1.00, green: 0.82, blue: 0.30),
-                        Color(red: 0.95, green: 0.55, blue: 0.20)
-                    ],
-                    startPoint: .leading, endPoint: .trailing
-                )
-            )
-        )
-    }
-}
-
 // MARK: - Typing Indicator
 
 struct CoachTypingIndicator: View {

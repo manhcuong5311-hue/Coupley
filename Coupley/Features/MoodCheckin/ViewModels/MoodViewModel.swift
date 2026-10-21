@@ -112,6 +112,9 @@ final class MoodViewModel: ObservableObject {
             if submissionState == .success || submissionState == .queued {
                 submissionState = .idle
             }
+
+            // Counts toward the interstitial cap (shown after the success state).
+            AdsManager.shared.recordAction()
         }
     }
 

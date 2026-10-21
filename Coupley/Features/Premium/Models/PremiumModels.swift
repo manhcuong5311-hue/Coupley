@@ -2,193 +2,93 @@
 //  PremiumModels.swift
 //  Coupley
 //
+//  Since 1.1 every feature is free for everyone. The only purchase is a
+//  one-time "Remove Ads" that turns ads off for both partners. The old
+//  Monthly / Yearly subscriptions are no longer sold, but existing
+//  subscribers keep working (and stay ad-free forever).
+//
 
 import Foundation
 
 // MARK: - Premium Plan
 
 enum PremiumPlan: String, CaseIterable, Identifiable, Codable {
+    /// Legacy auto-renewable subscriptions (no longer sold).
     case monthly
     case yearly
+    /// One-time, non-consumable "Remove Ads".
+    case removeAds
 
     var id: String { rawValue }
 
-    var label: String {
-        switch self {
-        case .monthly: return "Monthly"
-        case .yearly:  return "Yearly"
-        }
-    }
+    var isSubscription: Bool { self != .removeAds }
 
-    /// Bundled fallback price string. Used only until StoreKit reports the
-    /// localized `Product.displayPrice` — which is the source of truth shown
-    /// in the paywall (Apple Guideline 3.1.2(c) requires the actual storefront
-    /// price). Keep these in sync with App Store Connect as a safety net.
-    var fallbackDisplayPrice: String {
-        switch self {
-        case .monthly: return "$3.99"
-        case .yearly:  return "$29.99"
-        }
-    }
-
-    /// Period unit for the price line ("month" / "year"). Matches what
-    /// StoreKit reports via `Product.SubscriptionPeriod.unit` so fallback
-    /// copy reads the same as live copy.
-    var fallbackPeriodLabel: String {
-        switch self {
-        case .monthly: return "month"
-        case .yearly:  return "year"
-        }
-    }
-
-    /// "$3.99 / month" — pre-StoreKit fallback. Live UI prefers
-    /// `PremiumStore.priceWithPeriod(for:)`.
-    var priceLabel: String {
-        "\(fallbackDisplayPrice) / \(fallbackPeriodLabel)"
-    }
-
-    var perMonthLabel: String {
-        switch self {
-        case .monthly: return "$3.99 / mo"
-        case .yearly:  return "~$2.50 / mo for two"
-        }
-    }
-
-    var savingsBadge: String? {
-        switch self {
-        case .monthly: return nil
-        case .yearly:  return "Best Value · Save 37%"
-        }
-    }
-
-    /// StoreKit product identifier (configure in App Store Connect + StoreKit file)
+    /// StoreKit product identifier (configured in App Store Connect).
     var productID: String {
         switch self {
-        case .monthly: return "com.coupley.premium.monthly"
-        case .yearly:  return "com.coupley.premium.yearly"
+        case .monthly:   return "com.coupley.premium.monthly"
+        case .yearly:    return "com.coupley.premium.yearly"
+        case .removeAds: return "com.coupley.removeads"
         }
     }
+
+    /// Shown only until StoreKit reports the localized price.
+    static let removeAdsFallbackPrice = "$9.99"
 }
 
 // MARK: - Premium Source
 
-/// Why this user has premium. Derived from the stored `purchaserId` — NOT
-/// persisted separately, so there's a single source of truth:
+/// Why this user is ad-free. Derived from the stored `purchaserId`:
 ///   - `.selfPaid`       → users/{uid}.premium.purchaserId == uid
 ///   - `.partnerShared`  → couples/{cid}.premium.purchaserId == partnerUid
 ///                          (and this user is not self-paid)
 ///   - `.free`           → neither doc reports an active, valid entitlement
 ///
-/// This is the *ownership model*: only `.selfPaid` survives a disconnect.
-/// Shared access evaporates the moment the couple doc is deleted or its
-/// premium is cleared.
+/// Only `.selfPaid` survives a disconnect.
 enum PremiumSource: String, Codable {
     case free = "none"           // raw values kept for backward compat with
     case selfPaid = "self"       // any previously-written Firestore snapshots
     case partnerShared = "partner"
-
-    /// User-facing label for premium state rows (Settings, Paywall).
-    var displayLabel: String {
-        switch self {
-        case .selfPaid:       return "Premium (Your Plan)"
-        case .partnerShared:  return "Premium (via Partner)"
-        case .free:           return "Free Plan"
-        }
-    }
 }
 
-// MARK: - Premium Feature
+// MARK: - Feature usage
 
-/// Features gated behind premium. Use `PremiumStore.hasAccess(to:)` at call sites.
+/// Features that used to be premium. All of them are unlocked now; the enum
+/// remains for the AI / date-idea daily fair-use limits and call-site clarity.
 enum PremiumFeature: String, CaseIterable {
-    case customAvatar          // Upload custom photo as avatar (free: preset only)
-    case anniversaryPhoto      // Upload cover photo for anniversaries / memories (free: none)
-    case allThemes             // All theme styles (free: default only)
-    case fullQuizAccess        // All quiz topics (free: first half of topics)
-    case customQuizzes         // Create custom chat quizzes (free: 1/day, premium: unlimited)
-    case dateIdeas             // Date ideas access (free: locked, premium: 25/day)
-    case aiMoodSuggestions     // AI mood suggestions (free: 1/day, premium: 50/day)
-    case aiCoach               // AI Relationship Coach (free: 2 sessions/week, premium: unlimited + deep features)
-    case chatPhotos            // Send pictures in chat (free: 1/day, premium: unlimited)
-    case memoryCapsule         // Time Tree memory capsules — write a memory that unlocks later (free: locked)
-    case togetherGoalsUnlimited      // Together: unlimited active goals (free: 2 max)
-    case togetherChallengesUnlimited // Together: unlimited challenges (free: 1 max)
-    case togetherDreamBoard          // Together: full Dream Board (free: 1 dream max, no photos)
-    case togetherCoach               // Together: AI Couple Coach insights (free: locked)
+    case customAvatar
+    case anniversaryPhoto
+    case allThemes
+    case fullQuizAccess
+    case customQuizzes
+    case dateIdeas
+    case aiMoodSuggestions
+    case aiCoach
+    case chatPhotos
+    case memoryCapsule
+    case togetherGoalsUnlimited
+    case togetherChallengesUnlimited
+    case togetherDreamBoard
+    case togetherCoach
 
-    var label: String {
+    /// Daily fair-use limit for everyone (nil = unlimited). AI calls cost
+    /// money per request, so they keep a cap; the server enforces the same
+    /// numbers (functions/index.js → LIMITS).
+    var dailyLimit: Int? {
         switch self {
-        case .customAvatar:                return "Custom avatar photo"
-        case .anniversaryPhoto:            return "Memory & anniversary photos"
-        case .allThemes:                   return "All themes & styles"
-        case .fullQuizAccess:              return "Full quiz library"
-        case .customQuizzes:               return "Custom quizzes (unlimited)"
-        case .dateIdeas:                   return "Date ideas (25/day)"
-        case .aiMoodSuggestions:           return "AI mood suggestions (50/day)"
-        case .aiCoach:                     return "AI Relationship Coach"
-        case .chatPhotos:                  return "Unlimited chat photos"
-        case .memoryCapsule:               return "Memory Capsules"
-        case .togetherGoalsUnlimited:      return "Unlimited shared goals"
-        case .togetherChallengesUnlimited: return "Unlimited couple challenges"
-        case .togetherDreamBoard:          return "Full Dream Board"
-        case .togetherCoach:               return "AI Couple Coach"
-        }
-    }
-
-    var freeLabel: String {
-        switch self {
-        case .customAvatar:                return "Preset avatars only"
-        case .anniversaryPhoto:            return "No memory photos"
-        case .allThemes:                   return "Default theme only"
-        case .fullQuizAccess:              return "Half the quiz library"
-        case .customQuizzes:               return "1 per day"
-        case .dateIdeas:                   return "Locked"
-        case .aiMoodSuggestions:           return "1 per day"
-        case .aiCoach:                     return "2 sessions per week"
-        case .chatPhotos:                  return "1 photo per day"
-        case .memoryCapsule:               return "Locked"
-        case .togetherGoalsUnlimited:      return "2 active goals"
-        case .togetherChallengesUnlimited: return "1 active challenge"
-        case .togetherDreamBoard:          return "1 dream"
-        case .togetherCoach:               return "Locked"
-        }
-    }
-
-    var icon: String {
-        switch self {
-        case .customAvatar:                return "person.crop.circle.fill"
-        case .anniversaryPhoto:            return "photo.fill"
-        case .allThemes:                   return "paintpalette.fill"
-        case .fullQuizAccess:              return "questionmark.bubble.fill"
-        case .customQuizzes:               return "pencil.and.list.clipboard"
-        case .dateIdeas:                   return "map.fill"
-        case .aiMoodSuggestions:           return "sparkles"
-        case .aiCoach:                     return "heart.text.square.fill"
-        case .chatPhotos:                  return "camera.fill"
-        case .memoryCapsule:               return "lock.shield.fill"
-        case .togetherGoalsUnlimited:      return "target"
-        case .togetherChallengesUnlimited: return "flame.fill"
-        case .togetherDreamBoard:          return "sparkles.rectangle.stack.fill"
-        case .togetherCoach:               return "wand.and.stars"
-        }
-    }
-
-    /// Daily limit for free users (nil = binary access, not daily-limited)
-    var freeDailyLimit: Int? {
-        switch self {
-        case .aiMoodSuggestions: return 1
-        case .dateIdeas:         return 0  // locked
-        case .aiCoach:           return 1  // 1 session per day on free tier
-        case .chatPhotos:        return 1  // 1 photo per day on free tier
-        case .customQuizzes:     return 1  // 1 custom chat quiz per day on free tier
+        case .aiMoodSuggestions: return 10
+        case .aiCoach:           return 10
+        case .dateIdeas:         return 25
         default:                 return nil
         }
     }
 
-    /// Daily limit for premium users (nil = unlimited)
-    var premiumDailyLimit: Int? {
+    /// Legacy subscribers keep the higher AI allowance they paid for until
+    /// their subscription ends.
+    var subscriberDailyLimit: Int? {
         switch self {
         case .aiMoodSuggestions: return 50
+        case .aiCoach:           return 50
         case .dateIdeas:         return 25
         default:                 return nil
         }

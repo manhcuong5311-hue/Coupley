@@ -178,6 +178,7 @@ struct RootView: View {
         sessionStore.registerTeardown { [weak premiumStore] in
             premiumStore?.unbind()
         }
+        AdsManager.shared.bind(isAdFree: premiumStore.$isAdFree)
         sessionStore.registerTeardown { [weak notificationViewModel] in
             notificationViewModel?.tearDownForSignOut()
         }

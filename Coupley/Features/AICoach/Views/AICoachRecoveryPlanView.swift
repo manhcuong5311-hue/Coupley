@@ -2,7 +2,7 @@
 //  AICoachRecoveryPlanView.swift
 //  Coupley
 //
-//  Premium tool: 3-day or 7-day reconnect plan. Day-by-day actions, a
+//  Coach toolkit: 3-day or 7-day reconnect plan. Day-by-day actions, a
 //  themed message the user can send, and a simple ritual to follow.
 //
 

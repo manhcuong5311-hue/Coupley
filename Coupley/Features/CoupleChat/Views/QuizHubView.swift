@@ -32,10 +32,8 @@ struct QuizHubView: View {
     @State private var showDailyPicker = false
     @State private var showCustomBuilder = false
     @State private var showHistory = false
-    @State private var showPaywall = false
     @State private var showAIConfirmation = false
     @State private var aiSuggestion: ChatQuizTemplate?
-    @State private var dailyLimitAlert = false
 
     var body: some View {
         NavigationStack {
@@ -81,10 +79,7 @@ struct QuizHubView: View {
                         allowsMultiple: allowsMultiple,
                         note: note
                     )
-                    // Burn one daily slot for free users.
-                    if !premiumStore.isActive {
-                        premiumStore.recordUsage(for: .customQuizzes)
-                    }
+                    AdsManager.shared.recordAction()
                     dismiss()
                 }
                 .presentationDetents([.large])
@@ -98,12 +93,6 @@ struct QuizHubView: View {
                     .presentationDragIndicator(.visible)
                     .presentationBackground(Brand.backgroundTop)
             }
-            .sheet(isPresented: $showPaywall) {
-                NavigationStack { PremiumPaywallView() }
-                    .environmentObject(premiumStore)
-                    .presentationDetents([.large])
-                    .presentationDragIndicator(.visible)
-            }
             .sheet(isPresented: $showAIConfirmation) {
                 if let suggestion = aiSuggestion {
                     AISuggestionConfirmationSheet(template: suggestion) {
@@ -116,13 +105,6 @@ struct QuizHubView: View {
                     .presentationDetents([.medium])
                     .presentationDragIndicator(.visible)
                 }
-            }
-            .alert("Free plan includes 1 custom quiz/day",
-                   isPresented: $dailyLimitAlert) {
-                Button("Upgrade", role: .none) { showPaywall = true }
-                Button("Cancel", role: .cancel) {}
-            } message: {
-                Text("Upgrade to Premium for unlimited custom quizzes, AI suggestions, and advanced quiz packs.")
             }
         }
     }
@@ -183,7 +165,6 @@ struct QuizHubView: View {
                     subtitle: "Hand-picked from our library",
                     icon: "sparkles",
                     accent: Color(red: 0.95, green: 0.55, blue: 0.30),
-                    isPremium: false,
                     action: { showDailyPicker = true }
                 )
                 entryCard(
@@ -191,7 +172,6 @@ struct QuizHubView: View {
                     subtitle: "We'll pick what fits you both",
                     icon: "wand.and.stars",
                     accent: Color(red: 0.55, green: 0.74, blue: 0.95),
-                    isPremium: false,
                     action: presentAISuggestion
                 )
             }
@@ -199,18 +179,16 @@ struct QuizHubView: View {
             HStack(spacing: 12) {
                 entryCard(
                     title: "Custom Quiz",
-                    subtitle: customQuizSubtitle,
+                    subtitle: "Create your own question",
                     icon: "heart.text.square.fill",
                     accent: Brand.accentStart,
-                    isPremium: !canCreateCustomQuiz && !premiumStore.isActive,
-                    action: presentCustomBuilder
+                    action: { showCustomBuilder = true }
                 )
                 entryCard(
                     title: "History",
                     subtitle: "Your past quizzes & results",
                     icon: "clock.fill",
                     accent: Color(red: 0.40, green: 0.76, blue: 0.55),
-                    isPremium: false,
                     action: { showHistory = true }
                 )
             }
@@ -222,7 +200,6 @@ struct QuizHubView: View {
         subtitle: String,
         icon: String,
         accent: Color,
-        isPremium: Bool,
         action: @escaping () -> Void
     ) -> some View {
         Button(action: {
@@ -241,9 +218,6 @@ struct QuizHubView: View {
                             .foregroundStyle(.white)
                     }
                     Spacer()
-                    if isPremium {
-                        premiumPill
-                    }
                 }
                 VStack(alignment: .leading, spacing: 4) {
                     Text(title)
@@ -275,31 +249,6 @@ struct QuizHubView: View {
             )
         }
         .buttonStyle(BouncyButtonStyle(scale: 0.97))
-    }
-
-    private var premiumPill: some View {
-        HStack(spacing: 4) {
-            Image(systemName: "crown.fill")
-                .font(.system(size: 9, weight: .semibold))
-            Text("Premium")
-                .font(.system(size: 10, weight: .bold, design: .rounded))
-                .kerning(0.3)
-        }
-        .foregroundStyle(.white)
-        .padding(.horizontal, 7)
-        .padding(.vertical, 4)
-        .background(
-            Capsule()
-                .fill(
-                    LinearGradient(
-                        colors: [
-                            Color(red: 1.00, green: 0.78, blue: 0.30),
-                            Color(red: 0.92, green: 0.50, blue: 0.18)
-                        ],
-                        startPoint: .leading, endPoint: .trailing
-                    )
-                )
-        )
     }
 
     // MARK: - Recent quiz section
@@ -370,34 +319,6 @@ struct QuizHubView: View {
             )
         }
         .buttonStyle(BouncyButtonStyle(scale: 0.98))
-    }
-
-    // MARK: - Custom Quiz gate
-
-    /// Free users get exactly 1 custom quiz per day. Premium is unlimited.
-    /// PremiumStore.hasAccess(.customQuizzes) returns true under both paths
-    /// (premium OR a free user with their daily slot still available), so
-    /// we use it as the unified gate.
-    private var canCreateCustomQuiz: Bool {
-        premiumStore.hasAccess(to: .customQuizzes)
-    }
-
-    private var customQuizSubtitle: String {
-        if premiumStore.isActive {
-            return "Create your own — unlimited"
-        }
-        if canCreateCustomQuiz {
-            return "Create your own — 1 free today"
-        }
-        return "Daily limit reached — upgrade for unlimited"
-    }
-
-    private func presentCustomBuilder() {
-        if canCreateCustomQuiz {
-            showCustomBuilder = true
-        } else {
-            dailyLimitAlert = true
-        }
     }
 
     private func presentAISuggestion() {

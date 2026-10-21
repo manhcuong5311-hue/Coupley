@@ -2,22 +2,22 @@
 //  PremiumService.swift
 //  Coupley
 //
-//  Ownership-based premium entitlement.
+//  Ownership-based "Remove Ads" entitlement (formerly Premium).
 //
 //  Firestore contract:
-//    /users/{uid}.premium = {                      // the user's OWN subscription
+//    /users/{uid}.premium = {                      // the user's OWN purchase
 //      active: Bool,
-//      plan: "monthly" | "yearly",
+//      plan: "removeAds" | "monthly" | "yearly",    // subscriptions are legacy
 //      purchaserId: String,                         // MUST == uid when valid
 //      purchasedAt: Timestamp,
-//      expiresAt: Timestamp
+//      expiresAt: Timestamp?                        // absent for removeAds
 //    }
 //    /couples/{coupleId}.premium = {                // shared access slot —
 //      active: Bool,                                 // mirror of whichever
-//      plan: "monthly" | "yearly",                   // partner is paid
+//      plan: …,                                      // partner is paid
 //      purchaserId: String,                          // the paying partner's uid
 //      purchasedAt: Timestamp,
-//      expiresAt: Timestamp
+//      expiresAt: Timestamp?
 //    }
 //
 //  Ownership rule:
@@ -50,8 +50,13 @@ protocol PremiumService {
         userId: String,
         coupleId: String?,
         plan: PremiumPlan,
-        expiresAt: Date
+        expiresAt: Date?
     ) async throws
+
+    /// True if `/users/{userId}.premium` records a purchase this user made at
+    /// any point (active, expired or cancelled). Former subscribers stay
+    /// ad-free forever.
+    func hasEverPurchased(userId: String) async -> Bool
 
     /// Clear this user's *own* entitlement (cancellation / refund / testing).
     /// Never touches the partner's user doc. Also clears the couple slot when
@@ -85,15 +90,17 @@ final class FirestorePremiumService: PremiumService {
         userId: String,
         coupleId: String?,
         plan: PremiumPlan,
-        expiresAt: Date
+        expiresAt: Date?
     ) async throws {
-        let payload: [String: Any] = [
+        var payload: [String: Any] = [
             "active": true,
             "plan": plan.rawValue,
             "purchaserId": userId,
-            "purchasedAt": FieldValue.serverTimestamp(),
-            "expiresAt": Timestamp(date: expiresAt)
+            "purchasedAt": FieldValue.serverTimestamp()
         ]
+        // "Remove Ads" never expires. `merge: true` keeps nested maps, so an
+        // old subscription expiry must be deleted explicitly.
+        payload["expiresAt"] = expiresAt.map { Timestamp(date: $0) } ?? FieldValue.delete()
 
         // Write the user's OWN subscription on their user doc. purchaserId
         // always == userId here, which is the only legitimate shape for
@@ -146,6 +153,14 @@ final class FirestorePremiumService: PremiumService {
             }
             return nil
         })
+    }
+
+    // MARK: - Purchase history
+
+    func hasEverPurchased(userId: String) async -> Bool {
+        guard let snapshot = try? await db.collection(FirestorePath.users).document(userId).getDocument(),
+              let premium = snapshot.data()?["premium"] as? [String: Any] else { return false }
+        return (premium["purchaserId"] as? String) == userId
     }
 
     // MARK: - Clear (self)
@@ -349,7 +364,8 @@ private final class PairedEntitlementMerger {
 // MARK: - Mock
 
 final class MockPremiumService: PremiumService {
-    func recordPurchase(userId: String, coupleId: String?, plan: PremiumPlan, expiresAt: Date) async throws {}
+    func recordPurchase(userId: String, coupleId: String?, plan: PremiumPlan, expiresAt: Date?) async throws {}
+    func hasEverPurchased(userId: String) async -> Bool { false }
     func clearEntitlement(userId: String, coupleId: String?) async throws {}
     func clearCouplePremium(coupleId: String) async throws {}
     func observeEntitlement(

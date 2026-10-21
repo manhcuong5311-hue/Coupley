@@ -12,15 +12,8 @@ struct QuizPickerSheet: View {
 
     let onPick: (ChatQuizTemplate) -> Void
 
-    @EnvironmentObject private var premiumStore: PremiumStore
     @Environment(\.dismiss) private var dismiss
     @State private var selectedTopic: QuizTopic? = nil
-    @State private var showPaywall = false
-
-    // Free-tier topics (first half of topics by relationship depth)
-    private static let freeTopics: Set<QuizTopic> = [
-        .loveLanguage, .communication, .conflict, .finance, .intimacy, .lifestyle
-    ]
 
     var body: some View {
         NavigationStack {
@@ -31,18 +24,12 @@ struct QuizPickerSheet: View {
                     topicFilterSection
 
                     ForEach(topicsToShow, id: \.self) { topic in
-                        let isLocked = !premiumStore.hasAccess(to: .fullQuizAccess)
-                                        && !Self.freeTopics.contains(topic)
                         Section {
-                            if isLocked {
-                                lockedTopicRow(topic)
-                            } else {
-                                ForEach(ChatQuizBank.byTopic(topic), id: \.questionId) { template in
-                                    Button { pick(template) } label: {
-                                        row(for: template)
-                                    }
-                                    .listRowBackground(Brand.surfaceLight)
+                            ForEach(ChatQuizBank.byTopic(topic), id: \.questionId) { template in
+                                Button { pick(template) } label: {
+                                    row(for: template)
                                 }
+                                .listRowBackground(Brand.surfaceLight)
                             }
                         } header: {
                             HStack(spacing: 6) {
@@ -52,15 +39,6 @@ struct QuizPickerSheet: View {
                                     .foregroundStyle(Brand.textSecondary)
                                     .textCase(.uppercase)
                                     .tracking(0.5)
-                                if isLocked {
-                                    Spacer()
-                                    Image(systemName: "lock.fill")
-                                        .font(.system(size: 10, weight: .semibold))
-                                        .foregroundStyle(Brand.accentStart)
-                                    Text("Premium")
-                                        .font(.system(size: 10, weight: .bold, design: .rounded))
-                                        .foregroundStyle(Brand.accentStart)
-                                }
                             }
                         }
                     }
@@ -74,62 +52,11 @@ struct QuizPickerSheet: View {
                     Button("Close") { dismiss() }
                         .foregroundStyle(Brand.textSecondary)
                 }
-                if !premiumStore.isActive {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        Button {
-                            showPaywall = true
-                        } label: {
-                            HStack(spacing: 4) {
-                                Image(systemName: "crown.fill")
-                                    .font(.system(size: 11))
-                                Text("Unlock All")
-                                    .font(.system(size: 13, weight: .semibold, design: .rounded))
-                            }
-                            .foregroundStyle(Color(red: 0.95, green: 0.65, blue: 0.15))
-                        }
-                    }
-                }
-            }
-            .sheet(isPresented: $showPaywall) {
-                NavigationStack {
-                    PremiumPaywallView()
-                }
-                .environmentObject(premiumStore)
-                .presentationDetents([.large])
-                .presentationDragIndicator(.visible)
             }
         }
     }
 
     // MARK: - Locked Topic Row
-
-    private func lockedTopicRow(_ topic: QuizTopic) -> some View {
-        Button {
-            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-            showPaywall = true
-        } label: {
-            HStack(spacing: 12) {
-                Image(systemName: "lock.fill")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(Brand.accentStart)
-                    .frame(width: 30)
-                VStack(alignment: .leading, spacing: 3) {
-                    Text("\(ChatQuizBank.byTopic(topic).count) questions in \(topic.label)")
-                        .font(.system(size: 15, weight: .semibold, design: .rounded))
-                        .foregroundStyle(Brand.textPrimary)
-                    Text("Upgrade to Premium to unlock")
-                        .font(.system(size: 12, design: .rounded))
-                        .foregroundStyle(Brand.textSecondary)
-                }
-                Spacer()
-                Image(systemName: "crown.fill")
-                    .font(.system(size: 14))
-                    .foregroundStyle(Color(red: 0.95, green: 0.65, blue: 0.15))
-            }
-            .contentShape(Rectangle())
-        }
-        .listRowBackground(Brand.accentStart.opacity(0.06))
-    }
 
     // MARK: - Topic filter chips
 

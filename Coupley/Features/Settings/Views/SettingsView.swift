@@ -2,7 +2,7 @@
 //  SettingsView.swift
 //  Coupley
 //
-//  Central settings hub — Account, Appearance, Notifications, Premium, About.
+//  Central settings hub — Remove Ads, Account, Appearance, Notifications, About.
 //  Opened from the top-right gear button in CoupleDashboardView.
 //
 
@@ -16,13 +16,13 @@ struct SettingsView: View {
     @EnvironmentObject var themeManager: ThemeManager
     @EnvironmentObject var premiumStore: PremiumStore
     @EnvironmentObject var notificationViewModel: NotificationViewModel
+    @ObservedObject private var ads = AdsManager.shared
 
     @Environment(\.dismiss) private var dismiss
 
     @State private var showSignOutConfirm = false
     @State private var showEditName = false
     @State private var currentDisplayName: String = Auth.auth().currentUser?.displayName ?? "—"
-    @State private var showThemePaywall = false
 
     /// Hidden 5-tap-on-version gesture opens the developer DebugMenu, which
     /// surfaces "Replay Onboarding", "Send Test Notification", token tools,
@@ -82,43 +82,33 @@ struct SettingsView: View {
         }
     }
 
-    // MARK: - Premium
+    // MARK: - Remove Ads
 
     @ViewBuilder
     private var premiumSection: some View {
         Section {
             NavigationLink {
-                PremiumPaywallView()
+                RemoveAdsSheet(showsCloseButton: false)
             } label: {
-                HStack(spacing: 14) {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 10)
-                            .fill(Brand.accentGradient)
-                            .frame(width: 34, height: 34)
-                        Image(systemName: "sparkles")
-                            .font(.system(size: 15, weight: .bold))
-                            .foregroundStyle(.white)
-                    }
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(premiumStore.isActive ? "Coupley Premium" : "Upgrade to Premium")
-                            .font(.system(size: 16, weight: .semibold, design: .rounded))
-                            .foregroundStyle(Brand.textPrimary)
-                        Text(premiumSubtitle)
-                            .font(.system(size: 12, design: .rounded))
-                            .foregroundStyle(Brand.textSecondary)
-                    }
-                }
+                RemoveAdsRow()
             }
             .listRowBackground(premiumRowBackground)
-        }
-    }
 
-    private var premiumSubtitle: String {
-        if !premiumStore.isActive { return "Unlock all features for both of you" }
-        switch premiumStore.source {
-        case .partnerShared: return "Shared from your partner"
-        case .selfPaid:      return "Active — thanks for supporting Coupley"
-        case .free:          return "Active"
+            if premiumStore.hasActiveSubscription {
+                LegacySubscriberNotice()
+                    .listRowBackground(premiumRowBackground)
+            }
+
+            if ads.privacyOptionsRequired && !premiumStore.isAdFree {
+                Button {
+                    ads.presentPrivacyOptions()
+                } label: {
+                    Label("Ad privacy choices", systemImage: "hand.raised.fill")
+                        .font(.system(size: 15, weight: .medium, design: .rounded))
+                        .foregroundStyle(Brand.textPrimary)
+                }
+                .listRowBackground(surfaceRowBackground)
+            }
         }
     }
 
@@ -269,51 +259,29 @@ struct SettingsView: View {
     private var themeStyleSection: some View {
         Section {
             ForEach(ThemeVariant.allCases) { variant in
-                let isDefault = variant == ThemeVariant.allCases.first
-                let isLocked = !isDefault && !premiumStore.hasAccess(to: .allThemes)
-
                 Button {
-                    if isLocked {
-                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-                        showThemePaywall = true
-                    } else {
-                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                        themeManager.variant = variant
-                    }
+                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                    themeManager.variant = variant
                 } label: {
                     HStack(spacing: 14) {
                         ZStack {
                             RoundedRectangle(cornerRadius: 8)
-                                .fill(isLocked
-                                      ? Brand.textTertiary.opacity(0.12)
-                                      : Brand.accentStart.opacity(0.15))
+                                .fill(Brand.accentStart.opacity(0.15))
                                 .frame(width: 30, height: 30)
-                            Image(systemName: isLocked ? "lock.fill" : variant.icon)
+                            Image(systemName: variant.icon)
                                 .font(.system(size: 13, weight: .semibold))
-                                .foregroundStyle(isLocked ? Brand.textTertiary : Brand.accentStart)
+                                .foregroundStyle(Brand.accentStart)
                         }
                         VStack(alignment: .leading, spacing: 2) {
-                            HStack(spacing: 6) {
-                                Text(variant.label)
-                                    .font(.system(size: 15, weight: .medium, design: .rounded))
-                                    .foregroundStyle(isLocked ? Brand.textSecondary : Brand.textPrimary)
-                                if isLocked {
-                                    Text("Premium")
-                                        .font(.system(size: 10, weight: .bold, design: .rounded))
-                                        .foregroundStyle(Color(red: 0.95, green: 0.65, blue: 0.15))
-                                        .padding(.horizontal, 6)
-                                        .padding(.vertical, 2)
-                                        .background(
-                                            Capsule().fill(Color(red: 0.95, green: 0.65, blue: 0.15).opacity(0.15))
-                                        )
-                                }
-                            }
+                            Text(variant.label)
+                                .font(.system(size: 15, weight: .medium, design: .rounded))
+                                .foregroundStyle(Brand.textPrimary)
                             Text(variant.tagline)
                                 .font(.system(size: 12, design: .rounded))
                                 .foregroundStyle(Brand.textTertiary)
                         }
                         Spacer()
-                        if !isLocked && themeManager.variant == variant {
+                        if themeManager.variant == variant {
                             Image(systemName: "checkmark")
                                 .font(.system(size: 13, weight: .bold))
                                 .foregroundStyle(Brand.accentStart)
@@ -324,21 +292,10 @@ struct SettingsView: View {
         } header: {
             Text("Theme Style")
         } footer: {
-            if !premiumStore.isActive {
-                Text("Additional themes require Premium. Free tier includes the default style.")
-                    .font(.system(size: 12, design: .rounded))
-            } else {
-                Text("Pick between the new CoupleSync look or the classic gradient.")
-                    .font(.system(size: 12, design: .rounded))
-            }
+            Text("Pick between the new CoupleSync look or the classic gradient.")
+                .font(.system(size: 12, design: .rounded))
         }
         .listRowBackground(surfaceRowBackground)
-        .sheet(isPresented: $showThemePaywall) {
-            NavigationStack { PremiumPaywallView() }
-                .environmentObject(premiumStore)
-                .presentationDetents([.large])
-                .presentationDragIndicator(.visible)
-        }
     }
 
     // MARK: - Appearance

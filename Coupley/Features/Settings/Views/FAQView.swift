@@ -56,7 +56,7 @@ struct FAQView: View {
         ),
         FAQItem(
             question: "How many goals and challenges can we have?",
-            answer: "Free plan: up to 2 active goals, 1 active challenge, 1 dream. Premium removes those limits and unlocks the full Dream Board with photos."
+            answer: "As many as you like. Goals, challenges and the full Dream Board with photos are free for everyone."
         ),
         FAQItem(
             question: "Can both of us add to the same goal?",
@@ -67,15 +67,15 @@ struct FAQView: View {
 
         FAQItem(
             question: "What is the Time Tree?",
-            answer: "Time Tree is your shared timeline of memories — the moments worth keeping. Each memory can have a date, a note, and (on Premium) a cover photo. The anchor date marks when you started; everything else lives relative to it."
+            answer: "Time Tree is your shared timeline of memories — the moments worth keeping. Each memory can have a date, a note, and a cover photo. The anchor date marks when you started; everything else lives relative to it."
         ),
         FAQItem(
             question: "What's a Memory Capsule?",
-            answer: "A capsule is a memory you write today that locks until a future date you choose. Perfect for letters to your future selves, anniversary surprises, or notes meant to be read on a specific day. Capsules are a Premium feature."
+            answer: "A capsule is a memory you write today that locks until a future date you choose. Perfect for letters to your future selves, anniversary surprises, or notes meant to be read on a specific day."
         ),
         FAQItem(
             question: "Can I add anniversaries beyond the main one?",
-            answer: "Yes. Add as many anniversaries as you like — first kiss, moving in together, a favorite trip — and each one shows a countdown on your dashboard. Premium lets you add a cover photo to each anniversary."
+            answer: "Yes. Add as many anniversaries as you like — first kiss, moving in together, a favorite trip — and each one shows a countdown on your dashboard. You can add a cover photo to each one."
         ),
 
         // MARK: - Chat & Quizzes
@@ -86,52 +86,48 @@ struct FAQView: View {
         ),
         FAQItem(
             question: "Can I create my own quiz?",
-            answer: "Yes — tap the + in the chat and choose Custom Quiz. Free users can create one custom quiz per day; Premium is unlimited and unlocks the full library of pre-built topics."
+            answer: "Yes — tap the + in the chat and choose Custom Quiz. Custom quizzes and the full library of pre-built topics are free and unlimited."
         ),
 
         // MARK: - AI features
 
         FAQItem(
             question: "What does the AI Relationship Coach do?",
-            answer: "The Coach reads your recent mood patterns, your partner profile, and your shared activity to suggest small, specific actions tailored to you both. Free users get 1 session per day; Premium gets unlimited plus deeper analysis features."
+            answer: "The Coach reads your recent mood patterns, your partner profile, and your shared activity to suggest small, specific actions tailored to you both. Everyone gets up to 10 Coach sessions and 10 AI mood suggestions per day, plus the rewrite, health-check and recovery-plan tools."
         ),
         FAQItem(
             question: "Are AI suggestions personal?",
             answer: "They use your couple profile, mood history, love-language signals, and partner preferences — never any data from outside your couple. The AI doesn't share your history with anyone, including other Coupley users."
         ),
 
-        // MARK: - Premium
+        // MARK: - Free & Remove Ads
 
         FAQItem(
-            question: "What does Coupley Premium include?",
-            answer: "Unlimited shared goals and challenges, the full Dream Board with photos, Memory Capsules, all themes, custom avatar and anniversary photos, the AI Couple Coach, unlimited chat photos and custom quizzes, 50 AI mood suggestions and 25 date ideas per day, and unlimited AI Relationship Coach sessions."
+            question: "Is Coupley free?",
+            answer: "Yes. Every feature is free for both of you. Coupley shows ads to keep it that way; AI features have a fair daily limit because each request costs us money."
         ),
         FAQItem(
-            question: "Does my partner get Premium too?",
-            answer: "Yes. One subscription covers both partners. When you subscribe, your partner automatically inherits Premium access through your shared couple connection."
+            question: "What does Remove Ads do?",
+            answer: "It's a one-time purchase that turns off all banner and full-screen ads. It's not a subscription, and it covers your partner too while you're connected."
         ),
         FAQItem(
             question: "What happens if we disconnect?",
-            answer: "If either of you disconnects, both users return to the free tier on the shared workspace. The original purchaser keeps Premium on any new pairing they create; the partner who didn't pay reverts to free until they pair again with someone who has Premium."
+            answer: "The person who bought Remove Ads stays ad-free on any new pairing. The other partner sees ads again until they pair with someone who bought it."
         ),
         FAQItem(
-            question: "Why does the price look different from what I expected?",
-            answer: "Prices on the paywall are pulled live from the App Store in your local currency (e.g. ₫99,000 in Vietnam, £2.99 in the UK, ¥600 in Japan). Apple sets the per-region pricing; Coupley shows what they'll actually charge."
-        ),
-        FAQItem(
-            question: "How do I cancel my subscription?",
-            answer: "Go to your iPhone Settings → Apple ID → Subscriptions → Coupley. You can cancel anytime; you'll retain access until the end of the current billing period."
+            question: "I subscribed to Coupley Premium before. What now?",
+            answer: "Thank you! Premium no longer exists because everything is free, and you stay ad-free forever. You can cancel it from the “Coupley is free now” card in Settings, or in iPhone Settings → Apple ID → Subscriptions."
         ),
         FAQItem(
             question: "How do I restore a previous purchase?",
-            answer: "Tap 'Upgrade to Premium' in Settings, then 'Restore purchases' at the bottom of the paywall. Your purchase will restore if it was made with the same Apple ID."
+            answer: "Open Settings → Remove Ads and tap 'Restore Purchases'. Purchases restore when you use the same Apple ID."
         ),
 
         // MARK: - Privacy
 
         FAQItem(
             question: "Is my data private?",
-            answer: "Your moods, messages, goals, memories, and photos are visible only to you and your connected partner. We never sell or share your personal data with third parties, and AI suggestions are generated without revealing your data outside your couple."
+            answer: "Your moods, messages, goals, memories, and photos are visible only to you and your connected partner. We never sell your personal data, and AI suggestions are generated without revealing your data outside your couple. Ads are served by Google AdMob, which may use your device's advertising identifier only if you allow tracking; your moods, messages and memories are never shared with advertisers."
         ),
     ]
 

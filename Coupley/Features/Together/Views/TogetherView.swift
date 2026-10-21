@@ -318,7 +318,7 @@ struct TogetherView: View {
             .presentationDetents([.large])
         case .paywall:
             NavigationStack {
-                PremiumPaywallView()
+                RemoveAdsSheet(showsCloseButton: false)
                     .toolbar {
                         ToolbarItem(placement: .topBarTrailing) {
                             Button("Done") { presentedSheet = nil }

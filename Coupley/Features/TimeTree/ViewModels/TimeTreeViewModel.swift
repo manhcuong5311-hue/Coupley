@@ -217,6 +217,7 @@ final class TimeTreeViewModel: ObservableObject {
         do {
             try await memoryService.create(coupleId: session.coupleId, memory: memory)
             await scheduler.rescheduleCapsule(memory)
+            AdsManager.shared.recordAction()
         } catch {
             errorMessage = error.localizedDescription
         }

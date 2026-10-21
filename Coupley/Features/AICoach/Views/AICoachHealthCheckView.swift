@@ -2,7 +2,7 @@
 //  AICoachHealthCheckView.swift
 //  Coupley
 //
-//  Premium tool: 5-pillar relationship health snapshot — trust, communication,
+//  Coach toolkit: 5-pillar relationship health snapshot — trust, communication,
 //  emotional intimacy, support, consistency — plus a plain-English summary
 //  and any red-flag patterns worth watching.
 //

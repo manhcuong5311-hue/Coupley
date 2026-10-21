@@ -30,8 +30,7 @@ struct CoupleDashboardView: View {
     @State private var showMyDetail = false
     @State private var showPartnerDetail = false
     @State private var showProfileHub = false
-    @State private var showDateIdeasPaywall = false
-    @State private var showMoodSuggestionPaywall = false
+    @State private var limitReached: PremiumFeature?
     @State private var showAICoach = false
     @State private var sentReaction: ReactionKind? = nil
     @State private var isSendingReaction = false
@@ -146,18 +145,7 @@ struct CoupleDashboardView: View {
             .presentationDragIndicator(.visible)
             .presentationBackground(Brand.backgroundTop)
         }
-        .sheet(isPresented: $showDateIdeasPaywall) {
-            NavigationStack { PremiumPaywallView() }
-                .environmentObject(premiumStore)
-                .presentationDetents([.large])
-                .presentationDragIndicator(.visible)
-        }
-        .sheet(isPresented: $showMoodSuggestionPaywall) {
-            NavigationStack { PremiumPaywallView() }
-                .environmentObject(premiumStore)
-                .presentationDetents([.large])
-                .presentationDragIndicator(.visible)
-        }
+        .dailyLimitAlert($limitReached)
         .sheet(isPresented: $showAICoach) {
             NavigationStack {
                 AICoachHomeView(viewModel: aiCoachViewModel)
@@ -440,18 +428,14 @@ struct CoupleDashboardView: View {
 
             HStack(spacing: 12) {
                 activityCard(
-                    icon: premiumStore.hasAccess(to: .dateIdeas) ? "sparkles" : "lock.fill",
+                    icon: "sparkles",
                     tint: Color(red: 1.0, green: 0.55, blue: 0.20),
                     title: "Date Ideas",
-                    subtitle: premiumStore.hasAccess(to: .dateIdeas) ? "Get suggestions" : "Premium feature"
+                    subtitle: "Get suggestions"
                 ) {
                     if !premiumStore.hasAccess(to: .dateIdeas) {
                         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-                        showDateIdeasPaywall = true
-                        return
-                    }
-                    if premiumStore.remainingUsage(for: .dateIdeas) == 0 {
-                        showDateIdeasPaywall = true
+                        limitReached = .dateIdeas
                         return
                     }
                     if let mood = viewModel.partnerMood {
@@ -460,8 +444,8 @@ struct CoupleDashboardView: View {
                         viewModel.showAISuggestions = true
                     }
                 }
-                .opacity(viewModel.partnerMood == nil && premiumStore.hasAccess(to: .dateIdeas) ? 0.55 : 1)
-                .disabled(viewModel.partnerMood == nil && premiumStore.hasAccess(to: .dateIdeas))
+                .opacity(viewModel.partnerMood == nil ? 0.55 : 1)
+                .disabled(viewModel.partnerMood == nil)
 
                 activityCard(
                     icon: "chart.bar.fill",
@@ -750,7 +734,7 @@ struct CoupleDashboardView: View {
                 Button {
                     UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                     if !premiumStore.hasAccess(to: .aiMoodSuggestions) {
-                        showMoodSuggestionPaywall = true
+                        limitReached = .aiMoodSuggestions
                         return
                     }
                     premiumStore.recordUsage(for: .aiMoodSuggestions)
@@ -761,13 +745,10 @@ struct CoupleDashboardView: View {
                             .font(.system(size: 14, weight: .semibold))
                         Text("Get Suggestions")
                             .font(.system(size: 15, weight: .semibold, design: .rounded))
-                        if !premiumStore.isActive {
-                            Spacer()
-                            let remaining = premiumStore.remainingUsage(for: .aiMoodSuggestions)
-                            Text("\(remaining) left today")
-                                .font(.system(size: 12, design: .rounded))
-                                .opacity(0.8)
-                        }
+                        Spacer()
+                        Text("\(premiumStore.remainingUsage(for: .aiMoodSuggestions)) left today")
+                            .font(.system(size: 12, design: .rounded))
+                            .opacity(0.8)
                     }
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)

@@ -22,7 +22,6 @@ struct ChatView: View {
     @State private var pendingPhotoPopup: ChatMessage? = nil
     @State private var pendingPhotoQueue: [ChatMessage] = []
     @State private var seenPhotoMessageIds: Set<String> = []
-    @State private var showPhotoPaywall = false
     @FocusState private var isComposerFocused: Bool
 
     init(session: UserSession, profileViewModel: CouplePersonProfileViewModel) {
@@ -125,35 +124,16 @@ struct ChatView: View {
             .onDisappear { viewModel.stop() }
             .onChange(of: photosPickerItem) { _, item in
                 guard let item else { return }
-                // Re-check access at load time in case the user already sent
-                // their one free photo earlier in the same day.
-                guard premiumStore.hasAccess(to: .chatPhotos) else {
-                    photosPickerItem = nil
-                    showPhotoPaywall = true
-                    return
-                }
                 Task {
                     guard let data = try? await item.loadTransferable(type: Data.self),
                           let image = UIImage(data: data) else {
                         await MainActor.run { photosPickerItem = nil }
                         return
                     }
-                    // Only record the quota when the upload was actually
-                    // accepted — `sendPhoto` returns false if another upload
-                    // is already in flight, which would otherwise burn the
-                    // user's daily free photo without sending anything.
-                    let accepted = viewModel.sendPhoto(image)
-                    if accepted, !premiumStore.isActive {
-                        premiumStore.recordUsage(for: .chatPhotos)
-                    }
+                    // `sendPhoto` returns false if another upload is already in flight.
+                    _ = viewModel.sendPhoto(image)
                     await MainActor.run { photosPickerItem = nil }
                 }
-            }
-            .sheet(isPresented: $showPhotoPaywall) {
-                NavigationStack { PremiumPaywallView() }
-                    .environmentObject(premiumStore)
-                    .presentationDetents([.large])
-                    .presentationDragIndicator(.visible)
             }
             .onChange(of: viewModel.messages) { _, messages in
                 checkForIncomingPhoto(in: messages)
@@ -354,38 +334,25 @@ struct ChatView: View {
         && !viewModel.isSending
     }
 
-    // MARK: - Photo button (gated by `chatPhotos` premium)
+    // MARK: - Photo button
 
-    /// Free users can send 1 photo per day. When their quota is spent we
-    /// swap the `PhotosPicker` for a plain `Button` that surfaces the paywall
-    /// — mirrors the `AvatarPickerSheet` pattern so gating feels consistent.
-    @ViewBuilder
     private var photoButton: some View {
-        if premiumStore.hasAccess(to: .chatPhotos) {
-            PhotosPicker(selection: $photosPickerItem, matching: .images) {
-                photoButtonLabel(locked: false)
-            }
-            .disabled(viewModel.isUploadingPhoto)
-        } else {
-            Button {
-                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-                showPhotoPaywall = true
-            } label: {
-                photoButtonLabel(locked: true)
-            }
+        PhotosPicker(selection: $photosPickerItem, matching: .images) {
+            photoButtonLabel
         }
+        .disabled(viewModel.isUploadingPhoto)
     }
 
-    private func photoButtonLabel(locked: Bool) -> some View {
+    private var photoButtonLabel: some View {
         ZStack {
             if viewModel.isUploadingPhoto {
                 ProgressView()
                     .tint(Brand.accentStart)
                     .controlSize(.small)
             } else {
-                Image(systemName: locked ? "lock.fill" : "photo")
-                    .font(.system(size: locked ? 13 : 16, weight: .semibold))
-                    .foregroundStyle(locked ? Brand.textTertiary : Brand.accentStart)
+                Image(systemName: "photo")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(Brand.accentStart)
             }
         }
         .frame(width: 38, height: 38)

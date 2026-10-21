@@ -100,7 +100,7 @@ struct DeleteAccountView: View {
 
                 deletionSummaryCard
 
-                if premiumStore.isActive {
+                if premiumStore.hasActiveSubscription {
                     subscriptionNoticeCard
                 }
 
@@ -171,7 +171,7 @@ struct DeleteAccountView: View {
                 summaryRow(
                     icon: "heart.slash.fill",
                     title: "Your partner connection",
-                    detail: "Your partner is notified and returned to free tier"
+                    detail: "Your partner is notified and the connection ends"
                 )
                 summaryRow(
                     icon: "iphone",
@@ -513,7 +513,7 @@ struct DeleteAccountView: View {
                     .padding(.horizontal, 18)
             }
 
-            if premiumStore.isActive {
+            if premiumStore.hasActiveSubscription {
                 Text("Remember to cancel your subscription in Settings → Apple ID → Subscriptions if you no longer want to be charged.")
                     .font(.system(size: 12, design: .rounded))
                     .foregroundStyle(Brand.textTertiary)

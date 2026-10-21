@@ -2,10 +2,13 @@
 //  PremiumStore.swift
 //  Coupley
 //
-//  Observable wrapper around PremiumService + StoreKit 2. Keeps a live
-//  entitlement for the current session (couple-shared when paired, user-scoped
-//  when solo) and drives feature gating via `hasAccess(to:)`. Also tracks daily
-//  usage for rate-limited free-tier features.
+//  Observable wrapper around PremiumService + StoreKit 2.
+//
+//  Since 1.1 every feature is free. This store now:
+//    • sells the one-time "Remove Ads" (shared with the partner when paired),
+//    • decides `isAdFree` (Remove Ads, an active legacy subscription, or any
+//      past purchase — former subscribers stay ad-free forever),
+//    • tracks the daily fair-use limits of the AI features.
 //
 //  Inject into the environment from CoupleyApp; call `bind(session:)` from
 //  RootView whenever the session changes.
@@ -25,9 +28,13 @@ final class PremiumStore: ObservableObject {
 
     // MARK: - Published
 
-    @Published private(set) var entitlement: PremiumEntitlement = .inactive
+    @Published private(set) var entitlement: PremiumEntitlement = .inactive {
+        didSet { refreshAdFree() }
+    }
+    /// Drives AdsManager: no ads while true.
+    @Published private(set) var isAdFree: Bool = false
     @Published private(set) var isPurchasing: Bool = false
-    @Published private(set) var products: [Product] = []
+    @Published private(set) var removeAdsProduct: Product?
     @Published var lastError: String?
 
     // MARK: - Dependencies
@@ -38,16 +45,32 @@ final class PremiumStore: ObservableObject {
     private var boundCoupleId: String?
     private var transactionListenerTask: Task<Void, Never>?
 
-    // MARK: - Daily Usage
-
     private let defaults = UserDefaults.standard
+
+    private enum Keys {
+        /// Set once this device saw any Coupley purchase (Remove Ads or a
+        /// legacy subscription) — ad-free forever, even signed out.
+        static let everPurchased = "coupley_everPurchased"
+    }
+
+    private var everPurchased: Bool {
+        get { defaults.bool(forKey: Keys.everPurchased) }
+        set {
+            defaults.set(newValue, forKey: Keys.everPurchased)
+            refreshAdFree()
+        }
+    }
 
     // MARK: - Init
 
     init(service: PremiumService? = nil) {
         self.service = service ?? FirestorePremiumService()
+        refreshAdFree()
         transactionListenerTask = Task { await listenForSKTransactions() }
-        Task { await loadProducts() }
+        Task {
+            await loadProducts()
+            await scanPurchaseHistory()
+        }
     }
 
     deinit {
@@ -58,12 +81,22 @@ final class PremiumStore: ObservableObject {
     // MARK: - Product Loading
 
     func loadProducts() async {
-        let ids = PremiumPlan.allCases.map { $0.productID }
         do {
-            let loaded = try await Product.products(for: ids)
-            products = loaded.sorted { $0.price < $1.price }
+            removeAdsProduct = try await Product.products(for: [PremiumPlan.removeAds.productID]).first
         } catch {
             print("[PremiumStore] Failed to load products: \(error)")
+        }
+    }
+
+    /// Any verified transaction for a Coupley product (including expired
+    /// subscriptions) means this Apple ID paid at some point → ad-free.
+    private func scanPurchaseHistory() async {
+        let ids = Set(PremiumPlan.allCases.map(\.productID))
+        for await result in SKTransaction.all {
+            if case .verified(let tx) = result, ids.contains(tx.productID), tx.revocationDate == nil {
+                everPurchased = true
+                return
+            }
         }
     }
 
@@ -92,6 +125,12 @@ final class PremiumStore: ObservableObject {
                 self?.entitlement = next
             }
         }
+
+        Task {
+            if await service.hasEverPurchased(userId: userId) {
+                everPurchased = true
+            }
+        }
     }
 
     func unbind() {
@@ -102,48 +141,39 @@ final class PremiumStore: ObservableObject {
         entitlement = .inactive
     }
 
-    // MARK: - Gating
+    // MARK: - State
 
-    var isActive: Bool { entitlement.isActive }
     var source: PremiumSource { entitlement.source }
 
-    func hasAccess(to feature: PremiumFeature) -> Bool {
-        switch feature {
-        case .customAvatar, .anniversaryPhoto, .allThemes, .fullQuizAccess:
-            return isActive
-        case .customQuizzes:
-            // Custom chat quizzes: free users get 1/day, premium unlimited.
-            if isActive { return true }
-            return dailyUsage(for: .customQuizzes) < 1
-        case .memoryCapsule:
-            // Free: locked. Capsules are an emotional premium hook.
-            return isActive
-        case .dateIdeas:
-            // Free: totally locked
-            return isActive
-        case .aiMoodSuggestions:
-            if isActive { return true }
-            // Free: 1 use per day
-            return dailyUsage(for: .aiMoodSuggestions) < 1
-        case .aiCoach:
-            if isActive { return true }
-            // Free: 1 coaching session per day (opens the coach, deep features still premium)
-            return dailyUsage(for: .aiCoach) < 1
-        case .chatPhotos:
-            if isActive { return true }
-            // Free: 1 photo per day
-            return dailyUsage(for: .chatPhotos) < 1
-        case .togetherGoalsUnlimited,
-             .togetherChallengesUnlimited,
-             .togetherDreamBoard,
-             .togetherCoach:
-            // Together features are binary — quotas are enforced inside the
-            // tab's view model rather than as daily-counter rate limits.
-            return isActive
-        }
+    private func refreshAdFree() {
+        let adFree = entitlement.isActive || everPurchased
+        if adFree != isAdFree { isAdFree = adFree }
     }
 
-    // MARK: - Daily Usage Tracking
+    /// The user (not the partner) still pays for a legacy subscription.
+    /// Shown a "Coupley is free now — you can cancel" notice in Settings.
+    var hasActiveSubscription: Bool {
+        entitlement.isActive
+            && entitlement.source == .selfPaid
+            && (entitlement.plan?.isSubscription ?? false)
+    }
+
+    /// Legacy subscribers (self or via partner) keep their higher AI limits.
+    private var isLegacySubscriber: Bool {
+        entitlement.isActive && (entitlement.plan?.isSubscription ?? false)
+    }
+
+    // MARK: - Fair-use limits
+
+    /// Every feature is free; only the daily fair-use limits can say no.
+    func hasAccess(to feature: PremiumFeature) -> Bool {
+        guard let limit = dailyLimit(for: feature) else { return true }
+        return dailyUsage(for: feature) < limit
+    }
+
+    func dailyLimit(for feature: PremiumFeature) -> Int? {
+        isLegacySubscriber ? feature.subscriberDailyLimit : feature.dailyLimit
+    }
 
     func dailyUsage(for feature: PremiumFeature) -> Int {
         let today = Calendar.current.startOfDay(for: Date())
@@ -155,6 +185,7 @@ final class PremiumStore: ObservableObject {
     }
 
     func recordUsage(for feature: PremiumFeature) {
+        guard feature.dailyLimit != nil else { return }
         let today = Calendar.current.startOfDay(for: Date())
         let currentCount: Int
         if let storedDate = defaults.object(forKey: dailyDateKey(for: feature)) as? Date,
@@ -168,12 +199,7 @@ final class PremiumStore: ObservableObject {
     }
 
     func remainingUsage(for feature: PremiumFeature) -> Int {
-        let limit: Int
-        if isActive {
-            limit = feature.premiumDailyLimit ?? Int.max
-        } else {
-            limit = feature.freeDailyLimit ?? 0
-        }
+        guard let limit = dailyLimit(for: feature) else { return Int.max }
         return max(0, limit - dailyUsage(for: feature))
     }
 
@@ -184,15 +210,15 @@ final class PremiumStore: ObservableObject {
         "coupley_daily_count_\(feature.rawValue)"
     }
 
-    // MARK: - Purchase (StoreKit 2)
+    // MARK: - Remove Ads (StoreKit 2)
 
-    func purchase(plan: PremiumPlan) async {
-        guard let userId = boundUserId else {
-            lastError = "Not signed in."
-            return
-        }
+    var removeAdsDisplayPrice: String {
+        removeAdsProduct?.displayPrice ?? PremiumPlan.removeAdsFallbackPrice
+    }
 
-        guard let product = products.first(where: { $0.id == plan.productID }) else {
+    func purchaseRemoveAds() async {
+        if removeAdsProduct == nil { await loadProducts() }
+        guard let product = removeAdsProduct else {
             lastError = "Product not available. Check your connection and try again."
             return
         }
@@ -205,7 +231,7 @@ final class PremiumStore: ObservableObject {
             switch result {
             case .success(let verification):
                 let transaction = try checkVerified(verification)
-                await fulfillPurchase(userId: userId, plan: plan, transaction: transaction)
+                await fulfill(plan: .removeAds, transaction: transaction)
                 await transaction.finish()
             case .pending:
                 break  // Awaiting approval (e.g. Ask to Buy)
@@ -222,16 +248,19 @@ final class PremiumStore: ObservableObject {
     }
 
     func restorePurchases() async {
-        guard let userId = boundUserId else { return }
         isPurchasing = true
         do {
             try await AppStore.sync()
             for await result in SKTransaction.currentEntitlements {
                 if case .verified(let tx) = result,
                    let plan = PremiumPlan.allCases.first(where: { $0.productID == tx.productID }) {
-                    await fulfillPurchase(userId: userId, plan: plan, transaction: tx)
+                    await fulfill(plan: plan, transaction: tx)
                     await tx.finish()
                 }
+            }
+            await scanPurchaseHistory()
+            if !isAdFree {
+                lastError = "No previous purchase was found for this Apple ID."
             }
         } catch {
             lastError = error.localizedDescription
@@ -248,13 +277,12 @@ final class PremiumStore: ObservableObject {
         }
     }
 
-    private func fulfillPurchase(userId: String, plan: PremiumPlan, transaction: SKTransaction) async {
-        let expires: Date = transaction.expirationDate ?? {
-            switch plan {
-            case .monthly: return Calendar.current.date(byAdding: .month, value: 1, to: Date()) ?? Date()
-            case .yearly:  return Calendar.current.date(byAdding: .year,  value: 1, to: Date()) ?? Date()
-            }
-        }()
+    private func fulfill(plan: PremiumPlan, transaction: SKTransaction) async {
+        everPurchased = true
+        guard let userId = boundUserId else { return }
+
+        // Remove Ads never expires; legacy subscriptions carry their period end.
+        let expires: Date? = plan.isSubscription ? transaction.expirationDate : nil
         do {
             try await service.recordPurchase(
                 userId: userId,
@@ -269,104 +297,24 @@ final class PremiumStore: ObservableObject {
 
     private func listenForSKTransactions() async {
         for await result in SKTransaction.updates {
-            guard let userId = boundUserId else { continue }
             if case .verified(let tx) = result,
                let plan = PremiumPlan.allCases.first(where: { $0.productID == tx.productID }) {
-                await fulfillPurchase(userId: userId, plan: plan, transaction: tx)
+                // A Remove Ads buyer must not be downgraded by a late renewal
+                // of an old subscription.
+                if plan.isSubscription, entitlement.isActive, entitlement.plan == .removeAds {
+                    await tx.finish()
+                    continue
+                }
+                await fulfill(plan: plan, transaction: tx)
                 await tx.finish()
             }
         }
     }
 
-    func cancelForTesting() async {
-        guard let userId = boundUserId else { return }
-        try? await service.clearEntitlement(userId: userId, coupleId: boundCoupleId)
-    }
-
-    // MARK: - Display Helpers (Apple Guideline 3.1.2(c))
-    //
-    // Every price the paywall shows must come from StoreKit's localized
-    // `Product.displayPrice` so the storefront's currency / tax rules are
-    // honored. The fallbacks below are read only when products haven't loaded
-    // yet (network blip, first launch); StoreKit overrides them the moment
-    // `loadProducts()` resolves.
-
-    /// The loaded `Product` for a plan, if available.
-    func product(for plan: PremiumPlan) -> Product? {
-        products.first { $0.id == plan.productID }
-    }
-
-    /// Localized base price (e.g. "$3.99"). Live → fallback in that order.
-    func displayPrice(for plan: PremiumPlan) -> String {
-        product(for: plan)?.displayPrice ?? plan.fallbackDisplayPrice
-    }
-
-    /// Spelled-out period unit ("month" / "year") — sourced from the
-    /// StoreKit subscription period when loaded.
-    func displayPeriod(for plan: PremiumPlan) -> String {
-        if let unit = product(for: plan)?.subscription?.subscriptionPeriod.unit {
-            switch unit {
-            case .day:   return "day"
-            case .week:  return "week"
-            case .month: return "month"
-            case .year:  return "year"
-            @unknown default: return plan.fallbackPeriodLabel
-            }
-        }
-        return plan.fallbackPeriodLabel
-    }
-
-    /// "$3.99 / month" — used in plan rows and the disclosure line.
-    func priceWithPeriod(for plan: PremiumPlan) -> String {
-        "\(displayPrice(for: plan)) / \(displayPeriod(for: plan))"
-    }
-
-    /// "7-day free trial" / "3-day free trial" — composed from StoreKit's
-    /// `IntroductoryOffer` if the product has one configured. Returns `nil`
-    /// when no intro offer is attached, which is the signal the paywall uses
-    /// to render the no-trial CTA copy.
-    func introductoryOfferDescription(for plan: PremiumPlan) -> String? {
-        guard let offer = product(for: plan)?.subscription?.introductoryOffer,
-              offer.paymentMode == .freeTrial else {
-            // Fallback to the bundled trial only on the yearly plan, so the
-            // disclosure is still present pre-StoreKit-load. Apple Review
-            // network is reliable but the safety net stops a "no trial copy"
-            // flash on slow launches.
-            return plan == .yearly ? "7-day free trial" : nil
-        }
-        let unit: String
-        switch offer.period.unit {
-        case .day:   unit = offer.period.value == 1 ? "day"   : "days"
-        case .week:  unit = offer.period.value == 1 ? "week"  : "weeks"
-        case .month: unit = offer.period.value == 1 ? "month" : "months"
-        case .year:  unit = offer.period.value == 1 ? "year"  : "years"
-        @unknown default: unit = "days"
-        }
-        return "\(offer.period.value)-\(unit) free trial"
-    }
-
-    func hasIntroductoryOffer(for plan: PremiumPlan) -> Bool {
-        introductoryOfferDescription(for: plan) != nil
-    }
-
-    /// Compliance disclosure shown directly above the CTA. Mirrors the format
-    /// Apple's review team consistently approves: trial length → renewal price
-    /// → renewal cadence → cancellation instructions, with no hedging copy.
-    func paywallDisclosure(for plan: PremiumPlan) -> String {
-        let priceLine = priceWithPeriod(for: plan)
-        if let trial = introductoryOfferDescription(for: plan) {
-            return "\(trial), then \(priceLine), auto-renewing. " +
-                   "Cancel anytime in Settings at least 24 hours before the period ends."
-        }
-        return "\(priceLine), auto-renewing. " +
-               "Cancel anytime in Settings at least 24 hours before the period ends."
-    }
-
     // MARK: - Manage Subscription
     //
-    // Opens the in-app Manage Subscriptions sheet StoreKit 2 provides. If
-    // the API fails (e.g. simulator without a sandbox account), fall back to
-    // the App Store deep link that always works.
+    // Legacy subscribers can cancel from Settings. Opens the StoreKit 2 sheet,
+    // or the App Store deep link if that fails (e.g. simulator).
     @MainActor
     func openManageSubscriptions() async {
         let scene = UIApplication.shared.connectedScenes

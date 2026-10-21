@@ -28,7 +28,7 @@ protocol OnboardingServiceProtocol {
     /// break on a transient network blip.
     func savePartial(_ profile: OnboardingProfile, userId: String) async
 
-    /// Final commit. Throws so the caller can hold the user on the paywall
+    /// Final commit. Throws so the caller can hold the user on the last
     /// step if the network is genuinely down.
     func complete(_ profile: OnboardingProfile, userId: String) async throws
 

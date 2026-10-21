@@ -6,7 +6,7 @@
 //  Persists to:
 //    • In-memory `OnboardingViewModel.profile` while flowing through the steps
 //    • `/users/{uid}` on partial save (after each step) and a final commit
-//      with `onboardingCompletedAt` once the paywall is dismissed.
+//      with `onboardingCompletedAt` once the final step is confirmed.
 //
 //  Designed so each field is optional — users can skip Partner, Anniversary,
 //  or any preference, and we just don't write that field. This keeps the

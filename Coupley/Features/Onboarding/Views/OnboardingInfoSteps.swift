@@ -223,7 +223,12 @@ struct PartnerExpectationStepView: View {
     @ObservedObject var viewModel: OnboardingViewModel
 
     var body: some View {
-        OnboardingStepScaffold(viewModel: viewModel) {
+        OnboardingStepScaffold(
+            viewModel: viewModel,
+            primaryTitle: "Get Started",
+            canAdvance: !viewModel.isCompleting,
+            primaryAction: { Task { await viewModel.complete() } }
+        ) {
             infoLayout(
                 icon: "person.2.fill",
                 tint: Brand.accentStart,
@@ -236,6 +241,14 @@ struct PartnerExpectationStepView: View {
                     "Disconnect any time — your data stays yours"
                 ]
             )
+        }
+        .alert("Couldn't finish setup", isPresented: Binding(
+            get: { viewModel.errorMessage != nil },
+            set: { if !$0 { viewModel.errorMessage = nil } }
+        )) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(viewModel.errorMessage ?? "")
         }
     }
 }

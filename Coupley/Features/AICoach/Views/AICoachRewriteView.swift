@@ -2,7 +2,7 @@
 //  AICoachRewriteView.swift
 //  Coupley
 //
-//  Premium tool: user types a message they're about to send and the coach
+//  Coach toolkit: user types a message they're about to send and the coach
 //  returns three rewritten versions — softer, honest, and repair-focused.
 //
 

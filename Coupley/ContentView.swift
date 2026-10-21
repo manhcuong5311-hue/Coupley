@@ -21,6 +21,7 @@ struct ContentView: View {
     @EnvironmentObject var sessionStore: SessionStore
     @EnvironmentObject var notificationViewModel: NotificationViewModel
     @ObservedObject private var deepLinkRouter = WidgetDeepLinkRouter.shared
+    @ObservedObject private var ads = AdsManager.shared
     @State private var selectedTab: AppTab = .home
     @State private var showPairingSheet = false
     @State private var showStatsSheet = false
@@ -73,20 +74,27 @@ struct ContentView: View {
                     showStatsSheet: $showStatsSheet,
                     selectedTab: $selectedTab
                 )
+                .adBannerInset()
                 .tabItem { Label("Home", systemImage: "house.fill") }
                 .tag(AppTab.home)
 
                 MoodCheckinView(viewModel: moodViewModel)
+                    .adBannerInset()
                     .tabItem { Label("Mood", systemImage: "heart.fill") }
                     .tag(AppTab.mood)
 
                 TogetherView(session: session)
+                    .adBannerInset()
                     .tabItem { Label("Together", systemImage: "infinity") }
                     .tag(AppTab.together)
 
                 TimeTreeView(session: session, displayName: displayName)
+                    .adBannerInset()
                     .tabItem { Label("Journey", systemImage: "leaf.fill") }
                     .tag(AppTab.anniversary)
+
+                // Chat gets no banner: it would sit between the message
+                // field and the keyboard.
 
                 ChatView(session: session, profileViewModel: profileViewModel)
                     .tabItem { Label("Chat", systemImage: "bubble.left.and.bubble.right.fill") }
@@ -98,7 +106,7 @@ struct ContentView: View {
 
             if !session.isPaired {
                 connectPartnerBanner
-                    .padding(.bottom, 58)
+                    .padding(.bottom, 58 + (selectedTab == .chat ? 0 : ads.bannerInset))
                     .padding(.horizontal, 16)
                     .transition(.move(edge: .bottom).combined(with: .opacity))
             }
@@ -160,6 +168,9 @@ struct ContentView: View {
                     chatUnreadCounter.start(session: session)
                 }
                 notificationViewModel.setup(session: session)
+                // Consent / ATT / ads start only once the main UI is up —
+                // never during onboarding.
+                AdsManager.shared.activate()
             }
             .onChange(of: notificationViewModel.navigateToMood) { _, navigate in
                 if navigate { selectedTab = .mood; notificationViewModel.navigateToMood = false }

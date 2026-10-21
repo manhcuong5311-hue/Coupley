@@ -14,7 +14,7 @@
 //      button's enable state is driven by the per-step `canAdvance`
 //      computed property below.
 //
-//  After the final paywall step, `complete()` writes the terminal payload
+//  After the final step, `complete()` writes the terminal payload
 //  and flips `@AppStorage("hasCompletedOnboarding")` to true, which the
 //  RootView observes to pop us out of onboarding.
 //
@@ -43,9 +43,7 @@ enum OnboardingStep: Int, CaseIterable, Identifiable {
     case dailyHabit            // reminder time + mood-check toggle
     case notifications
     case widget
-    case partnerExpectation
-    // Pay
-    case paywall
+    case partnerExpectation    // last step — completes onboarding
 
     var id: Int { rawValue }
 
@@ -54,16 +52,16 @@ enum OnboardingStep: Int, CaseIterable, Identifiable {
     var allowsSkip: Bool {
         switch self {
         case .nameInput: return false                  // required
-        case .paywall:   return false                  // explicit dismiss only
+        case .partnerExpectation: return false         // final step completes
         default:         return true
         }
     }
 
     /// Display index for the progress dots (1..n inclusive). Hidden on the
-    /// welcome and paywall steps so they read as standalone moments.
+    /// welcome step so it reads as a standalone moment.
     var progressIndex: Int? {
         switch self {
-        case .welcome, .paywall: return nil
+        case .welcome: return nil
         default: return rawValue
         }
     }
@@ -178,7 +176,7 @@ final class OnboardingViewModel: ObservableObject {
     }
 
     /// Flush pending writes immediately. Called when the user dismisses the
-    /// paywall or backgrounds the app mid-flow.
+    /// flow or backgrounds the app mid-flow.
     func flush() async {
         saveTask?.cancel()
         await service.savePartial(profile, userId: userId)
@@ -199,9 +197,4 @@ final class OnboardingViewModel: ObservableObject {
         isCompleting = false
     }
 
-    /// Allow paywall "Maybe Later" or any explicit dismiss to count as
-    /// completion — onboarding *finished*, premium just wasn't purchased.
-    func skipPaywallAndComplete() {
-        Task { await complete() }
-    }
 }

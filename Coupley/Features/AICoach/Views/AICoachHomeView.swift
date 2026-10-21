@@ -4,7 +4,7 @@
 //
 //  Entry screen for the AI Relationship Coach. Hero + quick-action issue
 //  cards that open the guided coaching flow, plus shortcuts to the
-//  premium-only features (rewrite, health check, recovery plan).
+//  the coach toolkit (rewrite, health check, recovery plan).
 //
 
 import SwiftUI
@@ -20,7 +20,7 @@ struct AICoachHomeView: View {
     @State private var showRewrite = false
     @State private var showHealth = false
     @State private var showRecovery = false
-    @State private var showPaywall = false
+    @State private var limitReached: PremiumFeature?
 
     var body: some View {
         ZStack {
@@ -124,12 +124,7 @@ struct AICoachHomeView: View {
             .presentationDragIndicator(.visible)
             .presentationBackground(Brand.backgroundTop)
         }
-        .sheet(isPresented: $showPaywall) {
-            NavigationStack { PremiumPaywallView() }
-                .environmentObject(premiumStore)
-                .presentationDetents([.large])
-                .presentationDragIndicator(.visible)
-        }
+        .dailyLimitAlert($limitReached)
         .onAppear { viewModel.load() }
     }
 
@@ -321,7 +316,7 @@ struct AICoachHomeView: View {
         .buttonStyle(BouncyButtonStyle(scale: 0.97))
     }
 
-    // MARK: - Premium tools
+    // MARK: - Coach toolkit
 
     private var premiumTools: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -333,25 +328,22 @@ struct AICoachHomeView: View {
                     icon: "wand.and.stars",
                     tint: Color(red: 0.52, green: 0.44, blue: 0.95),
                     title: "Rewrite my message",
-                    subtitle: "Say it the way you meant it",
-                    isPremium: true
-                ) { openPremiumTool { showRewrite = true } }
+                    subtitle: "Say it the way you meant it"
+                ) { openTool { showRewrite = true } }
 
                 toolRow(
                     icon: "heart.circle.fill",
                     tint: Color(red: 0.95, green: 0.45, blue: 0.60),
                     title: "Relationship health check",
-                    subtitle: "Trust, communication, intimacy & more",
-                    isPremium: true
-                ) { openPremiumTool { showHealth = true } }
+                    subtitle: "Trust, communication, intimacy & more"
+                ) { openTool { showHealth = true } }
 
                 toolRow(
                     icon: "calendar.badge.plus",
                     tint: Color(red: 0.48, green: 0.75, blue: 0.56),
                     title: "Conflict recovery plan",
-                    subtitle: "3 or 7 day reconnect roadmap",
-                    isPremium: true
-                ) { openPremiumTool { showRecovery = true } }
+                    subtitle: "3 or 7 day reconnect roadmap"
+                ) { openTool { showRecovery = true } }
             }
         }
     }
@@ -361,7 +353,6 @@ struct AICoachHomeView: View {
         tint: Color,
         title: String,
         subtitle: String,
-        isPremium: Bool,
         action: @escaping () -> Void
     ) -> some View {
         Button {
@@ -378,21 +369,16 @@ struct AICoachHomeView: View {
                         .foregroundStyle(tint)
                 }
                 VStack(alignment: .leading, spacing: 3) {
-                    HStack(spacing: 8) {
-                        Text(title)
-                            .font(.system(size: 14, weight: .semibold, design: .rounded))
-                            .foregroundStyle(Brand.textPrimary)
-                        if isPremium && !premiumStore.isActive {
-                            CoachPremiumBadge()
-                        }
-                    }
+                    Text(title)
+                        .font(.system(size: 14, weight: .semibold, design: .rounded))
+                        .foregroundStyle(Brand.textPrimary)
                     Text(subtitle)
                         .font(.system(size: 11, weight: .regular, design: .rounded))
                         .foregroundStyle(Brand.textSecondary)
                         .lineLimit(1)
                 }
                 Spacer(minLength: 0)
-                Image(systemName: premiumStore.isActive || !isPremium ? "arrow.right" : "lock.fill")
+                Image(systemName: "arrow.right")
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(Brand.textTertiary)
             }
@@ -421,22 +407,22 @@ struct AICoachHomeView: View {
 
     private func tapIssue(_ issue: CoachIssueType) {
         if !premiumStore.hasAccess(to: .aiCoach) {
-            showPaywall = true
+            limitReached = .aiCoach
             return
         }
-        if !premiumStore.isActive {
-            // Free users: each full session consumes the daily quota.
-            premiumStore.recordUsage(for: .aiCoach)
-        }
+        // Each full session counts toward the daily fair-use limit.
+        premiumStore.recordUsage(for: .aiCoach)
         selectedIssue = issue
         showChat = true
     }
 
-    private func openPremiumTool(_ open: () -> Void) {
-        if premiumStore.isActive {
+    /// Toolkit requests are counted by the server against the same AI Coach
+    /// limit; only block up front once the day's allowance is gone.
+    private func openTool(_ open: () -> Void) {
+        if premiumStore.hasAccess(to: .aiCoach) {
             open()
         } else {
-            showPaywall = true
+            limitReached = .aiCoach
         }
     }
 }

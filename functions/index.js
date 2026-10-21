@@ -34,10 +34,13 @@ const openaiApiKey = defineSecret("OPENAI_API_KEY");
 const MAX_NOTIFICATIONS_PER_DAY  = 2;
 const INACTIVITY_THRESHOLD_HOURS = 24;
 
-// Per-feature daily usage limits
+// Per-feature daily usage limits. Since app 1.1 every feature is free and
+// AI has a fair-use cap for everyone; "premium" now only means a legacy
+// Monthly/Yearly subscription that is still running (they keep what they
+// paid for). "Remove Ads" buyers use the standard cap.
 const LIMITS = {
-  suggestion: { free: 1,  premium: 50 },
-  coach:      { free: 1,  premium: 50 },
+  suggestion: { free: 10, premium: 50 },
+  coach:      { free: 10, premium: 50 },
 };
 
 // Cooldown between AI requests per user (prevents rapid hammering)
@@ -175,12 +178,18 @@ function isActivePremium(p) {
   return expiry === 0 || expiry > Date.now();
 }
 
+/** Higher AI limits are a perk of the legacy subscriptions only, not of "Remove Ads". */
+function isActiveSubscription(p) {
+  return isActivePremium(p) && p.plan !== "removeAds";
+}
+
 /**
- * Resolve whether the authenticated user has premium access.
+ * Resolve whether the authenticated user gets the higher (legacy subscriber)
+ * AI limits.
  *
- * Premium is granted when:
- *   1. users/{uid}.premium.active === true AND purchaserId === uid, OR
- *   2. couples/{coupleId}.premium.active === true (partner purchased it).
+ * Granted when a Monthly/Yearly subscription is still active on:
+ *   1. users/{uid}.premium (purchaserId === uid), OR
+ *   2. couples/{coupleId}.premium (partner subscribed).
  *
  * After disconnect the couple doc is cleaned by the client, so the non-buyer
  * falls back to free automatically.
@@ -193,14 +202,14 @@ async function getPremiumStatus(userId) {
   const coupleId = user.coupleId || null;
 
   // 1. User owns their own active subscription
-  if (isActivePremium(user.premium) && user.premium.purchaserId === userId) {
+  if (isActiveSubscription(user.premium) && user.premium.purchaserId === userId) {
     return { isPremium: true, coupleId };
   }
 
   // 2. Couple-level premium (partner purchased)
   if (coupleId) {
     const coupleSnap = await db.collection("couples").doc(coupleId).get();
-    if (coupleSnap.exists && isActivePremium(coupleSnap.data().premium)) {
+    if (coupleSnap.exists && isActiveSubscription(coupleSnap.data().premium)) {
       return { isPremium: true, coupleId };
     }
   }
@@ -722,7 +731,7 @@ async function aiMiddleware(req, res, feature) {
     if (quota.reason === "cooldown") {
       res.status(429).json({ error: "Please wait a moment before your next request.", retryAfterMs: REQUEST_COOLDOWN_MS });
     } else {
-      const resetHint = isPremium ? "50 sessions per day" : "1 session per day (upgrade for 50)";
+      const resetHint = `${quota.limit} per day — resets tomorrow`;
       res.status(429).json({
         error:     "Daily limit reached.",
         limit:     quota.limit,

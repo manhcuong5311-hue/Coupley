@@ -31,7 +31,6 @@ struct MemoryEditorSheet: View {
     @ObservedObject var viewModel: TimeTreeViewModel
     let mode: Mode
 
-    @EnvironmentObject private var premiumStore: PremiumStore
     @Environment(\.dismiss) private var dismiss
 
     // MARK: - Form state
@@ -51,7 +50,6 @@ struct MemoryEditorSheet: View {
     @State private var clearPhoto: Bool = false
 
     @State private var showDeleteConfirm = false
-    @State private var showPaywall = false
 
     // MARK: - Init
 
@@ -163,14 +161,6 @@ struct MemoryEditorSheet: View {
             } message: {
                 Text("Your partner will stop seeing it too.")
             }
-            .sheet(isPresented: $showPaywall) {
-                NavigationStack {
-                    PremiumPaywallView()
-                }
-                .environmentObject(premiumStore)
-                .presentationDetents([.large])
-                .presentationDragIndicator(.visible)
-            }
         }
     }
 
@@ -271,11 +261,7 @@ struct MemoryEditorSheet: View {
 
     private var photoSection: some View {
         Section("Photo") {
-            if premiumStore.hasAccess(to: .anniversaryPhoto) {
-                photoPicker
-            } else {
-                lockedPhotoCard
-            }
+            photoPicker
         }
     }
 
@@ -353,35 +339,6 @@ struct MemoryEditorSheet: View {
         }
     }
 
-    private var lockedPhotoCard: some View {
-        Button {
-            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-            showPaywall = true
-        } label: {
-            HStack(spacing: 12) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 14)
-                        .fill(Brand.accentStart.opacity(0.08))
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 110)
-                    VStack(spacing: 8) {
-                        Image(systemName: "lock.fill")
-                            .font(.system(size: 22, weight: .medium))
-                            .foregroundStyle(Brand.accentStart)
-                        Text("Premium feature")
-                            .font(.system(size: 13, weight: .semibold, design: .rounded))
-                            .foregroundStyle(Brand.accentStart)
-                        Text("Upgrade to add memory photos")
-                            .font(.system(size: 11, design: .rounded))
-                            .foregroundStyle(Brand.textTertiary)
-                    }
-                }
-            }
-        }
-        .buttonStyle(.plain)
-        .padding(.vertical, 4)
-    }
-
     // MARK: - Note
 
     private var noteSection: some View {
@@ -448,46 +405,21 @@ struct MemoryEditorSheet: View {
 
     private var capsuleToggleSection: some View {
         Section {
-            if premiumStore.hasAccess(to: .memoryCapsule) {
-                Toggle(isOn: $isCapsule) {
-                    HStack(spacing: 8) {
-                        Image(systemName: "lock.fill")
-                            .foregroundStyle(Color(red: 1.0, green: 0.78, blue: 0.30))
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Make this a Capsule")
-                                .font(.system(size: 14, weight: .semibold, design: .rounded))
-                                .foregroundStyle(Brand.textPrimary)
-                            Text("Hide it until a future date.")
-                                .font(.system(size: 12, weight: .regular, design: .rounded))
-                                .foregroundStyle(Brand.textSecondary)
-                        }
+            Toggle(isOn: $isCapsule) {
+                HStack(spacing: 8) {
+                    Image(systemName: "lock.fill")
+                        .foregroundStyle(Color(red: 1.0, green: 0.78, blue: 0.30))
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Make this a Capsule")
+                            .font(.system(size: 14, weight: .semibold, design: .rounded))
+                            .foregroundStyle(Brand.textPrimary)
+                        Text("Hide it until a future date.")
+                            .font(.system(size: 12, weight: .regular, design: .rounded))
+                            .foregroundStyle(Brand.textSecondary)
                     }
                 }
-                .tint(Brand.accentStart)
-            } else {
-                Button {
-                    showPaywall = true
-                } label: {
-                    HStack(spacing: 12) {
-                        Image(systemName: "lock.fill")
-                            .font(.system(size: 16, weight: .medium))
-                            .foregroundStyle(Brand.accentStart)
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text("Memory Capsule")
-                                .font(.system(size: 14, weight: .semibold, design: .rounded))
-                                .foregroundStyle(Brand.textPrimary)
-                            Text("Premium — write a memory that opens later")
-                                .font(.system(size: 11, weight: .regular, design: .rounded))
-                                .foregroundStyle(Brand.textTertiary)
-                        }
-                        Spacer()
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: 11, weight: .semibold))
-                            .foregroundStyle(Brand.textTertiary)
-                    }
-                }
-                .buttonStyle(.plain)
             }
+            .tint(Brand.accentStart)
         } header: {
             Text("Capsule")
         }
