@@ -38,9 +38,13 @@ const INACTIVITY_THRESHOLD_HOURS = 24;
 // AI has a fair-use cap for everyone; "premium" now only means a legacy
 // Monthly/Yearly subscription that is still running (they keep what they
 // paid for). "Remove Ads" buyers use the standard cap.
+// Counters are per feature per day (`{uid}_{feature}_{date}`), so the two
+// allowances do not share a budget: a user gets 5 coach questions AND 5
+// suggestions. `premium` is the allowance legacy subscribers paid for and is
+// deliberately left untouched.
 const LIMITS = {
-  suggestion: { free: 10, premium: 50 },
-  coach:      { free: 10, premium: 50 },
+  suggestion: { free: 5, premium: 50 },
+  coach:      { free: 5, premium: 50 },
 };
 
 // Cooldown between AI requests per user (prevents rapid hammering)
@@ -1172,10 +1176,61 @@ exports.onQuizAnswered = onDocumentWritten(
         "quiz_answered",
         title,
         body,
-        { coupleId, quizId, answererId, status: after.status, navigateTo: "chat" },
+        // The daily question's home is the dashboard card; chat quizzes
+        // live in the chat thread.
+        {
+          coupleId, quizId, answererId, status: after.status,
+          navigateTo: after.kind === "qotd" ? "dashboard" : "chat",
+        },
         { skipRateLimit: true, skipDuplicateCheck: true, threadId: `coupley-chat-${coupleId}` }
       );
     }
+  }
+);
+
+// =============================================================================
+// MARK: - 5d. QUESTION OF THE DAY CREATED (Firestore Trigger)
+// =============================================================================
+//
+// The daily question is materialised by whichever client opens the app first
+// (see QuestionOfTheDayService.swift — the couple document holds the sequence
+// counter and a transaction decides the winner). That client is recorded in
+// `triggeredBy`, so the push goes to the *other* partner only: the one who
+// created it is already looking at the card.
+//
+// Rate limiting is left ON deliberately. Unlike a chat message this is an
+// app-generated nudge, and it should compete for the same 2/day budget as
+// the other nudges rather than sit on top of them.
+
+exports.onQotDCreated = onDocumentCreated(
+  "couples/{coupleId}/quizzes/{quizId}",
+  async (event) => {
+    const snap = event.data;
+    if (!snap) return;
+
+    const quiz = snap.data();
+    if (!quiz || quiz.kind !== "qotd") return;        // ordinary chat quiz
+
+    const { coupleId, quizId } = event.params;
+    const triggeredBy = quiz.triggeredBy;
+    if (!triggeredBy) return;
+
+    const partnerId = await getPartnerId(coupleId, triggeredBy);
+    if (!partnerId) return;
+
+    const question = (quiz.question || "").trim();
+    const body = question
+      ? `${question} — answer separately, then compare.`
+      : "Today's question is ready. Answer separately, then compare.";
+
+    await sendNotification(
+      partnerId,
+      "qotd",
+      "Today's question is ready",
+      body,
+      { coupleId, quizId, navigateTo: "dashboard" },
+      { threadId: `coupley-qotd-${coupleId}` }
+    );
   }
 );
 
@@ -1558,6 +1613,12 @@ exports.coach = onRequest(
     maxInstances:   20,
     timeoutSeconds: 60,
     memory:         "512MiB",
+    // Stated explicitly because this service was missing the allUsers
+    // run.invoker binding that `generateSuggestion` has, and a plain
+    // redeploy did not add it — every request was rejected by Cloud Run
+    // before the function ran. The endpoint is not unprotected: every
+    // request still has to pass `aiMiddleware` (Firebase ID token + quota).
+    invoker:        "public",
   },
   async (req, res) => {
     if (setCors(req, res)) return;

@@ -73,6 +73,7 @@ struct CoupleyApp: App {
     @StateObject private var notificationViewModel = NotificationViewModel()
     @StateObject private var themeManager         = ThemeManager()
     @StateObject private var premiumStore         = PremiumStore()
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some Scene {
         WindowGroup {
@@ -85,6 +86,15 @@ struct CoupleyApp: App {
                 .id(themeManager.variant)      // rebuild tree when variant changes
                 .fixWindowBackground()          // ← UIKit-level fix
                 .onAppear { sessionStore.start() }
+                .onChange(of: scenePhase) { _, phase in
+                    // Presence is an app-wide fact, so it is driven here
+                    // rather than from whichever tab happens to be open.
+                    switch phase {
+                    case .active:                 notificationViewModel.recordActivity()
+                    case .background, .inactive:  notificationViewModel.recordInactive()
+                    @unknown default:             break
+                    }
+                }
         }
     }
 }

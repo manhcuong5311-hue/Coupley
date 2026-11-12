@@ -2,7 +2,10 @@
 //  PresenceService.swift
 //  Coupley
 //
-//  Lightweight presence: writes a heartbeat to users/{uid} and observes the partner's.
+//  Lightweight presence: observes the partner's heartbeat on users/{uid}.
+//  The heartbeat itself is written by NotificationService.updateLastActive —
+//  this file deliberately has no writer of its own, because having two was
+//  how `updateHeartbeat` ended up dead code that nothing ever called.
 //
 
 import Foundation
@@ -11,7 +14,6 @@ import FirebaseFirestore
 // MARK: - Presence Service Protocol
 
 protocol PresenceService {
-    func updateHeartbeat(userId: String) async throws
     func sendPing(coupleId: String, fromUserId: String) async throws
     func observePartnerPresence(
         partnerId: String,
@@ -27,14 +29,6 @@ final class FirestorePresenceService: PresenceService {
 
     /// Threshold for considering a user "online" based on lastSeen.
     private let onlineWindow: TimeInterval = 120 // 2 minutes
-
-    func updateHeartbeat(userId: String) async throws {
-        guard !userId.isEmpty else { return }
-        try await db.collection(FirestorePath.users).document(userId).setData([
-            "lastSeen": FieldValue.serverTimestamp(),
-            "timezone": TimeZone.current.identifier
-        ], merge: true)
-    }
 
     func sendPing(coupleId: String, fromUserId: String) async throws {
         guard !coupleId.isEmpty, !fromUserId.isEmpty else { return }
@@ -53,8 +47,18 @@ final class FirestorePresenceService: PresenceService {
                 guard let self else { return }
                 let data = snapshot?.data()
                 let lastSeen = (data?["lastSeen"] as? Timestamp)?.dateValue()
+                // `presenceActive` is written false the moment the partner
+                // backgrounds the app. Without it, `lastSeen` stays fresh for
+                // the whole window after they have gone, so they read as
+                // online for up to two minutes too long — long enough to
+                // invite a live reaction at someone who already left.
+                //
+                // Absent on documents written by older clients, which is why
+                // this is `!= false` rather than `== true`: those fall back
+                // to the timestamp alone.
+                let explicitlyInactive = (data?["presenceActive"] as? Bool) == false
                 let online: Bool
-                if let lastSeen {
+                if let lastSeen, !explicitlyInactive {
                     online = Date().timeIntervalSince(lastSeen) < self.onlineWindow
                 } else {
                     online = false
@@ -67,7 +71,6 @@ final class FirestorePresenceService: PresenceService {
 // MARK: - Mock
 
 final class MockPresenceService: PresenceService {
-    func updateHeartbeat(userId: String) async throws {}
     func sendPing(coupleId: String, fromUserId: String) async throws {}
     func observePartnerPresence(
         partnerId: String,

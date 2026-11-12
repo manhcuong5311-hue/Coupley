@@ -18,6 +18,7 @@ struct MessageRow: View {
     /// Status for the sender's own outgoing message (nil for incoming / non-text).
     let outgoingStatus: ChatViewModel.OutgoingStatus?
     let onAnswerTapped: (String) -> Void
+    let onReact: (ChatQuiz, ReactionKind?) -> Void
 
     var body: some View {
         switch message.kind {
@@ -35,7 +36,9 @@ struct MessageRow: View {
             QuizCardBubble(quiz: quiz, viewerId: viewerId, partnerId: partnerId,
                            onAnswerTapped: onAnswerTapped)
         case .result:
-            ResultCardBubble(message: message)
+            ResultCardBubble(message: message, quiz: quiz,
+                             viewerId: viewerId, partnerId: partnerId,
+                             onReact: onReact)
         case .photo:
             PhotoBubble(imageURL: message.imageURL ?? "", isMine: isMine)
         }
@@ -331,6 +334,12 @@ struct QuizCardBubble: View {
 
 struct ResultCardBubble: View {
     let message: ChatMessage
+    /// Resolved from `message.quizId` by the caller. Present for curated
+    /// quizzes; nil for custom ones, which carry no bank insight.
+    let quiz: ChatQuiz?
+    let viewerId: String
+    let partnerId: String
+    let onReact: (ChatQuiz, ReactionKind?) -> Void
 
     var body: some View {
         HStack {
@@ -358,6 +367,27 @@ struct ResultCardBubble: View {
                                            : Brand.surfaceMid)
                         )
                 }
+
+                // Titled with the option, never with a name: the bank's
+                // hints address whoever picked in the second person, so
+                // attributing one to a person inverts its pronouns.
+                if let option = quiz?.answers[partnerId]?.options.first,
+                   let insight = partnerInsight {
+                    insightBlock(option: option, body: insight)
+                }
+
+                if let quiz {
+                    GuessOutcomeRow(quiz: quiz, viewerId: viewerId, partnerId: partnerId)
+                }
+
+                if let quiz {
+                    QuizReactionBar(
+                        myReaction: quiz.reaction(of: viewerId),
+                        partnerReaction: quiz.reaction(of: partnerId),
+                        onTap: { onReact(quiz, $0) }
+                    )
+                    .padding(.top, 2)
+                }
             }
             .padding(18)
             .frame(maxWidth: .infinity)
@@ -371,6 +401,35 @@ struct ResultCardBubble: View {
             )
             Spacer(minLength: 16)
         }
+    }
+
+    /// The viewer is whoever is reading the feed, so "partner" here is
+    /// relative to them — each side sees what the *other* one's pick says.
+    private var partnerInsight: String? {
+        quiz?.insight(for: partnerId)
+    }
+
+
+    private func insightBlock(option: String, body: String) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("What \u{201C}\(option)\u{201D} means")
+                .font(.system(size: 11, weight: .semibold, design: .rounded))
+                .textCase(.uppercase)
+                .tracking(0.4)
+                .foregroundStyle(Brand.accentStart)
+
+            Text(body)
+                .font(.system(size: 13, design: .rounded))
+                .foregroundStyle(Brand.textSecondary)
+                .multilineTextAlignment(.leading)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 14)
+                .fill(Brand.accentStart.opacity(0.08))
+        )
     }
 }
 
@@ -412,6 +471,143 @@ struct PhotoBubble: View {
                 )
             }
             if !isMine { Spacer(minLength: 48) }
+        }
+    }
+}
+
+// MARK: - Partner typing
+
+/// Three breathing dots shown while the partner has the keyboard open.
+///
+/// Uses a SwiftUI repeating animation rather than a `Timer`: the timer in the
+/// AI coach's equivalent is never invalidated and keeps ticking after its view
+/// is gone, which is not a mistake worth copying.
+struct PartnerTypingRow: View {
+
+    @State private var animating = false
+
+    var body: some View {
+        HStack(spacing: 6) {
+            ForEach(0..<3, id: \.self) { index in
+                Circle()
+                    .fill(Brand.accentStart)
+                    .frame(width: 7, height: 7)
+                    .opacity(animating ? 1 : 0.3)
+                    .animation(
+                        .easeInOut(duration: 0.55)
+                            .repeatForever(autoreverses: true)
+                            .delay(Double(index) * 0.18),
+                        value: animating
+                    )
+            }
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .background(
+            Capsule()
+                .fill(Brand.surfaceLight)
+                .overlay(Capsule().strokeBorder(Brand.divider, lineWidth: 1))
+        )
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 16)
+        .onAppear { animating = true }
+        .accessibilityLabel("Your partner is typing")
+    }
+}
+
+// MARK: - Quiz result reactions
+
+/// A small reaction strip under a finished quiz result.
+///
+/// The result card used to be a dead end: you learned what your partner
+/// picked and that was the end of it. Moods could already be reacted to;
+/// results could not. This closes that gap with the same four reactions.
+struct QuizReactionBar: View {
+
+    let myReaction: ReactionKind?
+    let partnerReaction: ReactionKind?
+    let onTap: (ReactionKind?) -> Void
+
+    var body: some View {
+        HStack(spacing: 8) {
+            ForEach(ReactionKind.allCases) { kind in
+                Button {
+                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                    // Tapping your current reaction takes it back.
+                    onTap(myReaction == kind ? nil : kind)
+                } label: {
+                    Text(kind.emoji)
+                        .font(.system(size: 15))
+                        .frame(width: 32, height: 32)
+                        .background(
+                            Circle().fill(myReaction == kind
+                                          ? Brand.accentStart.opacity(0.22)
+                                          : Brand.backgroundTop)
+                        )
+                        .overlay(
+                            Circle().strokeBorder(
+                                myReaction == kind ? Brand.accentStart : Brand.divider,
+                                lineWidth: 1
+                            )
+                        )
+                }
+                .buttonStyle(BouncyButtonStyle(scale: 0.9))
+            }
+
+            if let partnerReaction {
+                Spacer(minLength: 4)
+                HStack(spacing: 3) {
+                    Text(partnerReaction.emoji).font(.system(size: 13))
+                    Text("them")
+                        .font(.system(size: 10, weight: .semibold, design: .rounded))
+                        .foregroundStyle(Brand.textTertiary)
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(Capsule().fill(Brand.backgroundTop))
+            }
+        }
+    }
+}
+
+// MARK: - Guess outcome
+
+/// Shows whether the viewer's prediction of their partner's answer landed.
+/// Only rendered once the quiz is complete and a guess was actually made.
+struct GuessOutcomeRow: View {
+
+    let quiz: ChatQuiz
+    let viewerId: String
+    let partnerId: String
+
+    private var outcome: Bool? {
+        quiz.answers[viewerId]?.guessWasRight(against: quiz.answers[partnerId])
+    }
+
+    private var guessText: String? {
+        quiz.answers[viewerId]?.guess?.joined(separator: ", ")
+    }
+
+    var body: some View {
+        if let outcome, let guessText {
+            HStack(spacing: 8) {
+                Text(outcome ? "🎯" : "🤔").font(.system(size: 16))
+                Text(outcome
+                     ? "You called it — you guessed exactly that"
+                     : "You guessed \u{201C}\(guessText)\u{201D}")
+                    .font(.system(size: 12, weight: .medium, design: .rounded))
+                    .foregroundStyle(outcome ? Brand.textPrimary : Brand.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                Spacer(minLength: 0)
+            }
+            .padding(10)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(outcome
+                          ? Color(red: 0.25, green: 0.75, blue: 0.50).opacity(0.14)
+                          : Brand.backgroundTop)
+            )
         }
     }
 }

@@ -14,8 +14,8 @@
 		0D552E362F7D2FC4007A7BAD /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 0D552E352F7D2FC4007A7BAD /* FirebaseAuth */; };
 		0D552E382F7D2FC4007A7BAD /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 0D552E372F7D2FC4007A7BAD /* FirebaseFirestore */; };
 		0D552E3A2F7D2FC4007A7BAD /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = 0D552E392F7D2FC4007A7BAD /* FirebaseMessaging */; };
-		0DE88DC92F987061002BCB01 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 0DE88DC82F987061002BCB01 /* FirebaseStorage */; };
 		0DC0A0032FA0000000ADF4EE /* GoogleMobileAds in Frameworks */ = {isa = PBXBuildFile; productRef = 0DC0A0022FA0000000ADF4EE /* GoogleMobileAds */; };
+		0DE88DC92F987061002BCB01 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 0DE88DC82F987061002BCB01 /* FirebaseStorage */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -100,8 +100,8 @@
 				0D552E362F7D2FC4007A7BAD /* FirebaseAuth in Frameworks */,
 				0DE88DC92F987061002BCB01 /* FirebaseStorage in Frameworks */,
 				0D552E382F7D2FC4007A7BAD /* FirebaseFirestore in Frameworks */,
-							0DC0A0032FA0000000ADF4EE /* GoogleMobileAds in Frameworks */,
-);
+				0DC0A0032FA0000000ADF4EE /* GoogleMobileAds in Frameworks */,
+			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
@@ -286,7 +286,7 @@
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
 				CODE_SIGN_ENTITLEMENTS = CoupleyWidgetExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 553U32259K;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = CoupleyWidget/Info.plist;
@@ -298,7 +298,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.1;
+				MARKETING_VERSION = 1.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.SamCorp.Coupley.CoupleyWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -318,7 +318,7 @@
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
 				CODE_SIGN_ENTITLEMENTS = CoupleyWidgetExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 553U32259K;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = CoupleyWidget/Info.plist;
@@ -330,7 +330,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.1;
+				MARKETING_VERSION = 1.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.SamCorp.Coupley.CoupleyWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -471,7 +471,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = Coupley/Coupley.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 553U32259K;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
@@ -487,7 +487,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.1;
+				MARKETING_VERSION = 1.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.SamCorp.Coupley;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -507,7 +507,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = Coupley/Coupley.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 553U32259K;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
@@ -523,7 +523,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.1;
+				MARKETING_VERSION = 1.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.SamCorp.Coupley;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -608,15 +608,15 @@
 			package = 0D552E322F7D2FC4007A7BAD /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseMessaging;
 		};
-		0DE88DC82F987061002BCB01 /* FirebaseStorage */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 0D552E322F7D2FC4007A7BAD /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
-			productName = FirebaseStorage;
-		};
 		0DC0A0022FA0000000ADF4EE /* GoogleMobileAds */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 0DC0A0012FA0000000ADF4EE /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */;
 			productName = GoogleMobileAds;
+		};
+		0DE88DC82F987061002BCB01 /* FirebaseStorage */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0D552E322F7D2FC4007A7BAD /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseStorage;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

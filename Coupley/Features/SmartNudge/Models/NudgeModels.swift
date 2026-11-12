@@ -13,6 +13,7 @@ enum NudgeType: String, Codable, CaseIterable {
     case inactivity = "inactivity"
     case ping       = "ping"
     case reaction   = "reaction"
+    case questionOfTheDay = "qotd"
 
     var icon: String {
         switch self {
@@ -21,6 +22,7 @@ enum NudgeType: String, Codable, CaseIterable {
         case .inactivity: return "clock.fill"
         case .ping:       return "paperplane.fill"
         case .reaction:   return "face.smiling.fill"
+        case .questionOfTheDay: return "questionmark.bubble.fill"
         }
     }
 
@@ -31,6 +33,7 @@ enum NudgeType: String, Codable, CaseIterable {
         case .inactivity: return "Check-in Reminder"
         case .ping:       return "Thinking of You"
         case .reaction:   return "Reaction"
+        case .questionOfTheDay: return "Question of the Day"
         }
     }
 }

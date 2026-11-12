@@ -94,7 +94,7 @@ final class RemoteAISuggestionService: AISuggestionService {
 
     init(
         session: URLSession = .shared,
-        authTokenProvider: (() async throws -> String)? = nil
+        authTokenProvider: (() async throws -> String)? = FirebaseIDTokenProvider.token
     ) {
         self.session = session
         self.authTokenProvider = authTokenProvider

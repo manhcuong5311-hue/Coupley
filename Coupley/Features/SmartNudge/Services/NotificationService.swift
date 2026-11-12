@@ -230,8 +230,23 @@ final class NotificationService: NSObject, NotificationServiceProtocol {
         guard !userId.isEmpty else { return }
         try await db.collection(FirestorePath.users).document(userId).setData([
             "lastActive": FieldValue.serverTimestamp(),
-            "lastSeen":   FieldValue.serverTimestamp(),
-            "timezone":   TimeZone.current.identifier
+            "lastSeen":        FieldValue.serverTimestamp(),
+            "timezone":        TimeZone.current.identifier,
+            "presenceActive":  true
+        ], merge: true)
+    }
+
+    /// Marks this user as gone the moment the app backgrounds.
+    ///
+    /// `lastSeen` alone cannot express this: it stays fresh for the whole
+    /// two-minute online window after the app is closed, so the partner keeps
+    /// seeing "they're here right now" for minutes after they left.
+    /// `lastSeen` is intentionally not touched, so "last seen 10 minutes ago"
+    /// still reads correctly.
+    func markInactive(userId: String) async {
+        guard !userId.isEmpty else { return }
+        try? await db.collection(FirestorePath.users).document(userId).setData([
+            "presenceActive": false
         ], merge: true)
     }
 

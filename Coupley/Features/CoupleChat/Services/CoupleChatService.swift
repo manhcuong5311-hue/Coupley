@@ -44,6 +44,14 @@ protocol CoupleChatServicing {
     func postSystemMessage(_ body: String, coupleId: String) async throws
     func postQuiz(_ quiz: ChatQuiz, coupleId: String) async throws
 
+    /// Every question this couple has been asked, across their whole history.
+    /// A one-shot read — the live quiz listener is capped at 20 documents and
+    /// cannot answer "have we done this one before".
+    func fetchQuizProgress(coupleId: String, viewerId: String, partnerId: String) async throws -> QuizProgress
+
+    /// Sets (or clears, with nil) this user's reaction to a finished quiz.
+    func reactToQuiz(coupleId: String, quizId: String, userId: String, kind: ReactionKind?) async throws
+
     /// Submit this user's answer. If they are the second answerer, this call
     /// also posts the comparison result atomically.
     /// - Returns: the resulting `ChatQuiz` (with `status` updated). If the
@@ -138,6 +146,49 @@ final class FirestoreCoupleChatService: CoupleChatServicing {
         let msg = ChatMessage.system(body)
         try await writeMessage(msg, coupleId: coupleId)
         try await touchLastMessage(coupleId: coupleId)
+    }
+
+    func reactToQuiz(coupleId: String, quizId: String, userId: String, kind: ReactionKind?) async throws {
+        let ref = db.collection(FirestorePath.chatQuizzes(coupleId: coupleId)).document(quizId)
+        let value: Any = kind.map { $0.rawValue } ?? FieldValue.delete()
+        try await ref.setData(["reactions": [userId: value]], merge: true)
+    }
+
+    func fetchQuizProgress(coupleId: String, viewerId: String, partnerId: String) async throws -> QuizProgress {
+        let snapshot = try await db
+            .collection(FirestorePath.chatQuizzes(coupleId: coupleId))
+            .getDocuments()
+
+        var answered = Set<String>()
+        var pending  = Set<String>()
+        var guessesMade = 0
+        var guessesCorrect = 0
+
+        for doc in snapshot.documents {
+            guard let quiz = try? doc.data(as: ChatQuiz.self),
+                  !quiz.questionId.isEmpty else { continue }
+
+            if quiz.status == .complete {
+                answered.insert(quiz.questionId)
+                // Only finished quizzes can score a guess: an unanswered
+                // partner has nothing to be right or wrong about.
+                if let outcome = quiz.answers[viewerId]?
+                    .guessWasRight(against: quiz.answers[partnerId]) {
+                    guessesMade += 1
+                    if outcome { guessesCorrect += 1 }
+                }
+            } else {
+                pending.insert(quiz.questionId)
+            }
+        }
+        // A question finished once is answered, even if a later copy stalled.
+        pending.subtract(answered)
+        return QuizProgress(
+            answered: answered,
+            pending: pending,
+            guessesMade: guessesMade,
+            guessesCorrect: guessesCorrect
+        )
     }
 
     func postQuiz(_ quiz: ChatQuiz, coupleId: String) async throws {

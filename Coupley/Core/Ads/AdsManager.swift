@@ -38,6 +38,10 @@ final class AdsManager: NSObject, ObservableObject {
     /// True while the software keyboard is on screen — the banner steps aside
     /// so it never sits directly above the keys (accidental-click policy).
     @Published private(set) var isKeyboardVisible = false
+    /// Width an anchored adaptive banner should fill: the key window minus its
+    /// horizontal safe-area insets. Republished on rotation so the banner can
+    /// reload at the size that actually fits. 0 until a window exists.
+    @Published private(set) var bannerWidth: CGFloat = 0
 
     /// Bottom space content must keep free so the banner never covers it.
     var bannerInset: CGFloat {
@@ -80,6 +84,41 @@ final class AdsManager: NSObject, ObservableObject {
         center.publisher(for: UIResponder.keyboardWillHideNotification)
             .sink { [weak self] _ in self?.isKeyboardVisible = false }
             .store(in: &keyboardSubscriptions)
+
+        // An anchored adaptive banner is sized for one orientation, so the
+        // width has to be recomputed when the device turns. These events are
+        // only emitted while the device is generating them, which is not the
+        // default in every app configuration.
+        UIDevice.current.beginGeneratingDeviceOrientationNotifications()
+        center.publisher(for: UIDevice.orientationDidChangeNotification)
+            .sink { [weak self] _ in self?.refreshBannerWidth() }
+            .store(in: &keyboardSubscriptions)
+
+        // Covers the case this class is constructed before any window exists,
+        // and any resize that happened while the app was backgrounded.
+        center.publisher(for: UIApplication.didBecomeActiveNotification)
+            .sink { [weak self] _ in self?.refreshBannerWidth() }
+            .store(in: &keyboardSubscriptions)
+
+        refreshBannerWidth()
+    }
+
+    /// Measures the key window. Safe to call repeatedly; only publishes when
+    /// the value actually moved, so the banner doesn't reload on every nudge.
+    func refreshBannerWidth() {
+        guard let window = UIApplication.shared.connectedScenes
+            .compactMap({ $0 as? UIWindowScene })
+            .flatMap({ $0.windows })
+            .first(where: { $0.isKeyWindow }) ?? UIApplication.shared.connectedScenes
+            .compactMap({ $0 as? UIWindowScene })
+            .flatMap({ $0.windows })
+            .first
+        else { return }
+
+        let insets = window.safeAreaInsets
+        let width = window.bounds.width - insets.left - insets.right
+        guard width > 0, abs(width - bannerWidth) > 0.5 else { return }
+        bannerWidth = width
     }
 
     // MARK: - Lifecycle
@@ -97,6 +136,8 @@ final class AdsManager: NSObject, ObservableObject {
     /// form / ATT prompt never cover the onboarding flow.
     func activate() {
         uiReady = true
+        // First reliable moment a key window is guaranteed to exist.
+        refreshBannerWidth()
         startIfNeeded()
     }
 

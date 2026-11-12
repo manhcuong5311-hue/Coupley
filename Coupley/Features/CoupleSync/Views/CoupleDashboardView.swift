@@ -33,9 +33,15 @@ struct CoupleDashboardView: View {
     @State private var limitReached: PremiumFeature?
     @State private var showAICoach = false
     @State private var sentReaction: ReactionKind? = nil
+    @State private var sentLiveReaction: ReactionKind? = nil
+    @State private var showTouchTogether = false
     @State private var isSendingReaction = false
 
     @StateObject private var aiCoachViewModel: AICoachViewModel = AICoachViewModel(session: .demo)
+    @StateObject private var qotdViewModel: QuestionOfTheDayViewModel =
+        QuestionOfTheDayViewModel(session: .demo)
+    @StateObject private var dailyPhotoViewModel: DailyPhotoViewModel =
+        DailyPhotoViewModel(session: .demo)
 
     private let reactionService: ReactionService = FirestoreReactionService()
     private let presenceService: PresenceService = FirestorePresenceService()
@@ -54,11 +60,40 @@ struct CoupleDashboardView: View {
                 coupleAvatarsAndStats
                     .padding(.horizontal, 20)
 
+                // Sits above MicroAction on purpose: this is the one thing
+                // that is new every day and that the partner also has to act
+                // on, so it earns the first slot.
+                QuestionOfTheDayCard(
+                    viewModel: qotdViewModel,
+                    partnerName: profileViewModel.partnerProfile.displayName
+                )
+                .padding(.horizontal, 20)
+
+                DailyPhotoCard(
+                    viewModel: dailyPhotoViewModel,
+                    partnerName: profileViewModel.partnerProfile.displayName
+                )
+                .padding(.horizontal, 20)
+
                 MicroActionCard(viewModel: microActionViewModel)
                     .padding(.horizontal, 20)
 
                 activitiesSection
                     .padding(.horizontal, 20)
+
+                if viewModel.partnerIsOnline {
+                    TogetherNowCard(
+                        partnerName: profileViewModel.partnerProfile.displayName,
+                        sentReaction: sentLiveReaction,
+                        onSend: sendLiveReaction,
+                        onTouchTogether: {
+                            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                            showTouchTogether = true
+                        }
+                    )
+                    .padding(.horizontal, 20)
+                    .transition(.scale(scale: 0.97).combined(with: .opacity))
+                }
 
                 presenceRow
                     .padding(.horizontal, 20)
@@ -145,6 +180,14 @@ struct CoupleDashboardView: View {
             .presentationDragIndicator(.visible)
             .presentationBackground(Brand.backgroundTop)
         }
+        .sheet(isPresented: $showTouchTogether) {
+            TouchTogetherView(
+                partnerName: profileViewModel.partnerProfile.displayName,
+                viewModel: TouchTogetherViewModel(session: sessionStore.session ?? .demo)
+            )
+            .presentationDetents([.large])
+            .presentationBackground(Brand.backgroundTop)
+        }
         .dailyLimitAlert($limitReached)
         .sheet(isPresented: $showAICoach) {
             NavigationStack {
@@ -155,9 +198,17 @@ struct CoupleDashboardView: View {
             .presentationDragIndicator(.visible)
             .presentationBackground(Brand.backgroundTop)
         }
+        .animation(.spring(response: 0.45, dampingFraction: 0.85),
+                   value: viewModel.partnerIsOnline)
         .onAppear {
             viewModel.startListening()
-            if let s = sessionStore.session { aiCoachViewModel.rebind(session: s) }
+            if let s = sessionStore.session {
+                aiCoachViewModel.rebind(session: s)
+                qotdViewModel.rebind(session: s)
+                dailyPhotoViewModel.rebind(session: s)
+            }
+            qotdViewModel.start()
+            dailyPhotoViewModel.start()
             aiCoachViewModel.updateContext(
                 myName: profileViewModel.myProfile.displayName,
                 partnerName: profileViewModel.partnerProfile.displayName,
@@ -980,6 +1031,31 @@ struct CoupleDashboardView: View {
                 .disabled(!isPaired || isSendingReaction)
                 .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isSent)
             }
+        }
+    }
+
+    /// Fires a reaction straight at the partner while they are on screen.
+    /// Unlike `sendReaction(_:to:)` this is not tied to a mood entry — there
+    /// is nothing to attach it to, the point is the live moment itself.
+    private func sendLiveReaction(_ kind: ReactionKind) {
+        guard let session = sessionStore.session, session.isPaired else { return }
+        withAnimation { sentLiveReaction = kind }
+
+        Task {
+            do {
+                try await nudgeService.send(
+                    coupleId: session.coupleId,
+                    fromUserId: session.userId,
+                    toUserId: session.partnerId,
+                    kind: .reaction,
+                    reactionKind: kind
+                )
+            } catch {
+                print("[Dashboard] Live reaction failed: \(error.localizedDescription)")
+            }
+            // Return to the picker so they can send another.
+            try? await Task.sleep(nanoseconds: 3_000_000_000)
+            withAnimation { sentLiveReaction = nil }
         }
     }
 

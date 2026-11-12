@@ -9,6 +9,7 @@
 
 import CoreGraphics
 import Foundation
+import GoogleMobileAds
 
 enum AdsConfig {
 
@@ -48,4 +49,30 @@ enum AdsConfig {
 
     /// Gap between the banner and the tab bar.
     static let bannerSpacing: CGFloat = 4
+
+    /// Which anchored adaptive banner to request. Both fill the full screen
+    /// width — the difference is height:
+    ///
+    ///   `false` → classic anchored adaptive, ~50pt on a phone.
+    ///   `true`  → Google's "large" variant, 50–90pt (up to 15% of screen
+    ///             height). Earns more per impression, but on Coupley's Home
+    ///             tab it swallowed a noticeable slice of the card stack.
+    ///
+    /// Kept as a switch rather than a hard-coded call so the two can be
+    /// compared on real revenue once analytics is in place.
+    static let useLargeBanner = false
+
+    /// Ad size for an anchored banner filling `width`.
+    ///
+    /// The compact branch calls an API the SDK marks deprecated in favour of
+    /// the large variant — Google is steering everyone to the taller, better
+    /// paying format. It is still the correct size for this layout, so the
+    /// call stays until the SDK actually drops it; flipping `useLargeBanner`
+    /// moves to the supported one.
+    @MainActor
+    static func adaptiveBannerSize(width: CGFloat) -> AdSize {
+        useLargeBanner
+            ? largeAnchoredAdaptiveBanner(width: width)
+            : currentOrientationAnchoredAdaptiveBanner(width: width)
+    }
 }

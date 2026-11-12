@@ -34,6 +34,10 @@ struct QuizHubView: View {
     @State private var showHistory = false
     @State private var showAIConfirmation = false
     @State private var aiSuggestion: ChatQuizTemplate?
+    /// Full history, loaded once when the hub opens. nil until it arrives.
+    @State private var quizProgress: QuizProgress?
+
+    private let chatService: CoupleChatServicing = FirestoreCoupleChatService()
 
     var body: some View {
         NavigationStack {
@@ -51,6 +55,13 @@ struct QuizHubView: View {
                     .padding(.bottom, 40)
                 }
             }
+            .task {
+                quizProgress = try? await chatService.fetchQuizProgress(
+                    coupleId: viewModel.coupleId,
+                    viewerId: viewModel.myUserId,
+                    partnerId: viewModel.partnerUserId
+                )
+            }
             .navigationTitle("Quiz Hub")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -60,7 +71,9 @@ struct QuizHubView: View {
                 }
             }
             .sheet(isPresented: $showDailyPicker) {
-                QuizPickerSheet { template in
+                QuizPickerSheet(coupleId: viewModel.coupleId,
+                                viewerId: viewModel.myUserId,
+                                partnerId: viewModel.partnerUserId) { template in
                     viewModel.sendQuiz(template: template)
                     dismiss()
                 }
@@ -139,6 +152,26 @@ struct QuizHubView: View {
                     .font(.system(size: 32, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
                     .lineSpacing(2)
+                if let score = quizProgress?.knowledgeScore,
+                   let made = quizProgress?.guessesMade {
+                    HStack(spacing: 8) {
+                        Text("\(score)%")
+                            .font(.system(size: 22, weight: .heavy, design: .rounded))
+                            .foregroundStyle(.white)
+                        VStack(alignment: .leading, spacing: 0) {
+                            Text("You know them")
+                                .font(.system(size: 12, weight: .semibold, design: .rounded))
+                                .foregroundStyle(.white)
+                            Text("from \(made) guesses")
+                                .font(.system(size: 10, design: .rounded))
+                                .foregroundStyle(.white.opacity(0.8))
+                        }
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(Capsule().fill(.white.opacity(0.18)))
+                }
+
                 Text("A few well-asked questions can move a relationship forward more than a hundred small talks.")
                     .font(.system(size: 13, design: .rounded))
                     .foregroundStyle(.white.opacity(0.85))
@@ -321,15 +354,39 @@ struct QuizHubView: View {
         .buttonStyle(BouncyButtonStyle(scale: 0.98))
     }
 
+    /// Suggests the question that opens the most new ground.
+    ///
+    /// The previous version took `randomElement()` from whatever the live
+    /// listener happened to hold — and that listener caps at 20 documents, so
+    /// anything older counted as never asked. Two consequences: the "AI"
+    /// suggestion was uniformly random, and it re-suggested old questions.
+    ///
+    /// This reads the couple's full history, drops everything already asked,
+    /// then picks from the *least explored topic* rather than the whole bank.
+    /// Without that second step the bank's own skew decides for us — a third
+    /// of the questions are Lifestyle, so uniform sampling means a third of
+    /// the suggestions are too.
     private func presentAISuggestion() {
-        // Pick a quiz the couple hasn't done lately. We avoid running the
-        // full orchestrator transaction here (that's reserved for the
-        // automatic background suggestion) and just sample from the bank
-        // by recency-of-use.
-        let usedIds = Set(viewModel.quizzes.map(\.questionId))
-        let candidates = ChatQuizBank.all.filter { !usedIds.contains($0.questionId) }
-        let pool = candidates.isEmpty ? ChatQuizBank.all : candidates
-        guard let pick = pool.randomElement() else { return }
+        let progress = quizProgress ?? .empty
+
+        let unused = ChatQuizBank.all.filter { !progress.isUsed($0.questionId) }
+        let pool = unused.isEmpty
+            ? ChatQuizBank.all.filter { !progress.isAnswered($0.questionId) }
+            : unused
+        let candidates = pool.isEmpty ? ChatQuizBank.all : pool
+
+        let thinnestTopic = Set(candidates.map(\.topic))
+            .sorted { a, b in
+                let ca = progress.completion(in: a)
+                let cb = progress.completion(in: b)
+                // Ties broken by name so the choice is stable, not arbitrary.
+                return ca == cb ? a.rawValue < b.rawValue : ca < cb
+            }
+            .first
+
+        let focused = thinnestTopic.map { t in candidates.filter { $0.topic == t } } ?? candidates
+        guard let pick = (focused.isEmpty ? candidates : focused).randomElement() else { return }
+
         aiSuggestion = pick
         showAIConfirmation = true
     }

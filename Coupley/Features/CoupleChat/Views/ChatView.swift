@@ -107,6 +107,7 @@ struct ChatView: View {
             .sheet(item: $viewModel.activeQuizForAnswering) { quiz in
                 QuizAnswerSheet(
                     quiz: quiz,
+                    partnerName: profileViewModel.partnerProfile.displayName,
                     onSubmit: { answer in viewModel.submit(answer: answer, for: quiz) },
                     onCancel: { viewModel.activeQuizForAnswering = nil }
                 )
@@ -122,6 +123,14 @@ struct ChatView: View {
             }
             .onAppear   { viewModel.start() }
             .onDisappear { viewModel.stop() }
+            .onChange(of: viewModel.draftText) { _, text in
+                // Clearing the field (send, or manual delete) should stop the
+                // dots immediately rather than waiting out the window.
+                if text.isEmpty { viewModel.stopTyping() } else { viewModel.noteTyping() }
+            }
+            .onChange(of: isComposerFocused) { _, focused in
+                if !focused { viewModel.stopTyping() }
+            }
             .onChange(of: photosPickerItem) { _, item in
                 guard let item else { return }
                 Task {
@@ -194,8 +203,21 @@ struct ChatView: View {
     private var chatBody: some View {
         VStack(spacing: 0) {
             messagesScroll
+
+            if viewModel.partnerIsTyping {
+                PartnerTypingRow()
+                    .padding(.bottom, 6)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+
             composerBar
         }
+        .animation(.spring(response: 0.3, dampingFraction: 0.85),
+                   value: viewModel.partnerIsTyping)
+        // Below the composer, so the ad never comes between the message
+        // field and the keyboard. AdsManager also removes the banner outright
+        // while the keyboard is up, so typing is never done over an ad.
+        .adBannerInset()
     }
 
     private var messagesScroll: some View {
@@ -215,6 +237,9 @@ struct ChatView: View {
                             outgoingStatus: viewModel.outgoingStatus(for: msg),
                             onAnswerTapped: { quizId in
                                 viewModel.presentQuizForAnswering(quizId: quizId)
+                            },
+                            onReact: { quiz, kind in
+                                viewModel.react(to: quiz, kind: kind)
                             }
                         )
                         .id(msg.id)

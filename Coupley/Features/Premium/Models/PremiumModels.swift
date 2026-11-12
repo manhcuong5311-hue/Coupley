@@ -76,8 +76,8 @@ enum PremiumFeature: String, CaseIterable {
     /// numbers (functions/index.js → LIMITS).
     var dailyLimit: Int? {
         switch self {
-        case .aiMoodSuggestions: return 10
-        case .aiCoach:           return 10
+        case .aiMoodSuggestions: return 5
+        case .aiCoach:           return 5
         case .dateIdeas:         return 25
         default:                 return nil
         }

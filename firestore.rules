@@ -11,6 +11,8 @@ rules_version = '2';
 //     /syncScores/{date}                               — daily rollup
 //     /messages/{msgId}                                — chat messages
 //     /quizzes/{quizId}                                — chat quizzes
+//     /liveState/{docId}                               — typing / touch signals
+//     /photoOfDay/{photoId}                            — daily photo prompt
 //     /coupleProfile/{docId}                           — aggregated insights
 //     /anniversaries/{id}                              — anniversary events
 //     /memories/{id}                                   — Time Tree memories
@@ -201,6 +203,25 @@ service cloud.firestore {
                       );
         allow update: if isCoupleMember(coupleId);
         allow delete: if isDisconnectedCouple(coupleId);
+      }
+
+      // ---- Photo of the day ----
+      match /photoOfDay/{photoId} {
+        allow read:   if isCoupleMember(coupleId);
+        allow create: if isCoupleMember(coupleId);
+        allow update: if isCoupleMember(coupleId);
+        allow delete: if isDisconnectedCouple(coupleId);
+      }
+
+      // ---- Live room (typing / touch-together signals) ----
+      // Ephemeral, cosmetic, and rewritten every couple of seconds. Nothing
+      // here is read back as a fact about the relationship, so couple
+      // membership is the whole gate.
+      match /liveState/{docId} {
+        allow read:   if isCoupleMember(coupleId);
+        allow create: if isCoupleMember(coupleId);
+        allow update: if isCoupleMember(coupleId);
+        allow delete: if isCoupleMember(coupleId);
       }
 
       // ---- Chat quizzes ----

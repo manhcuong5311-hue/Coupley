@@ -171,7 +171,7 @@ final class NotificationViewModel: ObservableObject {
     func handleNudgeTap(_ nudge: NudgeRecord) {
         markAsRead(nudge)
         switch nudge.nudgeType {
-        case .lowMood, .reaction, .ping:
+        case .lowMood, .reaction, .ping, .questionOfTheDay:
             navigateToDashboard = true
         case .dailySync, .inactivity:
             navigateToMood = true
@@ -187,6 +187,14 @@ final class NotificationViewModel: ObservableObject {
         Task {
             try? await notificationService.updateLastActive(userId: session.userId)
         }
+    }
+
+    /// Call when the app leaves the foreground, so the partner stops seeing
+    /// this user as present.
+    func recordInactive() {
+        guard !session.userId.isEmpty else { return }
+        let userId = session.userId
+        Task { await NotificationService.shared.markInactive(userId: userId) }
     }
 
     // MARK: - Debug accessors (read-only views into NotificationService)

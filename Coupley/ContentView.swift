@@ -93,9 +93,14 @@ struct ContentView: View {
                     .tabItem { Label("Journey", systemImage: "leaf.fill") }
                     .tag(AppTab.anniversary)
 
-                // Chat gets no banner: it would sit between the message
-                // field and the keyboard.
-
+                // Chat used to be excluded because the banner would sit
+                // between the message field and the keyboard. AdsManager now
+                // tears the banner down on `keyboardWillShow` and restores it
+                // on hide, so that case no longer happens: while typing there
+                // is no ad on screen at all.
+                // Its banner inset lives inside ChatView, below the composer:
+                // applied out here it sits outside the NavigationStack and
+                // overlays the conversation instead of shortening it.
                 ChatView(session: session, profileViewModel: profileViewModel)
                     .tabItem { Label("Chat", systemImage: "bubble.left.and.bubble.right.fill") }
                     .tag(AppTab.chat)
@@ -106,7 +111,7 @@ struct ContentView: View {
 
             if !session.isPaired {
                 connectPartnerBanner
-                    .padding(.bottom, 58 + (selectedTab == .chat ? 0 : ads.bannerInset))
+                    .padding(.bottom, 58 + ads.bannerInset)
                     .padding(.horizontal, 16)
                     .transition(.move(edge: .bottom).combined(with: .opacity))
             }

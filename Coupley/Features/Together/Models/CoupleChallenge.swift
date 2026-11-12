@@ -88,6 +88,25 @@ enum ChallengeCadence: String, Codable, CaseIterable {
         case .weekly: return 60 * 60 * 24 * 7
         }
     }
+
+    /// The cadence unit a date falls into. Both partners checking in on the
+    /// same day land in one bucket.
+    func bucket(for date: Date, calendar: Calendar = .current) -> Date {
+        switch self {
+        case .daily:
+            return calendar.startOfDay(for: date)
+        case .weekly:
+            // ISO-8601 week start, so a weekly bucket does not depend on
+            // which day someone happened to check in.
+            let comps = calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: date)
+            return calendar.date(from: comps) ?? date
+        }
+    }
+
+    /// Distinct cadence units represented in a check-in log.
+    func buckets(for dates: [Date], calendar: Calendar = .current) -> Set<Date> {
+        Set(dates.map { bucket(for: $0, calendar: calendar) })
+    }
 }
 
 // MARK: - Couple Challenge
@@ -114,6 +133,13 @@ struct CoupleChallenge: Identifiable, Codable, Equatable {
     /// view can render activity over time without a subcollection.
     var checkInLog: [Date]
 
+    /// Who checked in, and when. `checkInLog` records *that* a check-in
+    /// happened but not *who* — which is the exact question a mutual
+    /// challenge is built on, and the reason `hasCheckedIn(for:on:)` used to
+    /// answer it wrong. Documents written before this field exists decode to
+    /// an empty map; see `hasCheckedIn` for how that is handled.
+    var checkInsByUser: [String: [Date]] = [:]
+
     /// Streak state. Recomputed from `checkInLog` whenever a check-in is
     /// recorded so it stays consistent without a separate write.
     var streak: TogetherStreak
@@ -132,7 +158,14 @@ struct CoupleChallenge: Identifiable, Codable, Equatable {
 
     // MARK: - Derived
 
-    var totalCheckIns: Int { checkInLog.count }
+    /// Progress is measured in cadence units, not raw check-ins.
+    ///
+    /// `targetCount` means days ("a 30 days gratitude challenge would have
+    /// targetCount = 30"), so once both partners can check in on the same day
+    /// — which they could not before `hasCheckedIn` was fixed — counting raw
+    /// entries would finish a 30-day challenge in 15. Legacy logs hold at
+    /// most one entry per day, so this changes nothing for existing data.
+    var totalCheckIns: Int { cadence.buckets(for: checkInLog).count }
 
     var progress: Double {
         guard targetCount > 0 else { return 0 }
@@ -154,14 +187,29 @@ struct CoupleChallenge: Identifiable, Codable, Equatable {
         return startDate.addingTimeInterval(interval)
     }
 
-    /// Whether the user has already checked in for *this* cadence unit.
-    /// Same-day check-ins coalesce — tapping the button after a successful
-    /// check-in shouldn't double-count.
+    /// Whether *this user* has already checked in for this cadence unit.
+    ///
+    /// This used to ignore `userId` entirely and ask only "did anyone check
+    /// in today", which made the first partner's tap consume the day for
+    /// both: the second partner's check-in was silently dropped by the
+    /// idempotency guard in `recordCheckIn`, so their contribution never
+    /// counted and no Together surface actually required mutual action.
+    ///
+    /// Legacy documents carry `checkInLog` entries with no attribution. They
+    /// are treated as nobody-has-checked-in-yet rather than guessed at: that
+    /// allows at most one extra check-in per existing challenge, once, and
+    /// the map is populated from the next write onward. Guessing an owner
+    /// would be wrong permanently; this is wrong briefly and self-corrects.
     func hasCheckedIn(for userId: String, on date: Date = Date()) -> Bool {
         let calendar = Calendar.current
-        return checkInLog.contains { logDate in
+        return (checkInsByUser[userId] ?? []).contains { logDate in
             calendar.isDate(logDate, inSameDayAs: date)
         }
+    }
+
+    /// How many times this partner has checked in overall.
+    func checkInCount(for userId: String) -> Int {
+        (checkInsByUser[userId] ?? []).count
     }
 
     var statusLine: String {

@@ -2,6 +2,14 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<!-- Cloud Function endpoints. Both functions authenticate the caller with
+	     a Firebase ID token and enforce their own per-user daily quota; the
+	     client holds no secret. Without these keys the app silently falls
+	     back to its on-device mock AI. -->
+	<key>AI_COACH_URL</key>
+	<string>https://us-central1-coupley-fcbb2.cloudfunctions.net/coach</string>
+	<key>AI_SUGGESTION_URL</key>
+	<string>https://us-central1-coupley-fcbb2.cloudfunctions.net/generateSuggestion</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>

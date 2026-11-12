@@ -21,6 +21,8 @@ final class ChatViewModel: ObservableObject {
 
     @Published private(set) var messages: [ChatMessage] = []
     @Published private(set) var quizzes:  [ChatQuiz]    = []
+    /// True while the partner has typed in the last few seconds.
+    @Published private(set) var partnerIsTyping = false
     @Published private(set) var pendingMessageIds: Set<String> = []
     @Published var draftText: String = ""
     @Published private(set) var isSending = false
@@ -48,6 +50,9 @@ final class ChatViewModel: ObservableObject {
     private let session: UserSession
     private let chatService:   CoupleChatServicing
     private let orchestrator:  QuizOrchestrating
+    private let liveRoom: LiveRoomServicing = FirestoreLiveRoomService()
+    private var liveRoomListener: ListenerRegistration?
+    private var typingExpiry: Task<Void, Never>?
     private let insightGen:    InsightGenerating
     private let aggregator:    CoupleInsightAggregating
 
@@ -78,12 +83,60 @@ final class ChatViewModel: ObservableObject {
     func start() {
         guard session.isPaired else { return }
         listen()
+        listenToLiveRoom()
         Task { await maybeSuggestQuiz() }
     }
 
     func stop() {
         messageListener?.remove(); messageListener = nil
         quizListener?.remove();    quizListener    = nil
+        liveRoomListener?.remove(); liveRoomListener = nil
+        typingExpiry?.cancel(); typingExpiry = nil
+        // Leaving the screen should not leave the dots running on their side.
+        Task { [liveRoom, session] in
+            await liveRoom.clearTyping(coupleId: session.coupleId, userId: session.userId)
+        }
+    }
+
+    // MARK: - Typing
+
+    private func listenToLiveRoom() {
+        guard liveRoomListener == nil else { return }
+        liveRoomListener = liveRoom.observe(coupleId: session.coupleId) { [weak self] state in
+            Task { @MainActor in
+                guard let self else { return }
+                self.applyTyping(state.isTyping(self.session.partnerId))
+            }
+        }
+    }
+
+    /// The signal is a timestamp, so nothing arrives to say "stopped typing" —
+    /// the partner simply goes quiet. Each update therefore schedules its own
+    /// expiry, which the next update replaces.
+    private func applyTyping(_ typing: Bool) {
+        partnerIsTyping = typing
+        typingExpiry?.cancel()
+        guard typing else { return }
+        typingExpiry = Task { [weak self] in
+            try? await Task.sleep(nanoseconds: UInt64(LiveRoomState.typingWindow * 1_000_000_000))
+            guard !Task.isCancelled else { return }
+            await MainActor.run { self?.partnerIsTyping = false }
+        }
+    }
+
+    /// Called as the user types. The service throttles the writes.
+    func noteTyping() {
+        guard session.isPaired else { return }
+        Task { [liveRoom, session] in
+            await liveRoom.markTyping(coupleId: session.coupleId, userId: session.userId)
+        }
+    }
+
+    func stopTyping() {
+        guard session.isPaired else { return }
+        Task { [liveRoom, session] in
+            await liveRoom.clearTyping(coupleId: session.coupleId, userId: session.userId)
+        }
     }
 
     private func listen() {
@@ -173,6 +226,7 @@ final class ChatViewModel: ObservableObject {
         guard !body.isEmpty, !isSending else { return }
         draftText = ""
         isSending = true
+        stopTyping()
 
         Task {
             defer { Task { @MainActor in self.isSending = false } }
@@ -256,6 +310,19 @@ final class ChatViewModel: ObservableObject {
         }
     }
 
+    // MARK: - Quiz reactions
+
+    func react(to quiz: ChatQuiz, kind: ReactionKind?) {
+        Task { [chatService, session] in
+            try? await chatService.reactToQuiz(
+                coupleId: session.coupleId,
+                quizId: quiz.id,
+                userId: session.userId,
+                kind: kind
+            )
+        }
+    }
+
     // MARK: - Helpers
 
     func quiz(for message: ChatMessage) -> ChatQuiz? {
@@ -272,6 +339,7 @@ final class ChatViewModel: ObservableObject {
     }
 
     var myUserId: String { session.userId }
+    var coupleId: String { session.coupleId }
     var partnerUserId: String { session.partnerId }
 
     // MARK: - Status helpers

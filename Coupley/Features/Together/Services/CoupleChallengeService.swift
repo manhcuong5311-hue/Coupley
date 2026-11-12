@@ -110,6 +110,8 @@ final class FirestoreCoupleChallengeService: CoupleChallengeService {
             var updated = challenge
             updated.checkInLog.append(date)
             updated.checkInLog.sort()
+            updated.checkInsByUser[userId, default: []].append(date)
+            updated.checkInsByUser[userId]?.sort()
             updated.contribution.add(1, for: userId)
 
             // Recompute streak from the freshly-appended log. We compute it
@@ -186,17 +188,11 @@ final class FirestoreCoupleChallengeService: CoupleChallengeService {
         let calendar = Calendar.current
         let sorted = log.sorted()
 
-        // Build the set of cadence-unit "buckets" that had at least one check-in.
-        let bucketDates: Set<Date> = Set(sorted.map { date in
-            switch cadence {
-            case .daily:  return calendar.startOfDay(for: date)
-            case .weekly:
-                // Use the start of the ISO-8601 week so weekly streaks are
-                // independent of when the user happened to check in.
-                let comps = calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: date)
-                return calendar.date(from: comps) ?? date
-            }
-        })
+        // Build the set of cadence-unit "buckets" that had at least one
+        // check-in. Shares `ChallengeCadence.buckets` with progress counting
+        // so the streak and the progress bar can never disagree about what
+        // one unit means.
+        let bucketDates = cadence.buckets(for: sorted, calendar: calendar)
 
         // Walk back from "today's bucket" until we hit a missing one.
         var anchor: Date
@@ -277,6 +273,9 @@ final class FirestoreCoupleChallengeService: CoupleChallengeService {
             "targetCount":         c.targetCount,
             "contributionAmounts": c.contribution.amounts,
             "checkInLog":          c.checkInLog.map { Timestamp(date: $0) },
+            "checkInsByUser":      c.checkInsByUser.mapValues { dates in
+                                       dates.map { Timestamp(date: $0) }
+                                   },
             "streakCurrent":       c.streak.current,
             "streakLongest":       c.streak.longest,
             "startDate":           Timestamp(date: c.startDate),
@@ -319,6 +318,8 @@ final class FirestoreCoupleChallengeService: CoupleChallengeService {
         let updatedAt = (data["updatedAt"] as? Timestamp)?.dateValue() ?? createdAt
         let amounts = (data["contributionAmounts"] as? [String: Double]) ?? [:]
         let log = (data["checkInLog"] as? [Timestamp])?.map { $0.dateValue() } ?? []
+        let byUser = ((data["checkInsByUser"] as? [String: [Timestamp]]) ?? [:])
+            .mapValues { stamps in stamps.map { $0.dateValue() } }
         let streak = TogetherStreak(
             current: (data["streakCurrent"] as? Int) ?? 0,
             longest: (data["streakLongest"] as? Int) ?? 0,
@@ -335,6 +336,7 @@ final class FirestoreCoupleChallengeService: CoupleChallengeService {
             targetCount: targetCount,
             contribution: TogetherContribution(amounts: amounts),
             checkInLog: log,
+            checkInsByUser: byUser,
             streak: streak,
             startDate: startDate,
             createdBy: createdBy,

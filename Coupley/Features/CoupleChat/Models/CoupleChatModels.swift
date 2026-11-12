@@ -159,6 +159,27 @@ struct ChatQuizAnswer: Codable, Equatable {
     let options: [String]
     let text: String?
     let answeredAt: Date
+    /// What this user predicted their partner would pick. Optional because
+    /// free-text questions cannot be guessed against, because the guess step
+    /// is skippable, and because answers written before this existed have
+    /// none.
+    var guess: [String]? = nil
+
+    /// Whether the prediction matched what the partner actually chose.
+    /// `nil` when no guess was made or the partner hasn't answered yet.
+    func guessWasRight(against partnerAnswer: ChatQuizAnswer?) -> Bool? {
+        guard let guess, !guess.isEmpty,
+              let actual = partnerAnswer?.options, !actual.isEmpty
+        else { return nil }
+        return Set(guess) == Set(actual)
+    }
+}
+
+/// Why a quiz exists. Absent (nil) for every quiz posted from the Chat tab —
+/// curated, AI-suggested, or custom — so existing documents keep decoding.
+enum ChatQuizKind: String, Codable {
+    /// Generated once per day per couple and surfaced on the Home tab.
+    case questionOfTheDay = "qotd"
 }
 
 /// A quiz instance posted into the chat. The question body itself comes from
@@ -196,7 +217,31 @@ struct ChatQuiz: Identifiable, Codable, Equatable {
     /// Optional romantic note attached to a custom quiz.
     var customNote: String?
 
+    // Question of the Day fields — both nil for chat quizzes.
+    /// Non-nil only for the automatically generated daily question. Lets the
+    /// Home card query for it and lets the server push distinguish it from a
+    /// quiz a partner deliberately sent.
+    var kind: ChatQuizKind? = nil
+    /// The user whose client materialised this QotD. *Not* an author — the
+    /// question comes from the curated bank, this is just whoever opened the
+    /// app first today. The server uses it to push the *other* partner.
+    var triggeredBy: String? = nil
+
+    /// How each partner reacted to the finished result, keyed by userId and
+    /// holding a `ReactionKind` raw value. Stored on the quiz rather than in
+    /// a subcollection: there are at most two, the existing quiz listener
+    /// already streams this document, and the quiz rules already let couple
+    /// members update it.
+    var reactions: [String: String]? = nil
+
     var isCustom: Bool { authorId != nil }
+
+    func reaction(of userId: String) -> ReactionKind? {
+        guard let raw = reactions?[userId] else { return nil }
+        return ReactionKind(rawValue: raw)
+    }
+
+    var isQuestionOfTheDay: Bool { kind == .questionOfTheDay }
 
     func answer(for userId: String) -> ChatQuizAnswer? {
         answers[userId]

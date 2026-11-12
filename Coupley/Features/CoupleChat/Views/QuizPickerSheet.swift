@@ -10,10 +10,18 @@ import SwiftUI
 
 struct QuizPickerSheet: View {
 
+    let coupleId: String
+    let viewerId: String
+    let partnerId: String
     let onPick: (ChatQuizTemplate) -> Void
 
     @Environment(\.dismiss) private var dismiss
     @State private var selectedTopic: QuizTopic? = nil
+    @State private var progress: QuizProgress = .empty
+    /// Default on: the common case is looking for something new to ask.
+    @State private var hideAnswered = true
+
+    private let service: CoupleChatServicing = FirestoreCoupleChatService()
 
     var body: some View {
         NavigationStack {
@@ -25,7 +33,7 @@ struct QuizPickerSheet: View {
 
                     ForEach(topicsToShow, id: \.self) { topic in
                         Section {
-                            ForEach(ChatQuizBank.byTopic(topic), id: \.questionId) { template in
+                            ForEach(templates(in: topic), id: \.questionId) { template in
                                 Button { pick(template) } label: {
                                     row(for: template)
                                 }
@@ -39,11 +47,22 @@ struct QuizPickerSheet: View {
                                     .foregroundStyle(Brand.textSecondary)
                                     .textCase(.uppercase)
                                     .tracking(0.5)
+                                Spacer()
+                                Text("\(progress.answeredCount(in: topic))/\(progress.total(in: topic))")
+                                    .font(.system(size: 11, weight: .semibold, design: .rounded))
+                                    .foregroundStyle(progress.isFullyAnswered(topic)
+                                                     ? Brand.accentStart
+                                                     : Brand.textTertiary)
                             }
                         }
                     }
                 }
                 .scrollContentBackground(.hidden)
+            }
+            .task {
+                progress = (try? await service.fetchQuizProgress(
+                    coupleId: coupleId, viewerId: viewerId, partnerId: partnerId
+                )) ?? .empty
             }
             .navigationTitle("Pick a Quiz")
             .navigationBarTitleDisplayMode(.inline)
@@ -51,6 +70,18 @@ struct QuizPickerSheet: View {
                 ToolbarItem(placement: .topBarLeading) {
                     Button("Close") { dismiss() }
                         .foregroundStyle(Brand.textSecondary)
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        withAnimation { hideAnswered.toggle() }
+                    } label: {
+                        Label(hideAnswered ? "Show answered" : "Hide answered",
+                              systemImage: hideAnswered ? "eye.slash" : "eye")
+                            .labelStyle(.iconOnly)
+                            .foregroundStyle(Brand.accentStart)
+                    }
+                    .accessibilityLabel(hideAnswered ? "Show answered questions"
+                                                     : "Hide answered questions")
                 }
             }
         }
@@ -129,10 +160,24 @@ struct QuizPickerSheet: View {
                 }
             }
             Spacer(minLength: 8)
-            Image(systemName: "paperplane.fill")
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(Brand.accentStart)
+
+            if progress.isAnswered(template.questionId) {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(Color(red: 0.25, green: 0.75, blue: 0.50))
+                    .accessibilityLabel("Already answered")
+            } else if progress.isPending(template.questionId) {
+                Image(systemName: "hourglass")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(Brand.textTertiary)
+                    .accessibilityLabel("Waiting on an answer")
+            } else {
+                Image(systemName: "paperplane.fill")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(Brand.accentStart)
+            }
         }
+        .opacity(progress.isAnswered(template.questionId) ? 0.55 : 1)
         .contentShape(Rectangle())
     }
 
@@ -145,7 +190,25 @@ struct QuizPickerSheet: View {
 
     private var topicsToShow: [QuizTopic] {
         if let selectedTopic { return [selectedTopic] }
+        // Least-explored first: the reason to open this screen is almost
+        // always to find new ground, not to re-read finished topics. Ties
+        // keep the enum's own order so the list doesn't reshuffle at random.
         return availableTopics
+            .filter { !templates(in: $0).isEmpty }
+            .enumerated()
+            .sorted { a, b in
+                let ca = progress.completion(in: a.element)
+                let cb = progress.completion(in: b.element)
+                return ca == cb ? a.offset < b.offset : ca < cb
+            }
+            .map(\.element)
+    }
+
+    /// Questions to list for a topic, honouring the hide-answered toggle.
+    private func templates(in topic: QuizTopic) -> [ChatQuizTemplate] {
+        let all = ChatQuizBank.byTopic(topic)
+        guard hideAnswered else { return all }
+        return all.filter { !progress.isAnswered($0.questionId) }
     }
 
     private func pick(_ template: ChatQuizTemplate) {

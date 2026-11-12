@@ -11,13 +11,28 @@ import SwiftUI
 struct QuizAnswerSheet: View {
 
     let quiz: ChatQuiz
+    let partnerName: String
     let onSubmit: (ChatQuizAnswer) -> Void
     let onCancel: () -> Void
 
+    /// Answering happens in two passes: your own answer, then a prediction of
+    /// theirs. The prediction is what turns a survey into a game — and it is
+    /// skippable, so nobody is forced to guess to take part.
+    private enum Phase { case mine, guessing }
+
+    @State private var phase: Phase = .mine
     @State private var selected: Set<String> = []
+    @State private var guessed: Set<String> = []
     @State private var freeText: String = ""
     @State private var submitting = false
     @State private var lastToggled: String?
+
+    /// Free text cannot be scored against a prediction.
+    private var supportsGuessing: Bool { !quiz.options.isEmpty }
+
+    private var activeSelection: Set<String> {
+        phase == .mine ? selected : guessed
+    }
 
     private var template: ChatQuizTemplate? { ChatQuizBank.byId(quiz.questionId) }
 
@@ -30,16 +45,28 @@ struct QuizAnswerSheet: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 20) {
                         topicChip
-                        Text(quiz.question)
-                            .font(.system(size: 22, weight: .bold, design: .rounded))
-                            .foregroundStyle(Brand.textPrimary)
-                            .fixedSize(horizontal: false, vertical: true)
 
-                        if !quiz.subtitle.isEmpty {
-                            Text(quiz.subtitle)
-                                .font(.system(size: 15, design: .rounded))
+                        if phase == .guessing {
+                            Text("What will \(partnerName) pick?")
+                                .font(.system(size: 22, weight: .bold, design: .rounded))
+                                .foregroundStyle(Brand.textPrimary)
+                                .fixedSize(horizontal: false, vertical: true)
+                            Text(quiz.question)
+                                .font(.system(size: 14, design: .rounded))
                                 .foregroundStyle(Brand.textSecondary)
                                 .fixedSize(horizontal: false, vertical: true)
+                        } else {
+                            Text(quiz.question)
+                                .font(.system(size: 22, weight: .bold, design: .rounded))
+                                .foregroundStyle(Brand.textPrimary)
+                                .fixedSize(horizontal: false, vertical: true)
+
+                            if !quiz.subtitle.isEmpty {
+                                Text(quiz.subtitle)
+                                    .font(.system(size: 15, design: .rounded))
+                                    .foregroundStyle(Brand.textSecondary)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
                         }
 
                         if quiz.options.isEmpty {
@@ -47,8 +74,10 @@ struct QuizAnswerSheet: View {
                         } else {
                             optionsList
 
-                            // Hint card — animates in when an option is picked
-                            if let hint = currentHint {
+                            // Hint card — animates in when an option is picked.
+                            // Suppressed while guessing: it describes the
+                            // person who picked, and here that is not you.
+                            if phase == .mine, let hint = currentHint {
                                 hintCard(hint)
                                     .transition(.scale(scale: 0.96, anchor: .top)
                                         .combined(with: .opacity))
@@ -69,7 +98,13 @@ struct QuizAnswerSheet: View {
 
     private var header: some View {
         HStack {
-            Button("Cancel") { onCancel() }
+            Button(phase == .guessing ? "Back" : "Cancel") {
+                if phase == .guessing {
+                    withAnimation { phase = .mine }
+                } else {
+                    onCancel()
+                }
+            }
                 .font(.system(size: 15, weight: .medium, design: .rounded))
                 .foregroundStyle(Brand.textSecondary)
             Spacer()
@@ -117,7 +152,7 @@ struct QuizAnswerSheet: View {
     }
 
     private func optionRow(_ option: String) -> some View {
-        let isSelected = selected.contains(option)
+        let isSelected = activeSelection.contains(option)
         return Button {
             withAnimation(.spring(response: 0.32, dampingFraction: 0.72)) {
                 toggle(option)
@@ -257,43 +292,80 @@ struct QuizAnswerSheet: View {
     private var submitBar: some View {
         VStack(spacing: 0) {
             Rectangle().fill(Brand.divider).frame(height: 0.5)
-            PrimaryButton(title: submitting ? "Sending…" : "Submit",
+
+            PrimaryButton(title: primaryTitle,
                           isLoading: submitting,
-                          isEnabled: canSubmit) {
-                submit()
+                          isEnabled: canAdvance) {
+                advance()
             }
             .padding(.horizontal, 20)
-            .padding(.vertical, 14)
+            .padding(.top, 14)
+
+            if phase == .guessing {
+                Button("Skip the guess") { submit() }
+                    .font(.system(size: 13, weight: .medium, design: .rounded))
+                    .foregroundStyle(Brand.textSecondary)
+                    .padding(.top, 8)
+            }
+
+            Color.clear.frame(height: 14)
         }
         .background(Brand.backgroundTop.opacity(0.95))
     }
 
-    private var canSubmit: Bool {
+    private var primaryTitle: String {
+        if submitting { return "Sending…" }
+        if phase == .mine && supportsGuessing { return "Next — guess theirs" }
+        return "Submit"
+    }
+
+    /// Gate for the primary button in whichever phase is showing.
+    private var canAdvance: Bool {
+        if submitting { return false }
         if quiz.options.isEmpty {
             return !freeText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         }
-        return !selected.isEmpty
+        return phase == .mine ? !selected.isEmpty : !guessed.isEmpty
+    }
+
+    private func advance() {
+        guard canAdvance else { return }
+        if phase == .mine && supportsGuessing {
+            withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
+                phase = .guessing
+                lastToggled = nil
+            }
+        } else {
+            submit()
+        }
     }
 
     private func toggle(_ option: String) {
         lastToggled = option
-        if quiz.allowsMultiple {
-            if selected.contains(option) { selected.remove(option) }
-            else { selected.insert(option) }
+        if phase == .mine {
+            selected = apply(option, to: selected)
         } else {
-            selected = [option]
+            guessed = apply(option, to: guessed)
         }
     }
 
+    private func apply(_ option: String, to set: Set<String>) -> Set<String> {
+        guard quiz.allowsMultiple else { return [option] }
+        var next = set
+        if next.contains(option) { next.remove(option) } else { next.insert(option) }
+        return next
+    }
+
     private func submit() {
-        guard canSubmit else { return }
+        guard !submitting else { return }
         submitting = true
         let answer = ChatQuizAnswer(
             options: Array(selected),
             text: freeText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
                 ? nil
                 : freeText.trimmingCharacters(in: .whitespacesAndNewlines),
-            answeredAt: Date()
+            answeredAt: Date(),
+            guess: guessed.isEmpty ? nil : Array(guessed)
         )
         onSubmit(answer)
     }

@@ -89,7 +89,7 @@ final class RemoteAICoachService: AICoachService {
 
     init(
         session: URLSession = .shared,
-        authTokenProvider: (() async throws -> String)? = nil
+        authTokenProvider: (() async throws -> String)? = FirebaseIDTokenProvider.token
     ) {
         self.session = session
         self.authTokenProvider = authTokenProvider
