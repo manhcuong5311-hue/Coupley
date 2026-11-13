@@ -166,7 +166,7 @@ struct DeleteAccountView: View {
                 summaryRow(
                     icon: "bubble.left.and.bubble.right.fill",
                     title: "Shared mood & memory data",
-                    detail: "Moods, reactions, chat, quizzes, anniversaries, dream board"
+                    detail: "Moods, reactions, chat, quizzes, letters, anniversaries, dream board"
                 )
                 summaryRow(
                     icon: "heart.slash.fill",

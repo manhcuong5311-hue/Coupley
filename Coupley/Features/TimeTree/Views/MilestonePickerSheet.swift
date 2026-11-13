@@ -2,53 +2,84 @@
 //  MilestonePickerSheet.swift
 //  Coupley
 //
-//  The grid of preset milestone types shown when adding a new memory.
-//  Tapping a preset opens the MemoryEditorSheet with the kind, suggested
-//  emotions, and a hint already filled in. Tapping "Custom Moment"
-//  opens the editor blank.
+//  The chooser behind Journey's + button: the preset milestone kinds, a
+//  custom moment and, when the presenter can write letters, a future letter
+//  for the partner. Picking a kind hands it back and closes; the presenter
+//  opens MemoryEditorSheet once this sheet is gone.
 //
-//  This sheet is small (presentationDetent .medium) — the editor itself
-//  is the workspace, this is just the chooser.
+//  Kinds already in the timeline say when they were added, but stay
+//  tappable: a couple can have more than one first trip.
 //
 
+import Foundation
 import SwiftUI
+import UIKit
 
 // MARK: - Picker Sheet
 
 struct MilestonePickerSheet: View {
 
+    /// When each kind already in the timeline was added, keyed by kind.
+    let loggedDates: [MemoryKind: Date]
+    let partnerName: String
     let onPick: (MemoryKind) -> Void
-    @Environment(\.dismiss) private var dismiss
+    /// Offered as the first row when non-nil.
+    let onWriteLetter: (() -> Void)?
 
-    private let columns = [GridItem(.flexible()), GridItem(.flexible())]
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
+    init(loggedDates: [MemoryKind: Date],
+         partnerName: String,
+         onPick: @escaping (MemoryKind) -> Void,
+         onWriteLetter: (() -> Void)? = nil) {
+        self.loggedDates = loggedDates
+        self.partnerName = partnerName
+        self.onPick = onPick
+        self.onWriteLetter = onWriteLetter
+    }
+
+    /// Two columns, or one once the text is too large to share a row.
+    private var columns: [GridItem] {
+        dynamicTypeSize.isAccessibilitySize
+            ? [GridItem(.flexible())]
+            : [GridItem(.flexible(), spacing: 12), GridItem(.flexible())]
+    }
+
+    private var kinds: [MemoryKind] {
+        MemoryKind.allCases.sorted { $0.pickerOrder < $1.pickerOrder }
+    }
 
     var body: some View {
         NavigationStack {
-            ZStack {
-                Brand.bgGradient.ignoresSafeArea()
+            ScrollView(showsIndicators: false) {
+                VStack(alignment: .leading, spacing: 20) {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("What kind of moment?")
+                            .font(JourneyFont.title)
+                            .foregroundStyle(Brand.textPrimary)
+                            .accessibilityAddTraits(.isHeader)
+                        Text("Pick one of these milestones, or capture something only you two would understand.")
+                            .font(JourneyFont.body)
+                            .foregroundStyle(Brand.textSecondary)
+                            .lineSpacing(2)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding(.horizontal, 4)
 
-                ScrollView(showsIndicators: false) {
-                    VStack(alignment: .leading, spacing: 20) {
-                        VStack(alignment: .leading, spacing: 6) {
-                            Text("What kind of moment?")
-                                .font(.system(size: 22, weight: .bold, design: .rounded))
-                                .foregroundStyle(Brand.textPrimary)
-                            Text("Pick one of these milestones, or capture something only you two would understand.")
-                                .font(.system(size: 13, weight: .regular, design: .rounded))
-                                .foregroundStyle(Brand.textSecondary)
-                                .lineSpacing(2)
-                        }
-                        .padding(.horizontal, 4)
+                    if let onWriteLetter {
+                        letterRow(onWriteLetter)
+                    }
 
-                        LazyVGrid(columns: columns, spacing: 12) {
-                            ForEach(MemoryKind.allCases.sorted { $0.pickerOrder < $1.pickerOrder }) { kind in
-                                tile(for: kind)
-                            }
+                    LazyVGrid(columns: columns, spacing: 12) {
+                        ForEach(kinds) { kind in
+                            tile(for: kind)
                         }
                     }
-                    .padding(20)
                 }
+                .padding(Brand.Space.gutter)
             }
+            .background(Brand.bgGradient.ignoresSafeArea())
             .navigationTitle("New Memory")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -60,56 +91,103 @@ struct MilestonePickerSheet: View {
         }
     }
 
+    // MARK: - Letter row
+
+    private func letterRow(_ onWriteLetter: @escaping () -> Void) -> some View {
+        Button {
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            onWriteLetter()
+            dismiss()
+        } label: {
+            BrandCard(tier: .chip) {
+                HStack(spacing: 12) {
+                    Image(systemName: "envelope.fill")
+                        .font(JourneyFont.title)
+                        .foregroundStyle(FutureLetterStyle.accent)
+                        .frame(width: 28)
+                        .accessibilityHidden(true)
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("A future letter")
+                            .font(JourneyFont.label)
+                            .foregroundStyle(Brand.textPrimary)
+                        Text("Sealed for \(partnerName) until a moment you pick")
+                            .font(JourneyFont.meta)
+                            .foregroundStyle(Brand.textSecondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .multilineTextAlignment(.leading)
+
+                    Spacer(minLength: 0)
+
+                    Image(systemName: "chevron.right")
+                        .font(JourneyFont.meta)
+                        .foregroundStyle(Brand.textTertiary)
+                        .accessibilityHidden(true)
+                }
+            }
+        }
+        .buttonStyle(BouncyButtonStyle(scale: 0.98))
+    }
+
     // MARK: - Tile
 
     private func tile(for kind: MemoryKind) -> some View {
-        Button {
+        let added = kind == .custom ? nil : loggedDates[kind]
+        return Button {
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
             onPick(kind)
             dismiss()
         } label: {
-            VStack(alignment: .leading, spacing: 12) {
-                Text(kind.emoji)
-                    .font(.system(size: 32))
+            BrandCard(tier: .card) {
+                VStack(alignment: .leading, spacing: 10) {
+                    Text(kind.emoji)
+                        .font(.largeTitle)
+                        .accessibilityHidden(true)
 
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(kind.displayName)
-                        .font(.system(size: 14, weight: .semibold, design: .rounded))
-                        .foregroundStyle(Brand.textPrimary)
-                        .lineLimit(2)
-                        .multilineTextAlignment(.leading)
-                    Text(kind == .custom ? "Anything you'd remember" : "Tap to add")
-                        .font(.system(size: 11, weight: .regular, design: .rounded))
-                        .foregroundStyle(Brand.textTertiary)
-                        .lineLimit(1)
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(kind.displayName)
+                            .font(JourneyFont.label)
+                            .foregroundStyle(Brand.textPrimary)
+                            .multilineTextAlignment(.leading)
+                            .fixedSize(horizontal: false, vertical: true)
+
+                        if kind == .custom {
+                            Text("Anything you'd remember")
+                                .font(JourneyFont.meta)
+                                .foregroundStyle(Brand.textSecondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        } else if let added {
+                            HStack(spacing: 4) {
+                                Image(systemName: "checkmark")
+                                    .font(JourneyFont.meta)
+                                    .foregroundStyle(FutureLetterStyle.opened)
+                                Text("Added \(added.formatted(.dateTime.day().month(.abbreviated)))")
+                                    .font(JourneyFont.meta)
+                                    .foregroundStyle(Brand.textSecondary)
+                            }
+                        }
+                    }
+
+                    Spacer(minLength: 0)
                 }
-
-                Spacer(minLength: 0)
+                .frame(maxWidth: .infinity, minHeight: 88, alignment: .topLeading)
             }
-            .padding(14)
-            .frame(maxWidth: .infinity, minHeight: 120, alignment: .topLeading)
-            .background(
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .fill(Brand.surfaceLight)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 18, style: .continuous)
-                            .strokeBorder(
-                                kind == .custom
-                                ? AnyShapeStyle(
-                                    LinearGradient(
-                                        colors: [
-                                            Brand.accentStart.opacity(0.55),
-                                            Brand.accentEnd.opacity(0.30)
-                                        ],
-                                        startPoint: .leading, endPoint: .trailing
-                                    )
-                                  )
-                                : AnyShapeStyle(Brand.divider),
-                                lineWidth: kind == .custom ? 1.5 : 1
-                            )
-                    )
-            )
         }
         .buttonStyle(BouncyButtonStyle(scale: 0.96))
+        // Overrides the label only, so the button keeps its trait and action.
+        .accessibilityLabel(spokenLabel(for: kind, added: added))
+    }
+
+    /// "First Kiss, added May 1", "Custom Moment, anything you'd remember",
+    /// or just the kind. Never the emoji.
+    private func spokenLabel(for kind: MemoryKind, added: Date?) -> String {
+        if kind == .custom {
+            return "\(kind.displayName), anything you'd remember"
+        }
+        if let added {
+            return "\(kind.displayName), added \(added.formatted(.dateTime.day().month(.wide)))"
+        }
+        return kind.displayName
     }
 }

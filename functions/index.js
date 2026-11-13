@@ -4,7 +4,7 @@
 // MARK: - Imports
 // =============================================================================
 
-const { onDocumentCreated, onDocumentWritten } = require("firebase-functions/v2/firestore");
+const { onDocumentCreated, onDocumentWritten, onDocumentDeleted } = require("firebase-functions/v2/firestore");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { onRequest } = require("firebase-functions/v2/https");
 const { defineSecret } = require("firebase-functions/params");
@@ -12,6 +12,7 @@ const { initializeApp } = require("firebase-admin/app");
 const { getAuth } = require("firebase-admin/auth");
 const { getFirestore, FieldValue, Timestamp } = require("firebase-admin/firestore");
 const { getMessaging } = require("firebase-admin/messaging");
+const { getStorage } = require("firebase-admin/storage");
 const OpenAI = require("openai");
 
 initializeApp();
@@ -1804,3 +1805,29 @@ exports.cleanupOldData = onSchedule("0 2 * * *", async () => {
 
   console.log("[Cleanup] Data cleanup completed");
 });
+
+// =============================================================================
+// MARK: - MEMORY PHOTOS FOLLOW THEIR MEMORY (Firestore Trigger)
+// =============================================================================
+//
+// A memory's photos live under couples/{coupleId}/memories/{memoryId}/ with
+// random names (photo-<UUID>.jpg; older versions wrote photo.jpg). Clients
+// delete them after deleting the document, but that can be skipped: an
+// offline delete outlives the Storage SDK's retry window, a 1.1/1.2 client
+// only knows photo.jpg, and an app killed mid-way never gets there. Nothing
+// points at such a file afterwards, so no client could ever find it again.
+// Deleting the folder here, whenever the document goes, covers every path.
+
+exports.onMemoryDeleted = onDocumentDeleted(
+  "couples/{coupleId}/memories/{memoryId}",
+  async (event) => {
+    const { coupleId, memoryId } = event.params;
+    const prefix = `couples/${coupleId}/memories/${memoryId}/`;
+    try {
+      await getStorage().bucket().deleteFiles({ prefix });
+      console.log(`[Memories] Deleted photos under ${prefix}`);
+    } catch (error) {
+      console.error(`[Memories] Couldn't delete photos under ${prefix}:`, error.message);
+    }
+  }
+);

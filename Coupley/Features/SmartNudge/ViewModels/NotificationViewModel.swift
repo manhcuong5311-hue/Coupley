@@ -22,6 +22,9 @@ final class NotificationViewModel: ObservableObject {
     @Published var selectedNudge: NudgeRecord?
     @Published var navigateToMood: Bool = false
     @Published var navigateToDashboard: Bool = false
+    /// Set when a capsule or crown reminder is tapped. ContentView selects
+    /// Journey, hands it on and sets this back to nil.
+    @Published var journeyFocus: JourneyFocus?
 
     // MARK: - Dependencies
 
@@ -85,6 +88,9 @@ final class NotificationViewModel: ObservableObject {
         heartbeatTask = nil
         recentNudges.removeAll()
         unreadCount = 0
+        // A tapped reminder for the couple just left must not open Journey
+        // for whoever signs in next.
+        journeyFocus = nil
         session = UserSession(userId: "", coupleId: "", partnerId: "")
         NotificationService.shared.unbind()
     }
@@ -196,12 +202,17 @@ final class NotificationViewModel: ObservableObject {
     func handleNudgeTap(_ nudge: NudgeRecord) {
         markAsRead(nudge)
         switch nudge.nudgeType {
-        case .lowMood, .reaction, .ping, .questionOfTheDay:
+        case .lowMood, .reaction, .ping, .questionOfTheDay, .futureLetter:
+            // A ready letter is Home's hero, one tap from the reader.
             navigateToDashboard = true
         case .dailySync, .inactivity:
             navigateToMood = true
         case .none:
-            break
+            // Capsule and crown reminders are not nudges. A row in the
+            // in-app list keeps only the type, so it opens Journey itself.
+            if nudge.type == JourneyNotification.capsuleType || nudge.type == JourneyNotification.crownType {
+                journeyFocus = .overview
+            }
         }
     }
 
@@ -248,8 +259,21 @@ final class NotificationViewModel: ObservableObject {
 
         NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] _ in self?.recordActivity() }
+            .sink { [weak self] _ in
+                self?.recordActivity()
+                self?.refreshPermission()
+            }
             .store(in: &cancellables)
+    }
+
+    /// The user can change this in Settings while the app is suspended, and
+    /// nothing else tells us; screens that explain it (the sealed letter's
+    /// reminder line, notification settings) read `permissionState`.
+    func refreshPermission() {
+        Task {
+            let state = await notificationService.checkCurrentPermission()
+            if state != permissionState { permissionState = state }
+        }
     }
 
     private func handleIncomingNudge(_ userInfo: [AnyHashable: Any]?) {
@@ -282,6 +306,14 @@ final class NotificationViewModel: ObservableObject {
     private func handleTappedNudge(_ userInfo: [AnyHashable: Any]?) {
         guard let info = userInfo,
               let typeString = info["type"] as? String else { return }
+        // NotificationService nests the reminder's own userInfo under
+        // "userInfo". A capsule or crown reminder opens Journey at the
+        // capsule or crown it is about.
+        if let payload = info["userInfo"] as? [AnyHashable: Any],
+           let focus = JourneyFocus(notificationUserInfo: payload) {
+            journeyFocus = focus
+            return
+        }
         handleNudgeTap(NudgeRecord(type: typeString, title: "", body: ""))
     }
 

@@ -2,16 +2,22 @@
 //  MemoryDetailSheet.swift
 //  Coupley
 //
-//  Read-only / detail view of a single memory. Tapping a memory card in
-//  the timeline opens this. Provides a clean reading experience for the
-//  story, the photo, and the emotion tags, with an "Edit" affordance
-//  in the toolbar.
+//  One memory, read in full: the photo, the story, the feelings and who
+//  wrote it. Tapping a memory on Journey opens this.
 //
-//  For locked capsules, the detail sheet shows the elegant "sealed"
-//  treatment with a large countdown — body and photo stay redacted.
+//  A sealed capsule shows only its envelope: a card-tier countdown (a locked
+//  state is never a hero), and nothing of the note, photo, feelings or
+//  attribution. Edit is offered only where `canEdit` allows it, so the
+//  partner of a capsule's author cannot read it early through the editor.
+//
+//  The sheet closes itself when its memory leaves the list (deleted from the
+//  nested editor, or on the partner's phone), so a stale copy can never be
+//  saved back and re-create it.
 //
 
+import Foundation
 import SwiftUI
+import UIKit
 
 // MARK: - Detail Sheet
 
@@ -19,9 +25,19 @@ struct MemoryDetailSheet: View {
 
     @ObservedObject var viewModel: TimeTreeViewModel
     let memory: TimeMemory
+    /// Its editor is up. Owned by the presenter, so a capsule reminder that
+    /// arrives meanwhile waits instead of closing the editor mid-edit.
+    @Binding var showEditor: Bool
+    /// Runs once the editor has fully closed (its sheet's onDismiss), where
+    /// the presenter can safely present or dismiss sheets again.
+    var onEditorDismissed: () -> Void = {}
 
     @Environment(\.dismiss) private var dismiss
-    @State private var showEditor = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    /// The lock glyph's well and the kind emoji's well grow with the text.
+    @ScaledMetric(relativeTo: .title2) private var sealSize: CGFloat = 64
+    @ScaledMetric(relativeTo: .title2) private var emojiSize: CGFloat = 46
 
     private var current: TimeMemory {
         viewModel.memories.first(where: { $0.id == memory.id }) ?? memory
@@ -29,37 +45,26 @@ struct MemoryDetailSheet: View {
 
     private var isLocked: Bool { current.isLocked(at: viewModel.now) }
 
+    /// False once the memory is gone from the shared list.
+    private var isStillListed: Bool {
+        viewModel.memories.contains { $0.id == memory.id }
+    }
+
     var body: some View {
         NavigationStack {
-            ZStack {
-                Brand.bgGradient.ignoresSafeArea()
-
-                ScrollView(showsIndicators: false) {
-                    VStack(alignment: .leading, spacing: 22) {
-                        if isLocked {
-                            lockedHero
-                        } else {
-                            openHero
-                        }
-
-                        if !isLocked, let note = current.note, !note.isEmpty {
-                            noteBlock(note)
-                        }
-
-                        if !isLocked, !current.emotions.isEmpty {
-                            emotionsBlock
-                        }
-
-                        if let attribution = current.attribution, !attribution.isEmpty {
-                            attributionBlock(attribution)
-                        }
-
-                        Color.clear.frame(height: 60)
+            ScrollView(showsIndicators: false) {
+                VStack(alignment: .leading, spacing: Brand.Space.sibling) {
+                    if isLocked {
+                        lockedCard
+                    } else {
+                        openContent
                     }
-                    .padding(.horizontal, 20)
-                    .padding(.top, 16)
                 }
+                .padding(.horizontal, Brand.Space.gutter)
+                .padding(.top, 16)
+                .padding(.bottom, 40)
             }
+            .background(Brand.bgGradient.ignoresSafeArea())
             .navigationTitle(isLocked ? "Capsule" : "Memory")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -67,235 +72,252 @@ struct MemoryDetailSheet: View {
                     Button("Close") { dismiss() }
                         .foregroundStyle(Brand.textSecondary)
                 }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Edit") {
-                        showEditor = true
+                // A sealed capsule is editable by its author only: the
+                // editor pre-fills everything the seal is hiding.
+                if viewModel.canEdit(current) {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button("Edit") { showEditor = true }
+                            .foregroundStyle(Brand.accentStart)
                     }
-                    .foregroundStyle(Brand.accentStart)
                 }
             }
-            .sheet(isPresented: $showEditor) {
+            .sheet(isPresented: $showEditor, onDismiss: onEditorDismissed) {
                 MemoryEditorSheet(viewModel: viewModel, mode: .edit(current))
                     .presentationDetents([.large])
                     .presentationDragIndicator(.visible)
             }
-        }
-    }
-
-    // MARK: - Open hero
-
-    private var openHero: some View {
-        VStack(alignment: .leading, spacing: 18) {
-            if let urlString = current.photoURL, let url = URL(string: urlString) {
-                CachedAsyncImage(url: url) { phase in
-                    ZStack {
-                        Brand.accentStart.opacity(0.06)
-                        if case .success(let image) = phase {
-                            image.resizable().scaledToFill()
-                        }
-                    }
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 240)
-                    .clipped()
-                }
-                .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 22, style: .continuous)
-                        .strokeBorder(Brand.divider, lineWidth: 1)
-                )
-                .shadow(color: .black.opacity(0.18), radius: 16, y: 6)
-            }
-
-            HStack(alignment: .top, spacing: 12) {
-                ZStack {
-                    Circle()
-                        .fill(Brand.accentStart.opacity(0.14))
-                        .frame(width: 46, height: 46)
-                    Text(current.kind.emoji).font(.system(size: 22))
-                }
-
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(current.title)
-                        .font(.system(size: 24, weight: .bold, design: .rounded))
-                        .foregroundStyle(Brand.textPrimary)
-                    Text(current.formattedDate())
-                        .font(.system(size: 13, weight: .medium, design: .rounded))
-                        .foregroundStyle(Brand.textSecondary)
-
-                    if current.isUnlockedCapsule(at: viewModel.now) {
-                        HStack(spacing: 4) {
-                            Image(systemName: "envelope.open.fill")
-                                .font(.system(size: 10, weight: .semibold))
-                            Text("Capsule opened")
-                                .font(.system(size: 11, weight: .semibold, design: .rounded))
-                        }
-                        .foregroundStyle(Color(red: 1.0, green: 0.78, blue: 0.30))
-                        .padding(.horizontal, 9)
-                        .padding(.vertical, 4)
-                        .background(
-                            Capsule().fill(Color(red: 1.0, green: 0.78, blue: 0.30).opacity(0.14))
-                        )
-                        .padding(.top, 4)
-                    }
-                }
+            // Deleted from the editor above, or by the partner: close, taking
+            // the editor with it, before a Save could write it back.
+            .onChange(of: isStillListed) { _, stillListed in
+                if !stillListed { dismiss() }
             }
         }
     }
 
-    // MARK: - Locked hero
+    // MARK: - Sealed
 
-    private var lockedHero: some View {
-        let daysLeft = current.daysUntilUnlock(now: viewModel.now) ?? 0
-        return VStack(alignment: .leading, spacing: 16) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 22, style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                Color(red: 1.0, green: 0.85, blue: 0.45).opacity(0.30),
-                                Color(red: 0.95, green: 0.55, blue: 0.30).opacity(0.18)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 22, style: .continuous)
-                            .strokeBorder(.white.opacity(0.12), lineWidth: 1)
-                    )
-
+    private var lockedCard: some View {
+        VStack(alignment: .leading, spacing: Brand.Space.sibling) {
+            BrandCard(tier: .card) {
                 VStack(spacing: 14) {
-                    ZStack {
-                        Circle()
-                            .fill(.white.opacity(0.18))
-                            .frame(width: 76, height: 76)
-                        Image(systemName: "lock.fill")
-                            .font(.system(size: 28, weight: .semibold))
-                            .foregroundStyle(Color(red: 1.0, green: 0.78, blue: 0.30))
-                    }
+                    Image(systemName: "lock.fill")
+                        .font(.title2.weight(.semibold))
+                        .foregroundStyle(FutureLetterStyle.gold)
+                        .frame(width: sealSize, height: sealSize)
+                        .wellBackground(in: .card, radius: sealSize / 2)
+                        .accessibilityHidden(true)
 
-                    VStack(spacing: 6) {
-                        Text("Sealed Capsule")
-                            .font(.system(size: 11, weight: .semibold, design: .rounded))
-                            .foregroundStyle(Brand.textSecondary)
-                            .textCase(.uppercase)
-                            .tracking(1.0)
-
-                        Text(current.title.isEmpty ? "A future moment for you both" : current.title)
-                            .font(.system(size: 20, weight: .bold, design: .rounded))
+                    VStack(spacing: 4) {
+                        Text("Sealed capsule")
+                            .font(JourneyFont.label)
+                            .foregroundStyle(JourneyStyle.goldText)
+                        Text(current.title.isEmpty ? "A moment for you both" : current.title)
+                            .font(JourneyFont.title)
                             .foregroundStyle(Brand.textPrimary)
                             .multilineTextAlignment(.center)
-                            .padding(.horizontal, 16)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
-
-                    HStack(alignment: .lastTextBaseline, spacing: 6) {
-                        Text("\(max(0, daysLeft))")
-                            .font(.system(size: 56, weight: .bold, design: .rounded))
-                            .foregroundStyle(Brand.textPrimary)
-                            .contentTransition(.numericText())
-                            .monospacedDigit()
-                        Text(daysLeft == 1 ? "day" : "days")
-                            .font(.system(size: 14, weight: .medium, design: .rounded))
-                            .foregroundStyle(Brand.textSecondary)
-                            .padding(.bottom, 8)
-                    }
+                    .accessibilityElement(children: .combine)
+                    .accessibilityAddTraits(.isHeader)
 
                     if let unlockDate = current.unlockDate {
-                        Text("Opens \(formatDate(unlockDate))")
-                            .font(.system(size: 13, weight: .medium, design: .rounded))
+                        countdown(to: unlockDate)
+
+                        Text("Opens \(unlockDate.formatted(date: .long, time: .omitted))")
+                            .font(JourneyFont.body)
                             .foregroundStyle(Brand.textSecondary)
+                            .multilineTextAlignment(.center)
                     }
+
+                    WaxSealStrip()
                 }
-                .padding(28)
                 .frame(maxWidth: .infinity)
             }
-            .frame(maxWidth: .infinity)
 
-            Text("Your partner can't read this yet either. The note, photo, and emotion tags are kept hidden until the unlock day arrives.")
-                .font(.system(size: 13, weight: .regular, design: .rounded))
+            Text("Kept out of sight in the app until the unlock day, for both of you.")
+                .font(JourneyFont.body)
                 .foregroundStyle(Brand.textSecondary)
-                .multilineTextAlignment(.leading)
                 .lineSpacing(2)
+                .fixedSize(horizontal: false, vertical: true)
                 .padding(.horizontal, 4)
         }
     }
 
-    // MARK: - Note block
-
-    private func noteBlock(_ note: String) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("The Story")
-                .font(.system(size: 11, weight: .semibold, design: .rounded))
+    /// "12" over "days until it opens", on the Journey clock, which ticks
+    /// every minute while the tab is up.
+    private func countdown(to unlockDate: Date) -> some View {
+        let remaining = FutureLetterClock.bigCountdown(to: unlockDate, now: viewModel.now)
+        return VStack(spacing: 2) {
+            Text("\(remaining.value)")
+                .font(JourneyFont.number)
+                .foregroundStyle(Brand.textPrimary)
+                .monospacedDigit()
+                .contentTransition(.numericText(countsDown: true))
+                // A content transition only plays inside an animation.
+                .animation(reduceMotion ? nil : .snappy, value: remaining.value)
+            Text(remaining.unit)
+                .font(JourneyFont.caption)
                 .foregroundStyle(Brand.textSecondary)
-                .textCase(.uppercase)
-                .tracking(0.8)
-
-            Text(note)
-                .font(.system(size: 16, weight: .regular, design: .rounded))
-                .foregroundStyle(Brand.textPrimary.opacity(0.95))
-                .lineSpacing(4)
-                .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(20)
-        .background(
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .fill(Brand.surfaceLight)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 22, style: .continuous)
-                        .strokeBorder(Brand.divider, lineWidth: 1)
-                )
-        )
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.updatesFrequently)
     }
 
-    // MARK: - Emotions block
+    // MARK: - Open
 
-    private var emotionsBlock: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("Felt Like")
-                .font(.system(size: 11, weight: .semibold, design: .rounded))
-                .foregroundStyle(Brand.textSecondary)
-                .textCase(.uppercase)
-                .tracking(0.8)
+    @ViewBuilder
+    private var openContent: some View {
+        if let urlString = current.photoURL, let url = URL(string: urlString) {
+            photo(url)
+        }
 
-            FlowLayout(spacing: 8) {
-                ForEach(current.emotions, id: \.self) { emotion in
-                    HStack(spacing: 5) {
-                        Text(emotion.emoji).font(.system(size: 12))
-                        Text(emotion.displayName)
-                            .font(.system(size: 13, weight: .semibold, design: .rounded))
-                    }
-                    .foregroundStyle(Brand.textPrimary)
-                    .padding(.horizontal, 11)
-                    .padding(.vertical, 7)
-                    .background(
-                        Capsule().fill(Brand.accentStart.opacity(0.14))
-                            .overlay(
-                                Capsule().strokeBorder(Brand.accentStart.opacity(0.30), lineWidth: 1)
-                            )
-                    )
+        header
+
+        if let note = current.note, !note.isEmpty {
+            noteCard(note)
+        }
+
+        if !current.emotions.isEmpty {
+            emotionsCard
+        }
+
+        if let attribution = current.attribution, !attribution.isEmpty {
+            attributionLine(attribution)
+        }
+    }
+
+    private func photo(_ url: URL) -> some View {
+        let radius = SurfaceTier.card.radius
+        return CachedAsyncImage(url: url, maxPixelSize: 1200) { phase in
+            ZStack {
+                switch phase {
+                case .success(let image):
+                    image
+                        .resizable()
+                        .scaledToFill()
+                case .failure:
+                    Image(systemName: "photo")
+                        .font(.title2)
+                        .foregroundStyle(Brand.textTertiary)
+                default:
+                    ProgressView()
+                        .tint(Brand.textTertiary)
                 }
+            }
+            .frame(maxWidth: .infinity)
+            .frame(height: 240)
+            .clipped()
+        }
+        .wellBackground(in: .quiet, radius: radius)
+        .clipShape(RoundedRectangle(cornerRadius: radius, style: Brand.cornerStyle))
+        .shadow(color: .black.opacity(0.10), radius: 12, y: 3)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Photo")
+        .accessibilityAddTraits(.isImage)
+    }
+
+    private var header: some View {
+        HStack(alignment: .top, spacing: 12) {
+            Text(current.kind.emoji)
+                .font(.title2)
+                .frame(width: emojiSize, height: emojiSize)
+                .wellBackground(in: .quiet, radius: emojiSize / 2)
+                .accessibilityHidden(true)
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text(current.title.isEmpty ? current.kind.displayName : current.title)
+                    .font(JourneyFont.display)
+                    .foregroundStyle(Brand.textPrimary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityAddTraits(.isHeader)
+
+                Text(current.formattedDate())
+                    .font(JourneyFont.body)
+                    .foregroundStyle(Brand.textSecondary)
+
+                if current.isUnlockedCapsule(at: viewModel.now) {
+                    openedBadge
+                        .padding(.top, 2)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
+    /// Gold glyph, gold-for-text label, on the page's own surface: the text
+    /// gold is only measured against the palette's surfaces, never a tint.
+    private var openedBadge: some View {
+        HStack(spacing: 5) {
+            Image(systemName: "envelope.open.fill")
+                .font(JourneyFont.meta)
+                .foregroundStyle(FutureLetterStyle.gold)
+                .accessibilityHidden(true)
+            Text("Capsule opened")
+                .font(JourneyFont.meta)
+                .foregroundStyle(JourneyStyle.goldText)
+        }
+        .padding(.horizontal, 9)
+        .padding(.vertical, 4)
+        .wellBackground(in: .quiet, radius: 10)
+    }
+
+    private func noteCard(_ note: String) -> some View {
+        BrandCard(tier: .card) {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("The story")
+                    .font(JourneyFont.label)
+                    .foregroundStyle(Brand.textSecondary)
+                    .accessibilityAddTraits(.isHeader)
+
+                Text(note)
+                    .font(JourneyFont.body)
+                    .foregroundStyle(Brand.textPrimary)
+                    .lineSpacing(3)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .textSelection(.enabled)
             }
         }
     }
 
-    // MARK: - Attribution
+    private var emotionsCard: some View {
+        BrandCard(tier: .card) {
+            VStack(alignment: .leading, spacing: 10) {
+                Text("Felt like")
+                    .font(JourneyFont.label)
+                    .foregroundStyle(Brand.textSecondary)
 
-    private func attributionBlock(_ attribution: String) -> some View {
-        HStack(spacing: 8) {
-            Image(systemName: "person.2.fill")
-                .font(.system(size: 11, weight: .medium))
-                .foregroundStyle(Brand.textTertiary)
-            Text(attribution)
-                .font(.system(size: 12, weight: .medium, design: .rounded))
-                .foregroundStyle(Brand.textTertiary)
+                FlowLayout(spacing: 8) {
+                    ForEach(current.emotions, id: \.self) { emotion in
+                        HStack(spacing: 5) {
+                            Text(emotion.emoji)
+                                .accessibilityHidden(true)
+                            Text(emotion.displayName)
+                        }
+                        .font(JourneyFont.caption)
+                        .foregroundStyle(Brand.textPrimary)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .wellBackground(in: .card, radius: 12)
+                    }
+                }
+            }
         }
-        .padding(.horizontal, 4)
+        // "Felt like, Nervous, Joyful, Tender": the names, never the emoji.
+        .accessibilityElement(children: .combine)
     }
 
-    private func formatDate(_ date: Date) -> String {
-        let f = DateFormatter()
-        f.dateStyle = .long
-        f.timeStyle = .none
-        return f.string(from: date)
+    private func attributionLine(_ attribution: String) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: "person.2.fill")
+                .font(JourneyFont.meta)
+                .foregroundStyle(Brand.textTertiary)
+                .accessibilityHidden(true)
+            Text(attribution)
+                .font(JourneyFont.caption)
+                .foregroundStyle(Brand.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(.horizontal, 4)
     }
 }

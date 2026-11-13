@@ -23,10 +23,16 @@ struct ChatView: View {
     @State private var pendingPhotoQueue: [ChatMessage] = []
     @State private var seenPhotoMessageIds: Set<String> = []
     @FocusState private var isComposerFocused: Bool
+    /// Opens a future letter seeded with the given words. Returns false when
+    /// it could not (no partner yet), so the typed message is kept.
+    private let onWriteLetter: ((String) -> Bool)?
 
-    init(session: UserSession, profileViewModel: CouplePersonProfileViewModel) {
+    init(session: UserSession,
+         profileViewModel: CouplePersonProfileViewModel,
+         onWriteLetter: ((String) -> Bool)? = nil) {
         self.session = session
         self.profileViewModel = profileViewModel
+        self.onWriteLetter = onWriteLetter
         _viewModel = StateObject(wrappedValue: ChatViewModel(session: session))
     }
 
@@ -321,11 +327,29 @@ struct ChatView: View {
 
     private var composerBar: some View {
         HStack(spacing: 10) {
-            Button {
-                UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                showQuizHub = true
+            // "+": a future letter or a quiz. A typed message can be turned
+            // into a letter instead of being sent: the words move into the
+            // letter draft and leave the field, so the surprise can't go out
+            // by accident.
+            Menu {
+                if let onWriteLetter {
+                    Button {
+                        if onWriteLetter(viewModel.draftText) {
+                            viewModel.draftText = ""
+                            isComposerFocused = false
+                        }
+                    } label: {
+                        Label(hasDraft ? "Turn into a future letter" : "Write a future letter",
+                              systemImage: "envelope")
+                    }
+                }
+                Button {
+                    showQuizHub = true
+                } label: {
+                    Label("Quiz", systemImage: "sparkles")
+                }
             } label: {
-                Image(systemName: "sparkles")
+                Image(systemName: "plus")
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(Brand.accentStart)
                     .frame(width: 38, height: 38)
@@ -335,8 +359,7 @@ struct ChatView: View {
                             .overlay(Circle().strokeBorder(Brand.divider, lineWidth: 1))
                     )
             }
-            .buttonStyle(BouncyButtonStyle())
-            .accessibilityLabel("Open Quiz Hub")
+            .accessibilityLabel("Future letter or quiz")
 
             photoButton
                 .accessibilityLabel("Send a photo")
@@ -386,6 +409,11 @@ struct ChatView: View {
             Brand.backgroundTop.opacity(0.95)
                 .overlay(Rectangle().fill(Brand.divider).frame(height: 0.5), alignment: .top)
         )
+    }
+
+    /// Words in the message field, which the + menu can turn into a letter.
+    private var hasDraft: Bool {
+        !viewModel.draftText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
     private var canSend: Bool {

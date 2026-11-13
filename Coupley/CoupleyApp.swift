@@ -212,6 +212,26 @@ struct RootView: View {
         if case .unauthenticated = sessionStore.appState {
             notificationViewModel.tearDownForSignOut()
         }
+        // Letter, capsule, crown and anniversary reminders live on this
+        // device, and so do Journey's caches of the couple's memories, start
+        // date and crowns. Leaving .ready (sign-out, disconnect, account
+        // deletion, whose signOut() returns early before the teardown hooks)
+        // must take pending AND delivered reminders off it and drop those
+        // caches. A brief .needsPairing heals itself: back in .ready, the
+        // letters listener reconciles the letter reminders, WidgetSyncService
+        // reschedules the Journey reminders and the listeners refill the
+        // caches.
+        switch sessionStore.appState {
+        case .unauthenticated, .needsPairing:
+            Task {
+                await FutureLetterNotificationScheduler().cancelAll()
+                await TimeTreeNotificationScheduler().cancelAll()
+                await AnniversaryNotificationScheduler().cancelAll()
+            }
+            TimeTreeViewModel.purgeLocalCaches()
+        case .loading, .ready:
+            break
+        }
     }
 
     private var stateID: Int {

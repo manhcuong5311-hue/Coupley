@@ -2,13 +2,19 @@
 //  MemoryCard.swift
 //  Coupley
 //
-//  A single luxury memory card. Two visual modes:
-//   - Standard: hero photo, title, date, note, emotion chips, attribution.
-//   - Capsule (locked): photo placeholder is fully obscured, body and
-//     emotions are redacted, but a beautiful "X days until unlock"
-//     countdown is rendered with a sealed-envelope motif.
+//  One memory on Journey's Timeline: title, date, note, feelings and who it
+//  is from, with its photo as a thumbnail on the right.
+//
+//  Only opened memories reach this card. A capsule that is still sealed is a
+//  chip in the Timeline's "Sealed for later" group (JourneyTimelineCapsuleRow),
+//  so there is no locked state here to redact.
+//
+//  Two buttons, never one inside the other: the card's content opens the
+//  memory, and a memory without a photo offers "Add photo" underneath. A
+//  memory without a photo draws no empty photo box; its text takes the width.
 //
 
+import Foundation
 import SwiftUI
 
 // MARK: - Memory Card
@@ -17,135 +23,146 @@ struct MemoryCard: View {
 
     let memory: TimeMemory
     let now: Date
-    /// Position in the timeline (used for the small node + connecting
-    /// line on the leading edge — drawn outside the card by the parent).
-    var indexInTimeline: Int = 0
-    var onTap: () -> Void = {}
+    let onTap: () -> Void
+    /// Nil hides "Add photo" even when the memory has none.
+    let onAddPhoto: (() -> Void)?
 
-    private var isLocked: Bool { memory.isLocked(at: now) }
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.displayScale) private var displayScale
 
-    var body: some View {
-        Button(action: onTap) {
-            if isLocked {
-                lockedBody
-            } else {
-                openBody
-            }
-        }
-        .buttonStyle(BouncyButtonStyle(scale: 0.98))
+    /// The main button's press, so the whole card gives under it the way it
+    /// did when the card was one button.
+    @State private var isPressed = false
+
+    init(memory: TimeMemory,
+         now: Date,
+         onTap: @escaping () -> Void,
+         onAddPhoto: (() -> Void)? = nil) {
+        self.memory = memory
+        self.now = now
+        self.onTap = onTap
+        self.onAddPhoto = onAddPhoto
     }
 
-    // MARK: - Open (standard) body
-
-    private var openBody: some View {
-        // Side-by-side layout: text content fills the left column, photo
-        // (when present) sits on the right as a tall thumbnail. When there's
-        // no photo, the text simply takes the full width — the card adapts
-        // gracefully without a photo placeholder.
-        HStack(alignment: .top, spacing: 14) {
-            VStack(alignment: .leading, spacing: 14) {
-                header
-
-                if let note = memory.note, !note.isEmpty {
-                    Text(note)
-                        .font(.system(size: 14, weight: .regular, design: .rounded))
-                        .foregroundStyle(Brand.textPrimary.opacity(0.92))
-                        .lineLimit(4)
-                        .multilineTextAlignment(.leading)
-                        .lineSpacing(2)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
-
-                if !memory.emotions.isEmpty {
-                    emotionChips
-                }
-
-                if let attribution = memory.attribution, !attribution.isEmpty {
-                    HStack(spacing: 6) {
-                        Image(systemName: "person.2.fill")
-                            .font(.system(size: 9, weight: .semibold))
-                            .foregroundStyle(Brand.textTertiary)
-                        Text(attribution)
-                            .font(.system(size: 11, weight: .regular, design: .rounded))
-                            .foregroundStyle(Brand.textTertiary)
-                    }
-                }
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Button(action: onTap) {
+                summary
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .contentShape(Rectangle())
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .buttonStyle(MemoryCardPressStyle(isPressed: $isPressed))
+            // One element, read as sentences, with no emoji names:
+            // "First Kiss, May 1, 2026. Nervous, Joyful, Tender. Has a photo."
+            .accessibilityLabel(spokenLabel)
+            .accessibilityHint("Shows the memory.")
 
-            if let urlString = memory.photoURL, let url = URL(string: urlString) {
-                sidePhoto(url: url)
-            } else {
-                Image(systemName: "photo")
-                    .font(.system(size: 20, weight: .regular))
-                    .foregroundStyle(Brand.textTertiary.opacity(0.55))
-                    .frame(width: 84, height: 84)
-                    .wellBackground(in: .card, radius: 16)
+            if photoURL == nil, let onAddPhoto {
+                addPhotoButton(action: onAddPhoto)
+            }
+        }
+        .modifier(TierContainer(tier: .card))
+        // BouncyButtonStyle's press, applied to the card rather than to the
+        // content inside it.
+        .scaleEffect(isPressed ? 0.98 : 1)
+        .animation(.spring(response: 0.25, dampingFraction: 0.6), value: isPressed)
+    }
+
+    // MARK: - Summary
+
+    private var isLarge: Bool { dynamicTypeSize.isAccessibilitySize }
+
+    private var photoURL: URL? {
+        guard let string = memory.photoURL, !string.isEmpty else { return nil }
+        return URL(string: string)
+    }
+
+    /// Text on the left and the thumbnail on the right. At the accessibility
+    /// text sizes the thumbnail moves under the text, which keeps the full
+    /// width and its title stays on the card's first line.
+    private var summary: some View {
+        let layout = isLarge
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 14))
+            : AnyLayout(HStackLayout(alignment: .top, spacing: 14))
+        return layout {
+            textColumn
+            if let photoURL {
+                thumbnail(url: photoURL)
+            }
+        }
+    }
+
+    private var textColumn: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            header
+
+            if let note = memory.note, !note.isEmpty {
+                Text(note)
+                    .font(JourneyFont.body)
+                    .foregroundStyle(Brand.textPrimary.opacity(0.92))
+                    .lineLimit(4)
+                    .multilineTextAlignment(.leading)
+                    .lineSpacing(2)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+
+            if !memory.emotions.isEmpty {
+                emotionChips
+            }
+
+            if let attribution = memory.attribution, !attribution.isEmpty {
+                HStack(spacing: 6) {
+                    Image(systemName: "person.2.fill")
+                        .imageScale(.small)
+                    Text(attribution)
+                }
+                .font(JourneyFont.meta)
+                .foregroundStyle(Brand.textSecondary)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .modifier(TierContainer(tier: .card))
     }
 
-    // MARK: - Side photo (right-hand thumbnail)
-
-    /// Square-ish thumbnail anchored to the top-right of the text column.
-    /// Sized to roughly match the height of the header + note block so the
-    /// card reads as a balanced two-column composition.
-    private func sidePhoto(url: URL) -> some View {
-        CachedAsyncImage(url: url) { phase in
-            ZStack {
-                Brand.accentStart.opacity(0.06)
-                if case .success(let image) = phase {
-                    image.resizable().scaledToFill()
-                }
-                // Subtle inner-edge sheen so the thumb doesn't feel pasted on.
-                LinearGradient(
-                    colors: [.white.opacity(0.10), .clear, .black.opacity(0.18)],
-                    startPoint: .top, endPoint: .bottom
-                )
-            }
-            .frame(width: 84, height: 84)
-            .clipped()
-        }
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .strokeBorder(Brand.divider, lineWidth: 0.5)
-        )
-        .shadow(color: .black.opacity(0.10), radius: 6, y: 2)
-    }
-
-    // MARK: - Header (title + kind badge + date)
+    // MARK: - Header (kind, title, date, capsule badge)
 
     private var header: some View {
         HStack(alignment: .top, spacing: 10) {
-            ZStack {
-                Circle()
-                    .fill(Brand.accentStart.opacity(0.12))
-                    .frame(width: 38, height: 38)
-                Text(memory.kind.emoji)
-                    .font(.system(size: 18))
-            }
+            Text(memory.kind.emoji)
+                .font(.system(size: 18))
+                .frame(width: 38, height: 38)
+                .background(Circle().fill(Brand.accentStart.opacity(0.12)))
+                .accessibilityHidden(true)
 
-            VStack(alignment: .leading, spacing: 2) {
-                Text(memory.title)
-                    .font(.system(size: 17, weight: .semibold, design: .rounded))
+            VStack(alignment: .leading, spacing: 3) {
+                Text(displayTitle)
+                    .font(JourneyFont.title)
                     .foregroundStyle(Brand.textPrimary)
-                    .lineLimit(2)
+                    .lineLimit(isLarge ? 4 : 2)
                     .multilineTextAlignment(.leading)
-                Text(memory.formattedDate())
-                    .font(.system(size: 11, weight: .medium, design: .rounded))
-                    .foregroundStyle(Brand.textTertiary)
+
+                Text(longDate)
+                    .font(JourneyFont.meta)
+                    .foregroundStyle(Brand.textSecondary)
+
+                if memory.isUnlockedCapsule(at: now) {
+                    capsuleOpenedBadge
+                        .padding(.top, 3)
+                }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-
-            if memory.isUnlockedCapsule(at: now) {
-                Image(systemName: "envelope.open.fill")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(Color(red: 1.0, green: 0.78, blue: 0.30))
-            }
         }
+    }
+
+    /// Gold text through `JourneyStyle.goldText`, which stays readable on the
+    /// Light palettes; the glyph keeps the capsule's icon gold.
+    private var capsuleOpenedBadge: some View {
+        HStack(spacing: 4) {
+            Image(systemName: "lock.open.fill")
+                .foregroundStyle(FutureLetterStyle.gold)
+            Text("Capsule opened")
+                .foregroundStyle(JourneyStyle.goldText)
+        }
+        .font(JourneyFont.meta)
     }
 
     // MARK: - Emotion chips
@@ -154,9 +171,10 @@ struct MemoryCard: View {
         FlowLayout(spacing: 6) {
             ForEach(memory.emotions, id: \.self) { emotion in
                 HStack(spacing: 4) {
-                    Text(emotion.emoji).font(.system(size: 10))
+                    Text(emotion.emoji)
+                        .font(JourneyFont.meta)
                     Text(emotion.displayName)
-                        .font(.system(size: 11, weight: .medium, design: .rounded))
+                        .font(JourneyFont.caption)
                 }
                 .foregroundStyle(Brand.textSecondary)
                 .padding(.horizontal, 9)
@@ -166,116 +184,103 @@ struct MemoryCard: View {
         }
     }
 
-    // MARK: - Locked (capsule) body
+    // MARK: - Thumbnail
 
-    private var lockedBody: some View {
-        let daysLeft = memory.daysUntilUnlock(now: now) ?? 0
+    private static let thumbnailSide: CGFloat = 84
 
-        return VStack(alignment: .leading, spacing: 16) {
-            HStack(alignment: .top, spacing: 12) {
-                ZStack {
-                    Circle()
-                        .fill(
-                            LinearGradient(
-                                colors: [
-                                    Color(red: 1.0, green: 0.85, blue: 0.45).opacity(0.30),
-                                    Color(red: 0.95, green: 0.55, blue: 0.30).opacity(0.18)
-                                ],
-                                startPoint: .top, endPoint: .bottom
-                            )
-                        )
-                        .frame(width: 44, height: 44)
-                    Image(systemName: "lock.fill")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(Color(red: 1.0, green: 0.78, blue: 0.30))
-                }
+    /// The longest side to decode, in pixels: never the photo's full size.
+    /// `maxPixelSize` bounds the LONGEST side and the thumbnail is filled and
+    /// cropped, so 84pt × scale alone (252 px at 3x) would leave a 4:3
+    /// photo's short side at 189 px, stretched to 252. A third more covers
+    /// 4:3 at full sharpness: 336 px at 3x, about 340 KB decoded.
+    private var thumbnailPixelSize: CGFloat {
+        (Self.thumbnailSide * displayScale * 4 / 3).rounded(.up)
+    }
 
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Memory Capsule")
-                        .font(.system(size: 11, weight: .semibold, design: .rounded))
-                        .foregroundStyle(Brand.textSecondary)
-                        .textCase(.uppercase)
-                        .tracking(0.6)
-
-                    Text(memory.title.isEmpty ? "A future moment for you both" : memory.title)
-                        .font(.system(size: 17, weight: .semibold, design: .rounded))
-                        .foregroundStyle(Brand.textPrimary)
-                        .lineLimit(2)
-                }
-
-                Spacer()
-            }
-
-            VStack(alignment: .leading, spacing: 6) {
-                HStack(alignment: .lastTextBaseline, spacing: 6) {
-                    Text("\(max(0, daysLeft))")
-                        .font(.system(size: 38, weight: .bold, design: .rounded))
-                        .foregroundStyle(Brand.textPrimary)
-                        .contentTransition(.numericText())
-                        .monospacedDigit()
-                    Text(daysLeft == 1 ? "day until it opens" : "days until it opens")
-                        .font(.system(size: 12, weight: .medium, design: .rounded))
-                        .foregroundStyle(Brand.textSecondary)
-                        .padding(.bottom, 6)
-                }
-
-                if let unlockDate = memory.unlockDate {
-                    Text("Sealed for \(formatDate(unlockDate))")
-                        .font(.system(size: 11, weight: .regular, design: .rounded))
+    /// Decoded small, never at the photo's full size. The well shows while
+    /// it loads, so the card keeps its shape.
+    private func thumbnail(url: URL) -> some View {
+        CachedAsyncImage(url: url, maxPixelSize: thumbnailPixelSize) { phase in
+            ZStack {
+                if case .success(let image) = phase {
+                    image
+                        .resizable()
+                        .scaledToFill()
+                } else if case .failure = phase {
+                    Image(systemName: "photo")
+                        .font(.system(size: 18, weight: .regular))
                         .foregroundStyle(Brand.textTertiary)
                 }
             }
-
-            // Decorative wax-seal style strip
-            HStack(spacing: 0) {
-                ForEach(0..<14, id: \.self) { i in
-                    RoundedRectangle(cornerRadius: 2)
-                        .fill(
-                            (i % 2 == 0)
-                            ? Color(red: 1.0, green: 0.78, blue: 0.30).opacity(0.65)
-                            : Color(red: 0.95, green: 0.55, blue: 0.30).opacity(0.45)
-                        )
-                        .frame(height: 4)
-                }
-            }
+            .frame(width: Self.thumbnailSide, height: Self.thumbnailSide)
+            .clipShape(RoundedRectangle(cornerRadius: 14, style: Brand.cornerStyle))
         }
-        .padding(18)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .fill(Brand.surfaceLight)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 22, style: .continuous)
-                        .strokeBorder(
-                            LinearGradient(
-                                colors: [
-                                    Color(red: 1.0, green: 0.85, blue: 0.45).opacity(0.55),
-                                    Color(red: 0.95, green: 0.55, blue: 0.30).opacity(0.30)
-                                ],
-                                startPoint: .topLeading, endPoint: .bottomTrailing
-                            ),
-                            lineWidth: 1
-                        )
-                )
-                .shadow(color: Color(red: 1.0, green: 0.65, blue: 0.30).opacity(0.18), radius: 14, y: 4)
-        )
+        .wellBackground(in: .card, radius: 14)
+        .accessibilityHidden(true)
     }
 
-    // MARK: - Card background
+    // MARK: - Add photo
 
-    private var cardBackground: some View {
-        RoundedRectangle(cornerRadius: 22, style: .continuous)
-            .fill(Brand.surfaceLight)
-            .overlay(
-                RoundedRectangle(cornerRadius: 22, style: .continuous)
-                    .strokeBorder(Brand.divider, lineWidth: 1)
-            )
+    /// Its own button below the card's content, never inside it. The padding
+    /// only widens the tap target.
+    private func addPhotoButton(action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 5) {
+                Image(systemName: "photo.badge.plus")
+                Text("Add photo")
+            }
+            .font(JourneyFont.meta)
+            .foregroundStyle(Brand.accentStart)
+            .padding(.vertical, 6)
+            .padding(.trailing, 12)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Add a photo to \(spokenTitle)")
     }
 
-    private func formatDate(_ date: Date) -> String {
-        let f = DateFormatter()
-        f.dateStyle = .long
-        f.timeStyle = .none
-        return f.string(from: date)
+    // MARK: - Copy
+
+    private var displayTitle: String {
+        memory.title.isEmpty ? memory.kind.displayName : memory.title
+    }
+
+    private var spokenTitle: String {
+        let trimmed = memory.title.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? memory.kind.displayName : trimmed
+    }
+
+    /// "May 1, 2026", in the viewer's locale.
+    private var longDate: String {
+        memory.date.formatted(date: .long, time: .omitted)
+    }
+
+    private var spokenLabel: String {
+        var sentences = ["\(spokenTitle), \(longDate)."]
+        if !memory.emotions.isEmpty {
+            sentences.append(memory.emotions.map { $0.displayName }.joined(separator: ", ") + ".")
+        }
+        if photoURL != nil {
+            sentences.append("Has a photo.")
+        }
+        if memory.isUnlockedCapsule(at: now) {
+            sentences.append("Capsule opened.")
+        }
+        return sentences.joined(separator: " ")
+    }
+}
+
+// MARK: - Press
+
+/// Draws nothing itself: it hands the press to the card, which scales as a
+/// whole, "Add photo" included, while the two stay separate buttons.
+private struct MemoryCardPressStyle: ButtonStyle {
+    @Binding var isPressed: Bool
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .onChange(of: configuration.isPressed) { _, pressed in
+                isPressed = pressed
+            }
     }
 }

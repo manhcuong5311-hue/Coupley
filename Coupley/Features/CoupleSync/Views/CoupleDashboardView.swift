@@ -14,6 +14,7 @@ struct CoupleDashboardView: View {
     @ObservedObject var statsViewModel: CoupleStatsViewModel
     @ObservedObject var profileViewModel: CouplePersonProfileViewModel
     @ObservedObject var microActionViewModel: MicroActionViewModel
+    @ObservedObject var lettersViewModel: FutureLetterViewModel
     @Binding var showPairingSheet: Bool
     @Binding var showStatsSheet: Bool
     @Binding var selectedTab: AppTab
@@ -69,6 +70,20 @@ struct CoupleDashboardView: View {
                 masthead
                     .padding(.horizontal, Brand.Space.gutter)
 
+                // ── T0b ── pinned letters. The one sanctioned object between
+                // the masthead and the hero, because the feature's promise is
+                // "pinned on Home". One chip row (~56pt + 14pt), never hero
+                // tier, never an accent wash, never an Eyebrow. A letter that
+                // is ready for this user is the hero instead.
+                if !pinnedLetters.isEmpty {
+                    Color.clear.frame(height: Brand.Space.sibling)
+                    FutureLetterPinnedRow(viewModel: lettersViewModel,
+                                          partnerName: partnerName,
+                                          includesReady: pinsReadyLetters)
+                        .padding(.horizontal, Brand.Space.gutter)
+                        .transition(.opacity)
+                }
+
                 // ── T1 ── the one hero. It sits directly under the masthead
                 // because it has to be ABOVE THE FOLD to mean anything: the
                 // visible box is ~674pt on an iPhone 15 once the tab bar and
@@ -107,6 +122,8 @@ struct CoupleDashboardView: View {
                 Color.clear.frame(height: 120)
             }
             .animation(.spring(response: 0.45, dampingFraction: 0.85), value: homeHero)
+            .animation(.spring(response: 0.45, dampingFraction: 0.85),
+                       value: pinnedLetters.map(\.id))
         }
         .task { suggestionProfile = await viewModel.loadPartnerProfile() }
         .sheet(isPresented: $viewModel.showAISuggestions) {
@@ -199,10 +216,10 @@ struct CoupleDashboardView: View {
                 partnerName: partnerName,
                 onSubmit: { qotdViewModel.submit(answer: $0, for: quiz) },
                 onCancel: { qotdViewModel.quizBeingAnswered = nil },
-                submitFailed: qotdViewModel.errorMessage != nil
+                submitFailed: qotdViewModel.submitError != nil
             )
             .alert("Couldn't send your answer", isPresented: Binding(
-                get: { qotdViewModel.errorMessage != nil },
+                get: { qotdViewModel.submitError != nil },
                 set: { if !$0 { qotdViewModel.dismissError() } }
             )) {
                 Button("OK", role: .cancel) {}
@@ -285,6 +302,10 @@ struct CoupleDashboardView: View {
 
     private var mastheadButtons: some View {
         HStack(alignment: .center, spacing: 10) {
+            if lettersViewModel.isAvailable {
+                writeLetterHeaderButton
+            }
+
             aiCoachHeaderButton
 
             Button {
@@ -311,6 +332,32 @@ struct CoupleDashboardView: View {
                 }
             }
             .buttonStyle(BouncyButtonStyle(scale: 0.92))
+        }
+    }
+
+    /// One tap to a new future letter, always above the fold. Outlined like
+    /// Settings, so the hero's CTA stays the screen's one filled accent; the
+    /// amber glyph matches the pinned row the letter will create. The letter
+    /// sheet itself is presented by ContentView.
+    private var writeLetterHeaderButton: some View {
+        Button {
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            lettersViewModel.compose()
+        } label: {
+            ZStack {
+                Circle()
+                    .fill(Brand.surfaceLight)
+                    .frame(width: 36, height: 36)
+                    .overlay(Circle().strokeBorder(Brand.divider, lineWidth: 1))
+                Image(systemName: "envelope.fill")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(FutureLetterStyle.accent)
+            }
+        }
+        .buttonStyle(BouncyButtonStyle(scale: 0.92))
+        .accessibilityLabel("Write a future letter")
+        .contextMenu {
+            Button("All letters", systemImage: "tray.full") { lettersViewModel.openHub() }
         }
     }
 
@@ -372,14 +419,28 @@ struct CoupleDashboardView: View {
     ///
     /// Tier is a function of state, never of scroll position, so QotD, Photo
     /// and TogetherNow can all render nothing and the hierarchy is unchanged.
+    /// A ready letter is the hero unless the two of them are here right now;
+    /// then it is pinned, so it never drops out of sight.
+    private var pinsReadyLetters: Bool { homeHero == .togetherNow }
+
+    private var pinnedLetters: [FutureLetter] {
+        lettersViewModel.pinnedLetters(includingReady: pinsReadyLetters)
+    }
+
     private enum HomeHero: Equatable {
-        case togetherNow, question, photo, microAction, mood, none
+        case letter, togetherNow, question, photo, microAction, mood, none
     }
 
     private var homeHero: HomeHero {
         // Co-presence first: it is the only thing on this screen that is true
         // *right now* rather than true all day.
         if viewModel.partnerIsOnline { return .togetherNow }
+
+        // A letter that has reached its moment: it waited days or years for
+        // this, it happens once, and only its reader can do the job, so it
+        // must not be missable. It yields only to the two of them being here
+        // at once, which passes; then it is pinned first, right above.
+        if lettersViewModel.heroLetter != nil { return .letter }
 
         // Something still to do.
         if case .awaitingMe = qotdViewModel.state       { return .question }
@@ -408,6 +469,9 @@ struct CoupleDashboardView: View {
 
     private var heroHeadline: String {
         switch homeHero {
+        case .letter:
+            let count = lettersViewModel.readyForMeCount
+            return count > 1 ? "\(count) letters for you." : "A letter for you."
         case .togetherNow: return "You're both here."
         case .question:
             if case .awaitingMe = qotdViewModel.state { return "One question today." }
@@ -423,6 +487,12 @@ struct CoupleDashboardView: View {
 
     private var heroStandfirst: String {
         switch homeHero {
+        case .letter:
+            guard let letter = lettersViewModel.heroLetter else { return "" }
+            let when = FutureLetterClock.sealedPhrase(letter.sealedMoment, now: lettersViewModel.now)
+            return lettersViewModel.readyForMeCount > 1
+                ? "From \(partnerName), the first sealed \(when)"
+                : "\(partnerName) sealed it \(when)"
         case .togetherNow: return "Reach for them while they are here"
         case .question:
             if case .awaitingMe = qotdViewModel.state { return "Answer blind, then compare" }
@@ -441,6 +511,16 @@ struct CoupleDashboardView: View {
     @ViewBuilder
     private var heroSlot: some View {
         switch homeHero {
+        case .letter:
+            if let letter = lettersViewModel.heroLetter {
+                FutureLetterHeroCard(
+                    letter: letter,
+                    partnerName: partnerName,
+                    moreReady: lettersViewModel.readyForMeCount - 1,
+                    now: lettersViewModel.now,
+                    onOpen: { lettersViewModel.show(letter) }
+                )
+            }
         case .togetherNow:
             TogetherNowCard(
                 partnerName: partnerName,
@@ -724,12 +804,27 @@ struct CoupleDashboardView: View {
                 ) { showStatsSheet = true }
             }
 
-            activityCard(
-                icon: "heart.text.square.fill",
-                tint: Color(red: 1.0, green: 0.40, blue: 0.55),
-                title: "Profile",
-                subtitle: "Likes, dislikes & more"
-            ) { showProfileHub = true }
+            HStack(spacing: 10) {
+                activityCard(
+                    icon: "heart.text.square.fill",
+                    tint: Color(red: 1.0, green: 0.40, blue: 0.55),
+                    title: "Profile",
+                    subtitle: "Likes, dislikes & more"
+                ) { showProfileHub = true }
+
+                activityCard(
+                    icon: "envelope.fill",
+                    tint: FutureLetterStyle.accent,
+                    title: "Future Letters",
+                    subtitle: "Sealed until a day you choose"
+                ) {
+                    if lettersViewModel.isAvailable {
+                        lettersViewModel.openHub()
+                    } else {
+                        showPairingSheet = true
+                    }
+                }
+            }
 
             aiCoachActivityCard
         }
@@ -1352,6 +1447,7 @@ struct CoupleDashboardView: View {
             statsViewModel: CoupleStatsViewModel(),
             profileViewModel: CouplePersonProfileViewModel(session: .demo),
             microActionViewModel: MicroActionViewModel(session: .demo),
+            lettersViewModel: FutureLetterViewModel(session: .demo),
             showPairingSheet: .constant(false),
             showStatsSheet: .constant(false),
             selectedTab: .constant(.home)

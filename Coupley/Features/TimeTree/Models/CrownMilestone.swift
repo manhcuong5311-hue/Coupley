@@ -3,7 +3,7 @@
 //  Coupley
 //
 //  Crown milestones are the gamified anniversaries — 100 days, 1 year,
-//  500 days, 1000 days, 2 years, 3 years, 5 years, 7 years, 10 years.
+//  500 days, 2 years, 1000 days, 3 years, 5 years, 7 years, 10 years.
 //  When a couple crosses one, the tree unlocks a new visual flourish
 //  (a golden crown ring) and a one-time celebration overlay fires.
 //
@@ -11,6 +11,10 @@
 //  We do NOT persist a "this crown was reached" flag — the celebration
 //  overlay uses a small UserDefaults flag keyed by milestone+coupleId so
 //  it shows once per achievement per device, not once per app launch.
+//
+//  Every date here counts from the day the start date names
+//  (`JourneyCalendarDay.localDay(ofStored:)`), never from the raw stored
+//  instant, so both partners reach a crown on the same calendar day.
 //
 
 import Foundation
@@ -20,9 +24,12 @@ import Foundation
 /// A reachable milestone on the relationship's timeline. Two flavors:
 ///   - day-based  ("100 Days", "500 Days", "1000 Days")
 ///   - year-based ("1 Year", "2 Years", ...)
-struct CrownMilestone: Identifiable, Hashable, Equatable {
+///
+/// A pure value: usable from any isolation (the reminder scheduler computes
+/// crown dates too).
+nonisolated struct CrownMilestone: Identifiable, Hashable, Equatable {
 
-    enum Kind: Hashable, Equatable {
+    nonisolated enum Kind: Hashable, Equatable {
         case days(Int)
         case years(Int)
     }
@@ -64,17 +71,19 @@ struct CrownMilestone: Identifiable, Hashable, Equatable {
         }
     }
 
-    /// The exact day this milestone is reached, given an anchor date.
-    /// Computed at calendar day-granularity so DST/timezone shifts don't
-    /// jitter the date by ±1 day.
+    /// The day this milestone is reached (the start of that day in
+    /// `calendar`), counted from the day the stored start date names.
+    /// Day-granular, so DST and time-zone shifts can't jitter it by a day.
     func date(anchor: Date, calendar: Calendar = .current) -> Date {
-        let start = calendar.startOfDay(for: anchor)
+        let start = JourneyCalendarDay.localDay(ofStored: anchor, calendar: calendar)
+        let reached: Date?
         switch kind {
         case .days(let d):
-            return calendar.date(byAdding: .day, value: d, to: start) ?? start
+            reached = calendar.date(byAdding: .day, value: d, to: start)
         case .years(let y):
-            return calendar.date(byAdding: .year, value: y, to: start) ?? start
+            reached = JourneyCalendarDay.gregorian(in: calendar).date(byAdding: .year, value: y, to: start)
         }
+        return calendar.startOfDay(for: reached ?? start)
     }
 
     /// Has the couple already reached this milestone?
@@ -85,9 +94,20 @@ struct CrownMilestone: Identifiable, Hashable, Equatable {
     /// Days remaining until reaching this milestone. 0 if today is the
     /// milestone day. Negative if already past.
     func daysUntil(anchor: Date, now: Date = Date(), calendar: Calendar = .current) -> Int {
-        let target = calendar.startOfDay(for: date(anchor: anchor, calendar: calendar))
+        let target = date(anchor: anchor, calendar: calendar)
         let today  = calendar.startOfDay(for: now)
         return calendar.dateComponents([.day], from: today, to: target).day ?? 0
+    }
+
+    /// Reached, and at most `withinDays` calendar days ago (0 = today).
+    /// Drives the automatic celebration, so a couple who first opens the app
+    /// a day or two after the milestone still gets the moment.
+    func isRecentlyReached(anchor: Date,
+                           now: Date = Date(),
+                           withinDays: Int = 3,
+                           calendar: Calendar = .current) -> Bool {
+        let daysAgo = -daysUntil(anchor: anchor, now: now, calendar: calendar)
+        return daysAgo >= 0 && daysAgo <= max(0, withinDays)
     }
 }
 
@@ -95,40 +115,54 @@ struct CrownMilestone: Identifiable, Hashable, Equatable {
 
 extension CrownMilestone {
 
-    /// The full ladder, in order from easiest to hardest. New entries
-    /// can be appended without breaking anything — old devices will
-    /// simply not render the milestones they don't know about, but the
-    /// computed list at runtime always reflects this single source.
+    /// The full ladder, in date order for every start date (2 years is day
+    /// 730 or 731, before 1000 days; 3 years is day 1095 or 1096, after it).
+    /// `next` and `reached` still sort by each milestone's actual date for
+    /// the given anchor, so this order is never load-bearing.
     static let ladder: [CrownMilestone] = [
         .init(kind: .days(100)),
         .init(kind: .years(1)),
         .init(kind: .days(500)),
-        .init(kind: .days(1000)),
         .init(kind: .years(2)),
+        .init(kind: .days(1000)),
         .init(kind: .years(3)),
         .init(kind: .years(5)),
         .init(kind: .years(7)),
         .init(kind: .years(10)),
     ]
 
-    /// The next unreached milestone given an anchor. nil if the couple
-    /// has already passed every entry in the ladder (which is a great
+    /// The ladder sorted by the date each milestone falls on for `anchor`
+    /// (ladder order breaks a tie).
+    private static func sortedLadder(for anchor: Date, calendar: Calendar) -> [CrownMilestone] {
+        ladder.enumerated()
+            .map { (date: $0.element.date(anchor: anchor, calendar: calendar), index: $0.offset, milestone: $0.element) }
+            .sorted { ($0.date, $0.index) < ($1.date, $1.index) }
+            .map(\.milestone)
+    }
+
+    /// The next unreached milestone given an anchor, by date. nil if the
+    /// couple has already passed every entry in the ladder (which is a great
     /// problem to have).
     static func next(after anchor: Date, now: Date = Date(), calendar: Calendar = .current) -> CrownMilestone? {
-        ladder.first { !$0.isReached(anchor: anchor, now: now, calendar: calendar) }
+        sortedLadder(for: anchor, calendar: calendar)
+            .first { !$0.isReached(anchor: anchor, now: now, calendar: calendar) }
     }
 
-    /// All milestones already reached, oldest first.
+    /// All milestones already reached, oldest first (by date).
     static func reached(after anchor: Date, now: Date = Date(), calendar: Calendar = .current) -> [CrownMilestone] {
-        ladder.filter { $0.isReached(anchor: anchor, now: now, calendar: calendar) }
+        sortedLadder(for: anchor, calendar: calendar)
+            .filter { $0.isReached(anchor: anchor, now: now, calendar: calendar) }
     }
 
-    /// Did the couple pass this milestone within the last 24 hours? Used
-    /// to drive the one-time celebration overlay on first appearance
-    /// after the milestone day arrives.
+    /// The ladder entry with this `id` ("d100", "y2", …), e.g. from a crown
+    /// reminder's payload. nil for anything not on the ladder.
+    static func milestone(id: String) -> CrownMilestone? {
+        ladder.first { $0.id == id }
+    }
+
+    /// Reached today. Kept for existing callers; the celebration now uses
+    /// `isRecentlyReached(anchor:now:withinDays:calendar:)`.
     func isFreshlyReached(anchor: Date, now: Date = Date(), calendar: Calendar = .current) -> Bool {
-        let milestoneDay = calendar.startOfDay(for: date(anchor: anchor, calendar: calendar))
-        let today = calendar.startOfDay(for: now)
-        return milestoneDay == today
+        daysUntil(anchor: anchor, now: now, calendar: calendar) == 0
     }
 }

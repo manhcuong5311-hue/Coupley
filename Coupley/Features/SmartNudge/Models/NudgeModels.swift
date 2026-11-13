@@ -14,6 +14,8 @@ enum NudgeType: String, Codable, CaseIterable {
     case ping       = "ping"
     case reaction   = "reaction"
     case questionOfTheDay = "qotd"
+    /// Local only: scheduled on the recipient's device for a letter's opening moment.
+    case futureLetter = "future_letter"
 
     var icon: String {
         switch self {
@@ -23,6 +25,7 @@ enum NudgeType: String, Codable, CaseIterable {
         case .ping:       return "paperplane.fill"
         case .reaction:   return "face.smiling.fill"
         case .questionOfTheDay: return "questionmark.bubble.fill"
+        case .futureLetter: return "envelope.fill"
         }
     }
 
@@ -34,6 +37,7 @@ enum NudgeType: String, Codable, CaseIterable {
         case .ping:       return "Thinking of You"
         case .reaction:   return "Reaction"
         case .questionOfTheDay: return "Question of the Day"
+        case .futureLetter: return "Future Letter"
         }
     }
 }

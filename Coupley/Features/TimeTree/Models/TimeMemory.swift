@@ -4,10 +4,17 @@
 //
 //  A single moment in the relationship's Time Tree. Memories live in
 //  Firestore at couples/{coupleId}/memories/{id} and are shared between
-//  both partners. Capsule memories are written now but locked until a
-//  future unlock date — only the existence + unlock countdown is visible
-//  before then; the body and photo are revealed together once the date
-//  arrives. This is the emotional engine of the Time Tree.
+//  both partners. Capsule memories are written now but sealed until a
+//  future unlock day, for both of you — only the existence + unlock
+//  countdown is visible before then; the body and photo are revealed
+//  together once the day arrives. This is the emotional engine of the
+//  Time Tree.
+//
+//  A capsule is only kept out of sight IN THE APP: the document itself is
+//  readable by both partners' clients. While it is sealed, only its author
+//  may edit it (TimeTreeViewModel.canEdit), and the device cache stores it
+//  without its note, emotions, attribution or photo. A letter that is truly
+//  time-locked on the server is a Future Letter.
 //
 
 import Foundation
@@ -176,9 +183,12 @@ enum MemoryEmotion: String, Codable, CaseIterable, Identifiable, Hashable {
 /// `couples/{coupleId}/memories/{id}`.
 ///
 /// `unlockDate` is the capsule mechanic: when non-nil and in the future,
-/// the body/photo of this memory is hidden from BOTH partners until the
-/// unlock date passes. Once unlocked, the memory becomes a normal entry
-/// in the timeline. The capsule countdown itself is always visible.
+/// the app keeps the body/photo of this memory out of sight for BOTH
+/// partners until the unlock moment passes (9:00 local time on the chosen
+/// day, `JourneyCalendarDay.capsuleUnlockMoment`; capsules sealed by earlier
+/// versions open at whatever time of day they stored).
+/// Once unlocked, the memory becomes a normal entry in the timeline. The
+/// capsule countdown itself is always visible.
 struct TimeMemory: Identifiable, Codable, Equatable, Hashable {
     @DocumentID var firestoreId: String?
     var id: String

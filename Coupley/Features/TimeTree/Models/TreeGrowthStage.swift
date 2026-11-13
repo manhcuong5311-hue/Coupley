@@ -31,17 +31,26 @@ enum TreeGrowthStage: Int, CaseIterable, Comparable {
         lhs.rawValue < rhs.rawValue
     }
 
-    static func from(daysTogether: Int) -> TreeGrowthStage {
-        switch daysTogether {
-        case ..<7:        return .seed
-        case 7..<30:      return .sprout
-        case 30..<90:     return .sapling
-        case 90..<180:    return .young
-        case 180..<365:   return .blooming
-        case 365..<730:   return .fruiting
-        case 730..<1460:  return .mature
-        default:          return .ancient
+    /// The day count on which this stage begins. The one source for every
+    /// threshold: `from(daysTogether:)` reads it, and so can anything that
+    /// explains the stages ("Blooming from day 180").
+    var startDay: Int {
+        switch self {
+        case .seed:      return 0
+        case .sprout:    return 7
+        case .sapling:   return 30
+        case .young:     return 90
+        case .blooming:  return 180
+        case .fruiting:  return 365
+        case .mature:    return 730
+        case .ancient:   return 1460
         }
+    }
+
+    /// The latest stage whose `startDay` has been reached. Anything below
+    /// day 0 (a start date in the future) is still a seed.
+    static func from(daysTogether: Int) -> TreeGrowthStage {
+        allCases.last { daysTogether >= $0.startDay } ?? .seed
     }
 
     // MARK: - Display
@@ -59,16 +68,17 @@ enum TreeGrowthStage: Int, CaseIterable, Comparable {
         }
     }
 
-    /// Short emotional caption shown under the tree stage badge.
+    /// Short emotional caption for the hero. The hero also shows
+    /// `displayName`, so no caption repeats its stage's name.
     var poeticCaption: String {
         switch self {
         case .seed:      return "Just planted. Tender beginnings."
-        case .sprout:    return "First green. Reaching for light."
+        case .sprout:    return "First green, reaching for light."
         case .sapling:   return "Steady growth, finding its shape."
         case .young:     return "Branches stretching outward."
-        case .blooming:  return "First flowers — your tree is blooming."
+        case .blooming:  return "First flowers on the branches."
         case .fruiting:  return "Golden fruit. A year of you."
-        case .mature:    return "Strong roots. Wide canopy."
+        case .mature:    return "Strong roots, a wide canopy."
         case .ancient:   return "An old tree. Remarkable, rare."
         }
     }

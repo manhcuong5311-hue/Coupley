@@ -90,6 +90,13 @@ final class MoodViewModel: ObservableObject {
             } catch let writeError as MoodWriteError where writeError.isQueued {
                 todayCheckinCount += 1
                 submissionState = .queued
+            } catch MoodWriteError.rejected {
+                // The server refused it. Not "saved", not "will sync": the
+                // branch below is only for solo users with no couple to write to.
+                submissionState = .error(
+                    MoodWriteError.rejected.errorDescription ?? "Failed to save. Please try again."
+                )
+                return
             } catch is MoodWriteError {
                 // `.notPaired`: there is no couple to write to yet, which is
                 // not a failure for someone using the app on their own. The

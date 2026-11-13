@@ -155,6 +155,13 @@ final class FirestoreConnectionService: ConnectionService {
         // their download URLs keep working.
         await deleteStoredPhotos(of: coupleRef)
 
+        // Future letters next: their bodies sit in a collection the rules never
+        // let anyone list, so each one is deleted by its envelope's id while the
+        // couple doc (and so isDisconnectedCouple) still exists. Never add the
+        // two letter collections to the flat lists below: a flat purge cannot
+        // see the bodies and would orphan every one of them.
+        try await deleteFutureLetters(coupleRef: coupleRef)
+
         for name in simpleSubcollections {
             try await deleteCollection(coupleRef.collection(name))
         }
@@ -232,6 +239,27 @@ final class FirestoreConnectionService: ConnectionService {
             try await batch.commit()
 
             if snap.documents.count < 100 { return }
+        }
+    }
+
+    /// Envelope page by page; each envelope's body is deleted by the same id,
+    /// in the same batch (2 writes per letter, 400 per batch, under the 500 cap).
+    private func deleteFutureLetters(coupleRef: DocumentReference) async throws {
+        let coupleId = coupleRef.documentID
+        let envelopes = db.collection(FirestorePath.futureLetters(coupleId: coupleId))
+        let bodies = db.collection(FirestorePath.futureLetterBodies(coupleId: coupleId))
+        while true {
+            let snap = try await envelopes.limit(to: 200).getDocuments()
+            if snap.documents.isEmpty { return }
+
+            let batch = db.batch()
+            for doc in snap.documents {
+                batch.deleteDocument(bodies.document(doc.documentID))
+                batch.deleteDocument(doc.reference)
+            }
+            try await batch.commit()
+
+            if snap.documents.count < 200 { return }
         }
     }
 

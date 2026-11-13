@@ -63,19 +63,23 @@ struct FAQView: View {
             answer: "Yes — that's the point. Every contribution is tagged with who added it, so the goal card shows the split between you and your partner. The total moves the progress bar regardless of who contributed."
         ),
 
-        // MARK: - Time Tree & Anniversaries
+        // MARK: - Journey
 
         FAQItem(
-            question: "What is the Time Tree?",
-            answer: "Time Tree is your shared timeline of memories — the moments worth keeping. Each memory can have a date, a note, and a cover photo. The anchor date marks when you started; everything else lives relative to it."
+            question: "What is Journey?",
+            answer: "Journey is your story together. Your tree grows with every day since the start date you set, and the countdowns show your next anniversary and milestone. Memories you add appear on the timeline and as stars around the tree. Future letters between you show up there too: sealed ones hang from the branches until they open, then they bloom."
         ),
         FAQItem(
             question: "What's a Memory Capsule?",
-            answer: "A capsule is a memory you write today that locks until a future date you choose. Perfect for letters to your future selves, anniversary surprises, or notes meant to be read on a specific day."
+            answer: "A memory sealed until a day you pick, for both of you. Until then the app keeps its note, photo and feelings out of sight; only whoever sealed it can still edit it. It opens at 9:00 that morning in the time zone it was sealed in, so a partner in another time zone sees it open at a different hour, and capsules sealed with an older version of Coupley open at the time of day they were sealed. Want something only your partner can open, locked on our servers rather than just hidden in the app? Write a Future Letter instead."
         ),
         FAQItem(
-            question: "Can I add anniversaries beyond the main one?",
-            answer: "Yes. Add as many anniversaries as you like — first kiss, moving in together, a favorite trip — and each one shows a countdown on your dashboard. You can add a cover photo to each one."
+            question: "What's a Future Letter?",
+            answer: "A letter to your partner that stays sealed until a date and time you pick. It's pinned on Home for both of you with a countdown, and it hangs on your tree on Journey until it opens. Only the person it's for can open it, and not a moment early: the lock is kept on our servers, so changing a phone's clock won't open it. You can always reread your own copy, and you can unsend it until it opens. A Memory Capsule is different: it's a shared memory that opens for both of you."
+        ),
+        FAQItem(
+            question: "Where do our anniversary and other special dates go?",
+            answer: "Your anniversary countdown comes from the start date you set on Journey, and milestones like 100 days, 1 year, 500 days and 1000 days are celebrated automatically. Other special days, like a first kiss or a trip, are memories: tap + on Journey to add them to your timeline."
         ),
 
         // MARK: - Chat & Quizzes
@@ -93,11 +97,11 @@ struct FAQView: View {
 
         FAQItem(
             question: "What does the AI Relationship Coach do?",
-            answer: "The Coach reads your recent mood patterns, your partner profile, and your shared activity to suggest small, specific actions tailored to you both. Everyone gets up to 10 Coach sessions and 10 AI mood suggestions per day, plus the rewrite, health-check and recovery-plan tools."
+            answer: "The Coach reads your recent mood patterns, your partner profile, and your shared activity to suggest small, specific actions tailored to you both. Everyone gets 5 Coach replies a day (each message, rewrite, health check or recovery plan uses one) and 5 AI mood suggestions. The allowance resets at 7:00 Vietnam time."
         ),
         FAQItem(
             question: "Are AI suggestions personal?",
-            answer: "They use your couple profile, mood history, love-language signals, and partner preferences — never any data from outside your couple. The AI doesn't share your history with anyone, including other Coupley users."
+            answer: "They use your couple profile, recent moods, love-language signals and partner preferences. To write a reply, that context and anything you type to the Coach is sent to OpenAI through our servers. It is not shown to other Coupley users or advertisers, and OpenAI states it does not use it to train its models."
         ),
 
         // MARK: - Free & Remove Ads
@@ -127,7 +131,7 @@ struct FAQView: View {
 
         FAQItem(
             question: "Is my data private?",
-            answer: "Your moods, messages, goals, memories, and photos are visible only to you and your connected partner. We never sell your personal data, and AI suggestions are generated without revealing your data outside your couple. Ads are served by Google AdMob, which may use your device's advertising identifier only if you allow tracking; your moods, messages and memories are never shared with advertisers."
+            answer: "Your moods, messages, goals, memories, and photos are visible only to you and your connected partner. We never sell your personal data. AI features send the context they need to OpenAI to write a reply, and nothing else. Ads are served by Google AdMob, which may use your device's advertising identifier only if you allow tracking; your moods, messages and memories are never shared with advertisers."
         ),
     ]
 

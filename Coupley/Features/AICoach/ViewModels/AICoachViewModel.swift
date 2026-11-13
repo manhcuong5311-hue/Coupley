@@ -114,11 +114,10 @@ final class AICoachViewModel: ObservableObject {
             messages.append(coachMessage)
             persist()
         } catch {
+            // Shown as an alert by AICoachChatView. Not appended to the
+            // conversation: a bubble here would be persisted with the next
+            // send and replayed to the model as something the coach said.
             errorMessage = error.localizedDescription
-            // No view reads `errorMessage`, so say it in the conversation.
-            // Otherwise a refused request just looks like the coach ignoring
-            // the user.
-            messages.append(CoachChatMessage(role: .coach, text: error.localizedDescription))
         }
     }
 
@@ -157,11 +156,10 @@ final class AICoachViewModel: ObservableObject {
             messages.append(response)
             persist()
         } catch {
+            // Shown as an alert by AICoachChatView. Not appended to the
+            // conversation: a bubble here would be persisted with the next
+            // send and replayed to the model as something the coach said.
             errorMessage = error.localizedDescription
-            // No view reads `errorMessage`, so say it in the conversation.
-            // Otherwise a refused request just looks like the coach ignoring
-            // the user.
-            messages.append(CoachChatMessage(role: .coach, text: error.localizedDescription))
         }
     }
 

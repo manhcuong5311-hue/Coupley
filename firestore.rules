@@ -22,6 +22,8 @@ rules_version = '2';
 //     /togetherGoals/{id}                              — author: createdBy
 //     /coupleChallenges/{id}                           — author: createdBy
 //     /dreams/{id}                                     — author: createdBy
+//     /futureLetters/{letterId}                        — sealed-letter envelope (both partners read)
+//     /futureLetterBodies/{letterId}                   — letter text; get-only, recipient after opensAt (server time)
 //     /notifications/{id}                              — in-app notifications
 //   /ai_usage_daily/{docId}                            — server-only usage counters
 //   /ai_coach_sessions/{sessionId}                     — coach session logs (owner-read)
@@ -34,6 +36,8 @@ rules_version = '2';
 //   * ai_usage_daily, abuse_logs, aiSuggestionLogs are server-admin only (deny all client).
 //   * ai_coach_sessions are owner-readable (the authenticated user whose userId matches).
 //   * Hard-delete of shared data is ONLY allowed when the couple doc status == "disconnected".
+//   * futureLetterBodies are never listable; the recipient's get is gated on request.time >= opensAt.
+//   * memories never change createdBy or id; while a capsule is sealed (request.time < unlockDate), only its author can move or remove its unlockDate.
 
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -253,14 +257,56 @@ service cloud.firestore {
       }
 
       // ---- Time Tree memories (past moments + capsules) ----
+      // A capsule is a memory with an unlockDate. It is sealed for BOTH
+      // partners until that moment by the SERVER clock (request.time), and
+      // until then only its author can move or remove its unlockDate.
+      // Nobody can reassign createdBy, and the id field always names its own
+      // document (the app reads a memory's identity from that field).
+      //
+      // Only unlockDate is guarded. The note and photo travel in this same
+      // document, so before the unlock they are hidden by the app, not by
+      // these rules; future letters are the server-locked kind.
+      //
+      // 1.1 and 1.2 clients re-send every field on each edit via
+      // setData(merge:), unlockDate included, after a Date <-> Timestamp
+      // round trip that can move it by a microsecond. The ±1 s window in
+      // unlockDateHeld absorbs that, so their edits of a partner's sealed
+      // capsule still land as long as they leave the date alone.
+      //
+      // Delete stays open to both members, because 1.2 offered it to both.
       match /memories/{memoryId} {
+        function memorySealed(data) {
+          return data.get('unlockDate', null) is timestamp
+            && data.unlockDate > request.time;
+        }
+
+        function unlockDateHeld(before, after) {
+          return after.get('unlockDate', null) is timestamp
+            && after.unlockDate >= before.unlockDate - duration.value(1, 's')
+            && after.unlockDate <= before.unlockDate + duration.value(1, 's');
+        }
+
         allow read:   if isCoupleMember(coupleId);
+
         allow create: if isCoupleMember(coupleId)
                       && (
                         !('createdBy' in incoming())
                         || incoming().createdBy == request.auth.uid
+                      )
+                      && (
+                        !('id' in incoming())
+                        || incoming().id == memoryId
                       );
-        allow update: if isCoupleMember(coupleId);
+
+        allow update: if isCoupleMember(coupleId)
+                      && incoming().get('createdBy', null) == resource.data.get('createdBy', null)
+                      && incoming().get('id', memoryId) == resource.data.get('id', memoryId)
+                      && (
+                        !memorySealed(resource.data)
+                        || resource.data.get('createdBy', null) == request.auth.uid
+                        || unlockDateHeld(resource.data, incoming())
+                      );
+
         allow delete: if isCoupleMember(coupleId);
       }
 
@@ -338,6 +384,91 @@ service cloud.firestore {
                       );
         allow update: if isCoupleMember(coupleId);
         allow delete: if isCoupleMember(coupleId);
+      }
+
+      // ---- Future letters ----
+      // One partner seals a letter for the other and picks a moment (opensAt).
+      // Two documents per letter, same id, created in ONE batch:
+      //
+      //   futureLetters/{letterId}       the envelope: who, to whom, when.
+      //                                  Both partners read it (Home pins it
+      //                                  with a countdown). Never any text.
+      //   futureLetterBodies/{letterId}  the words. Single-document get only:
+      //                                  rules see no data when they authorise
+      //                                  a list, so a time-gated read can never
+      //                                  be a query. The recipient's get needs
+      //                                  the SERVER clock past opensAt.
+      //
+      // Nothing is editable after sealing except the recipient stamping
+      // openedAt once. The sender can unsend (both docs, one batch) only
+      // before opensAt; a disconnected couple can purge everything.
+      match /futureLetters/{letterId} {
+        allow read: if isCoupleMember(coupleId);
+
+        // No minimum lead: a seal queued offline may reach the server after
+        // its moment, and must still land (it simply arrives ready).
+        allow create: if isCoupleMember(coupleId)
+                      && coupleDoc(coupleId).get('status', 'active') != 'disconnected'
+                      && incoming().keys().hasOnly(['id', 'fromUserId', 'toUserId', 'opensAt', 'sealedAt'])
+                      && incoming().id == letterId
+                      && incoming().fromUserId == request.auth.uid
+                      && incoming().toUserId is string
+                      && incoming().toUserId != request.auth.uid
+                      && incoming().toUserId in coupleDoc(coupleId).userIds
+                      && incoming().opensAt is timestamp
+                      && incoming().opensAt < request.time + duration.value(3700, 'd')
+                      && incoming().sealedAt == request.time
+                      && existsAfter(/databases/$(database)/documents/couples/$(coupleId)/futureLetterBodies/$(letterId));
+
+        // The recipient breaks the seal: once, only after opensAt by the
+        // server clock, only that field, stamped with the server time.
+        allow update: if isCoupleMember(coupleId)
+                      && resource.data.toUserId == request.auth.uid
+                      && request.time >= resource.data.opensAt
+                      && !('openedAt' in resource.data)
+                      && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['openedAt'])
+                      && incoming().openedAt == request.time;
+
+        // Purge after a disconnect, or the sender unsending (with its body,
+        // same batch) while it is still sealed.
+        allow delete: if isDisconnectedCouple(coupleId)
+                      || (isCoupleMember(coupleId)
+                          && resource.data.fromUserId == request.auth.uid
+                          && request.time < resource.data.opensAt
+                          && !existsAfter(/databases/$(database)/documents/couples/$(coupleId)/futureLetterBodies/$(letterId)));
+      }
+
+      match /futureLetterBodies/{letterId} {
+        // THE TIME LOCK. Reads this document's own copy of from/to/opensAt,
+        // which nobody can change (there is no update path).
+        allow get: if isCoupleMember(coupleId)
+                   && (resource.data.fromUserId == request.auth.uid
+                       || (resource.data.toUserId == request.auth.uid
+                           && request.time >= resource.data.opensAt
+                           && coupleDoc(coupleId).get('status', 'active') != 'disconnected'));
+
+        allow list: if false;
+
+        // Only inside the batch that creates its envelope, by its sender,
+        // with the envelope's exact recipient and opening time.
+        allow create: if isCoupleMember(coupleId)
+                      && incoming().keys().hasOnly(['fromUserId', 'toUserId', 'opensAt', 'text'])
+                      && incoming().fromUserId == request.auth.uid
+                      && incoming().text is string
+                      && incoming().text.size() > 0
+                      && incoming().text.size() <= 100000
+                      && !exists(/databases/$(database)/documents/couples/$(coupleId)/futureLetters/$(letterId))
+                      && getAfter(/databases/$(database)/documents/couples/$(coupleId)/futureLetters/$(letterId)).data.fromUserId == request.auth.uid
+                      && getAfter(/databases/$(database)/documents/couples/$(coupleId)/futureLetters/$(letterId)).data.toUserId == incoming().toUserId
+                      && getAfter(/databases/$(database)/documents/couples/$(coupleId)/futureLetters/$(letterId)).data.opensAt == incoming().opensAt;
+
+        allow update: if false;
+
+        allow delete: if isDisconnectedCouple(coupleId)
+                      || (isCoupleMember(coupleId)
+                          && resource.data.fromUserId == request.auth.uid
+                          && request.time < resource.data.opensAt
+                          && !existsAfter(/databases/$(database)/documents/couples/$(coupleId)/futureLetters/$(letterId)));
       }
     }
 

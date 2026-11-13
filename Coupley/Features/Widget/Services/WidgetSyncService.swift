@@ -12,6 +12,12 @@
 //  Bind/unbind cycles match `SessionStore.appState` transitions so the
 //  service is idle when the user is signed-out or unpaired.
 //
+//  It is also the single owner of Journey's capsule and crown reminders.
+//  Its anchor and memory listeners live for the whole paired session (the
+//  Journey tab's do not), so a partner's new capsule or a changed start date
+//  is scheduled even if Journey is never opened on this phone. Leaving a
+//  session takes its reminders with it.
+//
 
 import Foundation
 import FirebaseFirestore
@@ -34,6 +40,18 @@ final class WidgetSyncService {
     // the relationship anchor + memory collection.
     private let anchorService: TimeTreeAnchorService = FirestoreTimeTreeAnchorService()
     private let memoryService: TimeTreeMemoryService = FirestoreTimeTreeMemoryService()
+
+    /// Capsule and crown reminders. Only this service schedules them; the
+    /// Journey view model schedules nothing.
+    private let journeyReminders: TimeTreeNotificationScheduling = TimeTreeNotificationScheduler()
+    /// The newest step of the reminder work chain. Each step waits for the
+    /// one before it, so a crown reschedule, a capsule reconcile and the
+    /// cleanup after a session never interleave.
+    private var reminderTask: Task<Void, Never>?
+    /// Bumped per queued step, so a step that a newer one (with newer data)
+    /// is queued behind can leave the work to it.
+    private var crownReminderRevision = 0
+    private var capsuleReminderRevision = 0
 
     private var session: UserSession?
     private var partnerDisplayName: String?
@@ -113,8 +131,13 @@ final class WidgetSyncService {
     /// Removes Firestore listeners and clears in-memory pending state
     /// without touching the on-disk snapshot. Use this when transitioning
     /// between paired sessions; use `unbind()` when actually leaving the
-    /// paired state.
+    /// paired state. Either way the session being left takes its Journey
+    /// reminders with it.
     private func tearDownListeners() {
+        // Not on a first bind: nothing was bound, and reminders already
+        // delivered on this phone must stay.
+        if session != nil { stopJourneyReminders() }
+
         anchorListener?.remove();         anchorListener = nil
         memoryListener?.remove();         memoryListener = nil
         partnerMoodListener?.remove();    partnerMoodListener = nil
@@ -150,10 +173,13 @@ final class WidgetSyncService {
             coupleId: coupleId,
             onUpdate: { [weak self] anchor in
                 Task { @MainActor [weak self] in
-                    guard let self else { return }
+                    // A snapshot already on its way when this session ended
+                    // (or was switched) belongs to no one now.
+                    guard let self, self.session?.coupleId == coupleId else { return }
                     self.pendingAnchor = anchor
                     self.rebuildAnniversarySnapshot()
                     self.scheduleWrite()
+                    self.queueCrownReminders(for: anchor)
                 }
             },
             onError: { _ in }
@@ -165,14 +191,84 @@ final class WidgetSyncService {
             coupleId: coupleId,
             onUpdate: { [weak self] memories in
                 Task { @MainActor [weak self] in
-                    guard let self else { return }
+                    guard let self, self.session?.coupleId == coupleId else { return }
                     self.pendingMemories = memories
                     self.rebuildAnniversarySnapshot()
                     self.scheduleWrite()
+                    self.queueCapsuleReminders(memories)
                 }
             },
             onError: { _ in }
         )
+    }
+
+    // MARK: - Journey Reminders
+
+    /// Crown reminders follow the start date.
+    private func queueCrownReminders(for anchor: RelationshipAnchor?) {
+        crownReminderRevision &+= 1
+        let revision = crownReminderRevision
+        enqueueReminderWork { [weak self] scheduler in
+            // A newer start date is queued behind this one: it does the work.
+            guard self?.crownReminderRevision == revision else { return }
+            if let anchor {
+                await scheduler.rescheduleCrowns(anchor: anchor)
+            } else {
+                await scheduler.cancelAllCrowns()
+            }
+        }
+    }
+
+    /// Capsule reminders follow the memory collection, both partners'.
+    private func queueCapsuleReminders(_ memories: [TimeMemory]) {
+        capsuleReminderRevision &+= 1
+        let revision = capsuleReminderRevision
+        enqueueReminderWork { [weak self] scheduler in
+            // A newer list is queued behind this one: it does the work.
+            guard self?.capsuleReminderRevision == revision else { return }
+            await scheduler.reconcileCapsules(memories)
+        }
+    }
+
+    /// Runs `work` once everything queued before it has finished. Each step
+    /// re-checks that the session it was queued for is still the bound one,
+    /// and a teardown cancels the whole chain mid-way: the scheduler checks
+    /// for cancellation before every request it adds, so nothing is
+    /// scheduled after sign-out or disconnect.
+    private func enqueueReminderWork(_ work: @escaping (TimeTreeNotificationScheduling) async -> Void) {
+        guard let session else { return }
+        let coupleId = session.coupleId
+        let userId = session.userId
+        let previous = reminderTask
+        let scheduler = journeyReminders
+        reminderTask = Task { [weak self] in
+            // Cancelling the newest step cancels every step queued before it.
+            await withTaskCancellationHandler {
+                await previous?.value
+            } onCancel: {
+                previous?.cancel()
+            }
+            guard !Task.isCancelled,
+                  let bound = self?.session,
+                  bound.coupleId == coupleId,
+                  bound.userId == userId else { return }
+            await work(scheduler)
+        }
+    }
+
+    /// Cancels the queued reminder work and then, once it has stopped (so a
+    /// request it was adding at that moment goes too), removes every capsule
+    /// and crown reminder, pending and delivered. The next session's work
+    /// queues behind this cleanup, so it can never remove what that session
+    /// schedules.
+    private func stopJourneyReminders() {
+        let previous = reminderTask
+        previous?.cancel()
+        let scheduler = journeyReminders
+        reminderTask = Task {
+            await previous?.value
+            await scheduler.cancelAll()
+        }
     }
 
     /// Combines the latest anchor + memories into the AnniversarySnapshot
@@ -184,7 +280,14 @@ final class WidgetSyncService {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: now)
 
-        let relationshipStart = pendingAnchor?.startDate
+        // The calendar day the stored start date names, the same day Journey
+        // counts from on both phones. Noon of it: the widget takes the start
+        // of that day itself, and noon keeps naming the same date if the
+        // phone changes time zone before the next snapshot is written.
+        let relationshipStart = pendingAnchor.map { anchor -> Date in
+            let day = JourneyCalendarDay.localDay(ofStored: anchor.startDate, calendar: calendar)
+            return calendar.date(bySettingHour: 12, minute: 0, second: 0, of: day) ?? day
+        }
 
         var upcoming: [UpcomingAnniversary] = []
 

@@ -2,76 +2,86 @@
 //  AnchorSetupSheet.swift
 //  Coupley
 //
-//  First-run sheet that asks the couple "When did your story begin?"
-//  Setting the anchor unlocks the tree, all milestones, days-together
-//  counter, and yearly anniversary computation.
+//  "When did it begin?": picks the day the couple's story started, which
+//  every day count, anniversary and crown on Journey grows from. First run
+//  plants the tree; later it edits the start date from the hero's
+//  "Since … · Edit" line.
 //
-//  Surfaces an explainer paragraph at the top so users understand why
-//  we're asking, plus reassurance that they can change it later.
+//  The day is a calendar day, not an instant: the picker starts from the day
+//  the stored value names (JourneyCalendarDay.localDay(ofStored:)), and the
+//  view model stores what is picked as that day for both partners, wherever
+//  each of them is.
 //
 
+import Foundation
 import SwiftUI
+import UIKit
 
-// MARK: - Setup Sheet
+// MARK: - Start-date sheet
 
 struct AnchorSetupSheet: View {
 
     @ObservedObject var viewModel: TimeTreeViewModel
-    /// Existing anchor (if any) — if non-nil, this sheet operates as an
-    /// "edit" rather than an initial setup.
+    /// The current start date, if one is set. Non-nil makes this an edit.
     let existing: RelationshipAnchor?
-    /// User's display name, used to attribute the anchor on the partner
-    /// device. Optional — falls back to "your partner."
-    let displayName: String?
+    /// This user's name, stored with the date so the partner's phone can say
+    /// who set it.
+    let myName: String?
+    let partnerName: String
 
     @Environment(\.dismiss) private var dismiss
 
     @State private var startDate: Date
 
-    init(viewModel: TimeTreeViewModel, existing: RelationshipAnchor? = nil, displayName: String? = nil) {
+    /// The leaf's well grows with the text.
+    @ScaledMetric(relativeTo: .largeTitle) private var glyphSize: CGFloat = 84
+
+    init(viewModel: TimeTreeViewModel,
+         existing: RelationshipAnchor?,
+         myName: String?,
+         partnerName: String) {
         self.viewModel = viewModel
         self.existing = existing
-        self.displayName = displayName
-        _startDate = State(initialValue: existing?.startDate ?? Calendar.current.date(byAdding: .month, value: -3, to: Date()) ?? Date())
+        self.myName = myName
+        self.partnerName = partnerName
+
+        let calendar = Calendar.current
+        let threeMonthsAgo = calendar.date(byAdding: .month, value: -3, to: Date()) ?? Date()
+        _startDate = State(initialValue: existing.map { JourneyCalendarDay.localDay(ofStored: $0.startDate) }
+                           ?? calendar.startOfDay(for: threeMonthsAgo))
     }
 
     private var isEditing: Bool { existing != nil }
 
     var body: some View {
         NavigationStack {
-            ZStack {
-                Brand.bgGradient.ignoresSafeArea()
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 22) {
+                    heroBlock
 
-                ScrollView(showsIndicators: false) {
-                    VStack(spacing: 22) {
-                        Color.clear.frame(height: 8)
+                    dateCard
 
-                        heroBlock
-
-                        datePickerCard
-
-                        if let existing {
-                            attributionFootnote(existing)
-                        }
-
-                        Color.clear.frame(height: 80)
+                    if let existing {
+                        attributionFootnote(existing)
                     }
-                    .padding(.horizontal, 20)
                 }
-
-                VStack {
-                    Spacer()
-                    PrimaryButton(
-                        title: isEditing ? "Update Anchor" : "Plant Tree",
-                        isLoading: viewModel.isSavingAnchor,
-                        isEnabled: !viewModel.isSavingAnchor,
-                        action: save
-                    )
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 16)
-                }
+                .padding(.horizontal, Brand.Space.gutter)
+                .padding(.top, 20)
+                .padding(.bottom, 16)
             }
-            .navigationTitle(isEditing ? "Anchor Date" : "Begin Your Tree")
+            // The sheet's one filled control, pinned under the content.
+            .safeAreaInset(edge: .bottom) {
+                BrandCTA(title: isEditing ? "Save start date" : "Plant tree",
+                         tier: .hero,
+                         isBusy: viewModel.isSavingAnchor) {
+                    save()
+                }
+                .padding(.horizontal, Brand.Space.gutter)
+                .padding(.top, 8)
+                .padding(.bottom, 12)
+            }
+            .background(Brand.bgGradient.ignoresSafeArea())
+            .navigationTitle(isEditing ? "Start date" : "Plant your tree")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
@@ -86,84 +96,77 @@ struct AnchorSetupSheet: View {
 
     private var heroBlock: some View {
         VStack(spacing: 14) {
-            ZStack {
-                Circle()
-                    .fill(
+            Image(systemName: "leaf.fill")
+                .font(.largeTitle.weight(.semibold))
+                .foregroundStyle(Brand.accentStart)
+                .frame(width: glyphSize, height: glyphSize)
+                .background(
+                    Circle().fill(
                         LinearGradient(
                             colors: [Brand.accentStart.opacity(0.30), Brand.accentEnd.opacity(0.18)],
-                            startPoint: .topLeading, endPoint: .bottomTrailing
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
                         )
                     )
-                    .frame(width: 84, height: 84)
-                    .shadow(color: Brand.accentStart.opacity(0.30), radius: 18, y: 8)
-
-                Image(systemName: "leaf.fill")
-                    .font(.system(size: 32, weight: .semibold))
-                    .foregroundStyle(Brand.accentStart)
-            }
+                )
+                .accessibilityHidden(true)
 
             VStack(spacing: 8) {
-                Text(isEditing ? "When did it really begin?" : "Plant your Time Tree")
-                    .font(.system(size: 24, weight: .bold, design: .rounded))
+                Text(isEditing ? "When did it begin?" : "Plant your tree")
+                    .font(JourneyFont.display)
                     .foregroundStyle(Brand.textPrimary)
                     .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityAddTraits(.isHeader)
 
-                Text("Pick the day your story began.\nYour tree will grow from this date — \nshared with your partner instantly.")
-                    .font(.system(size: 14, weight: .regular, design: .rounded))
+                Text("Pick the day your story began. Your tree grows from it, and \(partnerName) sees it too.")
+                    .font(JourneyFont.body)
                     .foregroundStyle(Brand.textSecondary)
                     .multilineTextAlignment(.center)
                     .lineSpacing(3)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
         .frame(maxWidth: .infinity)
-        .padding(.top, 12)
+        .padding(.top, 4)
     }
 
-    // MARK: - Date picker card
+    // MARK: - Date card
 
-    private var datePickerCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 8) {
-                Image(systemName: "calendar")
-                    .font(.system(size: 13, weight: .semibold))
-                Text("Start Date")
-                    .font(.system(size: 13, weight: .semibold, design: .rounded))
-            }
-            .foregroundStyle(Brand.textSecondary)
-            .padding(.horizontal, 4)
+    private var dateCard: some View {
+        BrandCard(tier: .card) {
+            VStack(alignment: .leading, spacing: 12) {
+                Label("Start date", systemImage: "calendar")
+                    .font(JourneyFont.label)
+                    .foregroundStyle(Brand.textSecondary)
+                    .accessibilityHidden(true)
 
-            DatePicker(
-                "Start Date",
-                selection: $startDate,
-                in: ...Date(),
-                displayedComponents: [.date]
-            )
-            .datePickerStyle(.graphical)
-            .tint(Brand.accentStart)
-            .labelsHidden()
-        }
-        .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .fill(Brand.surfaceLight)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 22, style: .continuous)
-                        .strokeBorder(Brand.divider, lineWidth: 1)
+                DatePicker(
+                    "Start date",
+                    selection: $startDate,
+                    in: ...Date(),
+                    displayedComponents: [.date]
                 )
-        )
+                .datePickerStyle(.graphical)
+                .tint(Brand.accentStart)
+                .labelsHidden()
+            }
+        }
     }
 
     // MARK: - Attribution footnote
 
     private func attributionFootnote(_ anchor: RelationshipAnchor) -> some View {
-        let setBy = anchor.setByName ?? "your partner"
+        let who = anchor.setBy == viewModel.currentUserId ? "you" : partnerName
         return HStack(spacing: 8) {
             Image(systemName: "person.2.fill")
-                .font(.system(size: 11, weight: .medium))
+                .font(JourneyFont.meta)
                 .foregroundStyle(Brand.textTertiary)
-            Text("Originally set by \(setBy) on \(formatDate(anchor.setAt))")
-                .font(.system(size: 11, weight: .regular, design: .rounded))
-                .foregroundStyle(Brand.textTertiary)
+                .accessibilityHidden(true)
+            Text("Set by \(who) on \(anchor.setAt.formatted(date: .abbreviated, time: .omitted))")
+                .font(JourneyFont.meta)
+                .foregroundStyle(Brand.textSecondary)
+                .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
     }
@@ -172,15 +175,8 @@ struct AnchorSetupSheet: View {
 
     private func save() {
         Task {
-            await viewModel.setAnchor(startDate: startDate, displayName: displayName)
+            await viewModel.setAnchor(startDay: startDate, myName: myName)
             dismiss()
         }
-    }
-
-    private func formatDate(_ date: Date) -> String {
-        let f = DateFormatter()
-        f.dateStyle = .medium
-        f.timeStyle = .none
-        return f.string(from: date)
     }
 }

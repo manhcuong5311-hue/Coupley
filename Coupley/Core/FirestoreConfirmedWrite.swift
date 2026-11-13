@@ -2,7 +2,7 @@
 //  FirestoreConfirmedWrite.swift
 //  Coupley
 //
-//  A Codable write that can actually fail.
+//  Writes that can actually fail, and never hang offline.
 //
 //  `setData(from:)` has no async form in the Firebase SDK. Writing
 //  `try await ref.setData(from:)` compiles, but it calls the synchronous
@@ -18,6 +18,11 @@
 //  is thrown, an acknowledgement returns normally, and silence is treated as
 //  "queued" — Firestore keeps the write and syncs it when it can, exactly as
 //  before.
+//
+//  The dictionary `setData(_:merge:)` and `delete()` do have async forms, but
+//  those wait for the server with no limit: offline, a Save button stays
+//  disabled until the connection returns. The confirmed variants below give
+//  them the same short-wait contract.
 //
 
 import Foundation
@@ -44,6 +49,100 @@ extension DocumentReference {
                 // Encoding failed; the write was never queued.
                 once.run { continuation.resume(throwing: error) }
                 return
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + timeout) {
+                once.run { continuation.resume() }
+            }
+        }
+    }
+
+    /// The dictionary form of `setDataConfirmed(from:)`: writes `data`
+    /// (merged into the document when `merge` is true) and throws if the
+    /// server rejects it within `timeout`. Silence (offline) returns with the
+    /// write still queued, where `try await setData(_:merge:)` would hang
+    /// until the device reconnects.
+    func setDataConfirmed(_ data: [String: Any],
+                          merge: Bool = false,
+                          timeout: TimeInterval = 2.5) async throws {
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+            let once = ResumeOnce()
+            setData(data, merge: merge) { error in
+                once.run {
+                    if let error {
+                        continuation.resume(throwing: error)
+                    } else {
+                        continuation.resume()
+                    }
+                }
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + timeout) {
+                once.run { continuation.resume() }
+            }
+        }
+    }
+
+    /// `updateData` with the same short-wait contract. Unlike a merging
+    /// `setData`, it never creates the document: if it is gone (deleted on
+    /// another phone, even while this write sat queued offline), the server
+    /// answers NOT_FOUND (PERMISSION_DENIED where the rules read the missing
+    /// document) instead of bringing it back.
+    func updateDataConfirmed(_ fields: [AnyHashable: Any],
+                             timeout: TimeInterval = 2.5) async throws {
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+            let once = ResumeOnce()
+            updateData(fields) { error in
+                once.run {
+                    if let error {
+                        continuation.resume(throwing: error)
+                    } else {
+                        continuation.resume()
+                    }
+                }
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + timeout) {
+                once.run { continuation.resume() }
+            }
+        }
+    }
+
+    /// Deletes the document and throws if the server rejects it within
+    /// `timeout`. Silence (offline) returns with the delete still queued.
+    func deleteConfirmed(timeout: TimeInterval = 2.5) async throws {
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+            let once = ResumeOnce()
+            delete { error in
+                once.run {
+                    if let error {
+                        continuation.resume(throwing: error)
+                    } else {
+                        continuation.resume()
+                    }
+                }
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + timeout) {
+                once.run { continuation.resume() }
+            }
+        }
+    }
+}
+
+extension WriteBatch {
+
+    /// Same contract as `setDataConfirmed`: a rejection inside `timeout`
+    /// throws, an acknowledgement returns, and silence (offline) returns with
+    /// the batch still queued. `try await commit()` would hang until the
+    /// device reconnects.
+    func commitConfirmed(timeout: TimeInterval = 2.5) async throws {
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+            let once = ResumeOnce()
+            commit { error in
+                once.run {
+                    if let error {
+                        continuation.resume(throwing: error)
+                    } else {
+                        continuation.resume()
+                    }
+                }
             }
             DispatchQueue.main.asyncAfter(deadline: .now() + timeout) {
                 once.run { continuation.resume() }

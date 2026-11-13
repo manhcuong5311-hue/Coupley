@@ -45,12 +45,28 @@ final class FirestoreMoodService: MoodService {
             // fix, while their 3/day allowance was spent on writes that can
             // never land.
             throw error
+        } catch where Self.isServerRejection(error) {
+            // The server answered and said no (rules, a disconnected couple).
+            // Retrying cannot change that, so it is not queued: queueing it
+            // told the user "will sync" and retried it on every reconnect.
+            throw MoodWriteError.rejected
         } catch {
             // Queue for retry. Firestore offline cache will usually also persist
             // the write, but our queue guarantees retry semantics across relaunches.
             queue.enqueue(entry)
             throw MoodWriteError.queuedForRetry(underlying: error)
         }
+    }
+
+    /// A definite "no" from the backend: the rules refused the write, or the
+    /// data itself is invalid. Retrying sends the same write and gets the same
+    /// answer. Anything else (quota, auth refresh, an internal error) may pass
+    /// on a later attempt, so it stays queued.
+    private static func isServerRejection(_ error: Error) -> Bool {
+        let ns = error as NSError
+        guard ns.domain == FirestoreErrorDomain else { return false }
+        return ns.code == FirestoreErrorCode.permissionDenied.rawValue
+            || ns.code == FirestoreErrorCode.invalidArgument.rawValue
     }
 
     func fetchAll() async throws -> [MoodEntry] {
@@ -113,6 +129,9 @@ final class FirestoreMoodService: MoodService {
             do {
                 try await writeToFirestore(entry)
                 queue.dequeue(id: entry.id)
+            } catch where Self.isServerRejection(error) {
+                // Will never succeed; drop it rather than retry it forever.
+                queue.dequeue(id: entry.id)
             } catch {
                 // Stop on first failure — we'll retry later
                 break
@@ -153,12 +172,15 @@ final class FirestoreMoodService: MoodService {
 
 enum MoodWriteError: LocalizedError {
     case notPaired
+    case rejected
     case queuedForRetry(underlying: Error)
 
     var errorDescription: String? {
         switch self {
         case .notPaired:
             return "Connect a partner before saving moods."
+        case .rejected:
+            return "Couldn't save your mood. Please try again."
         case .queuedForRetry:
             return "Saved locally — will sync when online."
         }

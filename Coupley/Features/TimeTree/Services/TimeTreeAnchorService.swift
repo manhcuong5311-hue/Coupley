@@ -40,27 +40,44 @@ final class FirestoreTimeTreeAnchorService: TimeTreeAnchorService {
 
     // MARK: - Set / Update
 
+    /// Confirmed write: a rejection throws; offline the write is queued and
+    /// this returns after a short wait instead of hanging until reconnection.
     func setAnchor(coupleId: String, anchor: RelationshipAnchor) async throws {
-        try await document(coupleId).setData(Self.payload(from: anchor), merge: true)
+        try await document(coupleId).setDataConfirmed(Self.payload(from: anchor), merge: true)
     }
 
     // MARK: - Observe
 
+    /// Calls `onUpdate(nil)` only when the SERVER says there is no start
+    /// date. A document missing from the local cache (a new phone opened
+    /// offline, an evicted cache) says nothing about the server, and
+    /// reporting it as "no start date" would offer to plant one over the
+    /// partner's real date, which the queued write then overwrites on
+    /// reconnect. Such snapshots, and nil snapshots, are skipped.
+    ///
+    /// Metadata changes are included so that the server's confirmation still
+    /// arrives when it changes nothing but `isFromCache`: a couple with no
+    /// start date whose "missing" answer was already cached would otherwise
+    /// never hear `nil` from the server. Repeated identical updates are
+    /// harmless to every caller.
     func observe(
         coupleId: String,
         onUpdate: @escaping (RelationshipAnchor?) -> Void,
         onError: @escaping (Error) -> Void
     ) -> ListenerRegistration {
         document(coupleId)
-            .addSnapshotListener { snapshot, error in
+            .addSnapshotListener(includeMetadataChanges: true) { snapshot, error in
                 if let error {
                     onError(error)
                     return
                 }
-                guard let snapshot, snapshot.exists, let data = snapshot.data() else {
+                guard let snapshot else { return }
+                guard snapshot.exists else {
+                    if snapshot.metadata.isFromCache { return }
                     onUpdate(nil)
                     return
                 }
+                guard let data = snapshot.data() else { return }
                 onUpdate(Self.decode(data))
             }
     }

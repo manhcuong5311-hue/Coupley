@@ -106,7 +106,7 @@ struct ManageSharedDataView: View {
             }
             .disabled(viewModel.isDeleting)
         } footer: {
-            Text("Removes messages, moods, quizzes, and insights tied to this connection from the server. This cannot be undone.")
+            Text("Removes messages, moods, quizzes, letters, and insights tied to this connection from the server. This cannot be undone.")
                 .font(.system(size: 12, design: .rounded))
         }
         .listRowBackground(surfaceRowBackground)

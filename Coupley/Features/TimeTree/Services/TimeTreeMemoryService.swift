@@ -7,6 +7,10 @@
 //  untouched — those still drive countdowns. Memories are the past-tense
 //  emotional ledger; capsules are memories with a future unlock date.
 //
+//  Writes use the confirmed helpers (Core/FirestoreConfirmedWrite.swift): a
+//  server rejection throws, and offline the write is queued and the call
+//  returns after a short wait instead of hanging until reconnection.
+//
 
 import Foundation
 import FirebaseFirestore
@@ -43,23 +47,29 @@ final class FirestoreTimeTreeMemoryService: TimeTreeMemoryService {
     func create(coupleId: String, memory: TimeMemory) async throws {
         try await collection(coupleId)
             .document(memory.id)
-            .setData(Self.payload(from: memory, forCreate: true))
+            .setDataConfirmed(Self.payload(from: memory, forCreate: true), merge: false)
     }
 
     // MARK: - Update
 
+    /// Writes every field of `memory`, including `id` and `createdBy`
+    /// unchanged: the rules for /memories require both to stay as they are.
+    /// An update, never a merging set: a memory deleted on the other phone
+    /// (even while this write waited offline) fails (NOT_FOUND, or
+    /// PERMISSION_DENIED under the hardened rules) instead
+    /// of coming back.
     func update(coupleId: String, memory: TimeMemory) async throws {
         var updated = memory
         updated.updatedAt = Date()
         try await collection(coupleId)
             .document(updated.id)
-            .setData(Self.payload(from: updated, forCreate: false), merge: true)
+            .updateDataConfirmed(Self.payload(from: updated, forCreate: false))
     }
 
     // MARK: - Delete
 
     func delete(coupleId: String, id: String) async throws {
-        try await collection(coupleId).document(id).delete()
+        try await collection(coupleId).document(id).deleteConfirmed()
     }
 
     // MARK: - Observe
@@ -76,8 +86,9 @@ final class FirestoreTimeTreeMemoryService: TimeTreeMemoryService {
                     onError(error)
                     return
                 }
-                let items = snapshot?.documents.compactMap { Self.decode($0) } ?? []
-                onUpdate(items)
+                // No snapshot says nothing; it must not read as "no memories".
+                guard let snapshot else { return }
+                onUpdate(snapshot.documents.compactMap { Self.decode($0) })
             }
     }
 
@@ -92,7 +103,7 @@ final class FirestoreTimeTreeMemoryService: TimeTreeMemoryService {
     /// `forCreate == true`: nil optional fields are omitted entirely
     /// (`setData` without merge would reject `FieldValue.delete()`).
     /// `forCreate == false`: nil optional fields use `FieldValue.delete()`
-    /// so a `setData(merge: true)` write explicitly removes them.
+    /// so the `updateData` write explicitly removes them.
     private static func payload(from m: TimeMemory, forCreate: Bool) -> [String: Any] {
         var dict: [String: Any] = [
             "id":          m.id,

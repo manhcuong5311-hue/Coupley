@@ -1,0 +1,4 @@
+
+# Firestore emulator output (firestore-tests/)
+firestore-debug.log
+*.xcodeproj/project.xcworkspace/xcuserdata/

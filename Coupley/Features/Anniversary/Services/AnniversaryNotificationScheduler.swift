@@ -110,12 +110,19 @@ final class AnniversaryNotificationScheduler: AnniversaryNotificationScheduling 
         center.removePendingNotificationRequests(withIdentifiers: ids)
     }
 
+    /// Removes every anniversary reminder, pending AND delivered: called when
+    /// leaving the paired state (sign-out, disconnect, account deletion).
     func cancelAll() async {
         let pending = await center.pendingNotificationRequests()
         let ids = pending
             .filter { $0.identifier.hasPrefix("anniv.") }
             .map { $0.identifier }
         center.removePendingNotificationRequests(withIdentifiers: ids)
+
+        let delivered = await center.deliveredNotifications()
+            .map(\.request.identifier)
+            .filter { $0.hasPrefix("anniv.") }
+        center.removeDeliveredNotifications(withIdentifiers: delivered)
     }
 
     // MARK: - Copy

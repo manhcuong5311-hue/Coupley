@@ -22,6 +22,10 @@ final class QuestionOfTheDayViewModel: ObservableObject {
     @Published private(set) var isLoading = true
     @Published private(set) var isSubmitting = false
     @Published private(set) var errorMessage: String?
+    /// Only for a failed answer submission. Kept apart from `errorMessage`,
+    /// which the snapshot listeners also write: sharing it made a listener
+    /// hiccup appear as "Couldn't send your answer".
+    @Published private(set) var submitError: String?
 
     /// Non-nil while the answer sheet is up.
     @Published var quizBeingAnswered: ChatQuiz?
@@ -201,18 +205,19 @@ final class QuestionOfTheDayViewModel: ObservableObject {
 
     /// Called when the failure alert is dismissed.
     func dismissError() {
-        errorMessage = nil
+        submitError = nil
     }
 
     func beginAnswering() {
         guard let quiz, !quiz.hasAnswered(session.userId) else { return }
+        submitError = nil
         quizBeingAnswered = quiz
     }
 
     func submit(answer: ChatQuizAnswer, for quiz: ChatQuiz) {
         guard !isSubmitting else { return }
         isSubmitting = true
-        errorMessage = nil
+        submitError = nil
 
         Task {
             defer { isSubmitting = false }
@@ -248,7 +253,7 @@ final class QuestionOfTheDayViewModel: ObservableObject {
                 // saved memory (see AdsConfig.interstitialEveryNActions).
                 AdsManager.shared.recordAction()
             } catch {
-                errorMessage = error.localizedDescription
+                submitError = error.localizedDescription
             }
         }
     }

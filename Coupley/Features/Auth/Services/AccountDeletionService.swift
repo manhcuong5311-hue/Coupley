@@ -22,7 +22,8 @@
 //
 //    3. Hard-delete the shared couple document and all known subcollections
 //       (messages, moods + reactions, syncScores, quizzes, coupleProfile,
-//       notifications) using ConnectionService.deleteSharedData — same
+//       notifications, future letters + their bodies) using
+//       ConnectionService.deleteSharedData — same
 //       routine the "Delete shared data" UI runs.
 //
 //    4. Delete any pairing codes the user created — /pairingCodes where

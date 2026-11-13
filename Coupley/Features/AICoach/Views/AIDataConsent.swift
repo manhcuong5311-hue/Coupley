@@ -92,8 +92,8 @@ private struct AIDataConsentCard: View {
 
                     VStack(alignment: .leading, spacing: 12) {
                         row("What you type to the coach, and that conversation")
-                        row("Both your names and profile answers, such as love language, communication style, likes and dislikes")
-                        row("Your latest mood, its note, and themes from recent check-ins")
+                        row("Both of your names and profile answers, such as love language, attachment and communication style, personality, likes, dislikes and goals")
+                        row("Recent moods for both of you, your partner's latest mood note, how long you've been together, and your first anniversary")
                     }
 
                     Text("It is used only to write the reply. OpenAI states that data sent this way is not used to train its models. Your coach history is stored on this device only.")

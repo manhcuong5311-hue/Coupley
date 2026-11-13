@@ -48,6 +48,11 @@ struct AICoachHealthCheckView: View {
 
                         rerunButton
                             .padding(.horizontal, 20)
+                    } else {
+                        // A failed or refused run. Without this branch the
+                        // screen was a dead end: no result and no way to retry.
+                        rerunButton
+                            .padding(.horizontal, 20)
                     }
 
                     Color.clear.frame(height: 60)
