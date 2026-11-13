@@ -29,6 +29,54 @@ I re-verified every claim against the current working tree. Numbers below are on
 
 Grouped by fix. The deadline argument is the same shape every time: **after extraction, each of these becomes a key-renaming migration across the catalog plus every translation already paid for, instead of a local code change.**
 
+## STATUS — updated after the A2 / A3 / A16 fix pass
+
+**Done.** A1 (day keys, `DayKey`). A2 (quiz options carry stable slug ids; every
+comparison, hint lookup and trait aggregation goes through
+`ChatQuiz+Identity.swift`). A3 (the result verdict is stored as `kind` plus
+parameters on BOTH the quiz document and the result chat message, and rendered
+on the reading device). A16 (`DailyPhoto.promptId`).
+
+Two things were established while doing it that the rest of Section A has to
+respect, because they are what make the fix survive:
+
+1. **Base language vs display language are separate properties.**
+   `ChatQuizOption.label`, `DailyPhotoPrompt.text` and `QuizTopic.baseLabel`
+   are base-language-only: they are what gets written to Firestore and what
+   `option(label:)` / `byText` match when resolving a document that predates
+   ids. The catalog must hook into `displayLabel` / `displayText` /
+   `QuizTopic.label` instead. Localizing a base property re-breaks the data.
+
+2. **A backfill script is not available and never will be.** `onQuizAnswered`
+   is `onDocumentWritten` with no field filter, so rewriting existing documents
+   re-fires push notifications. Every fix has to be a read-side fallback.
+
+**Known and accepted, not fixed.**
+
+- The build already on the App Store rewrites the whole quiz document on every
+  answer (`setData(from:)`, no merge) and the whole couple-profile document in
+  the aggregator. It therefore DELETES `optionIds`, `guessIds`, the result
+  verdict and the profile's `*Refs` whenever that build answers second. Nothing
+  in this repo can stop it. The mitigation is point 1 above: because the text
+  stored next to the id stays English, the id can always be recovered. This is
+  the reason the base/display split is not optional.
+- Result prose already in Firestore stays English where it cannot be rebuilt.
+  `ChatQuiz.resultSentence` rebuilds a legacy verdict only when the two picks
+  overlap on exactly one option; with several overlapping, the original
+  sentence named one of them by `Set` order and there is no way to recover
+  which, so renaming it would rewrite a result the couple has already read.
+- `insight(for:)` now takes the first pick in the quiz's option order. For
+  pre-fix multi-select documents the old code took `Array(Set(...)).first`,
+  i.e. hash order, so the two builds can name different options. The new
+  behaviour is deterministic; neither reflects what the user tapped first.
+- Same disease, outside these three blockers, in rough order of how fast the
+  data accumulates: system chat messages (`"New quiz: …"`, `"Custom quiz from
+  …"`) store rendered prose; `ChallengeEditorSheet` / dream suggestions copy
+  curated English titles into Firestore; `WidgetSyncService` renders a mood
+  `customLabel` read from the partner's document.
+
+---
+
 ### A1. Firestore day keys are locale-sensitive — this is corrupting data *now* ⚠️
 **Not a language problem. A live data bug.** `DateFormatter()` inherits `Locale.current`, so `dateFormat = "yyyy-MM-dd"` produces `"2568-11-13"` on a Thai-region device, `"0007-11-13"` under the Japanese calendar, `"١٤٤٧-٠٥-٢٢"` on ar_SA.
 

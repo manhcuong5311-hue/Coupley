@@ -354,10 +354,14 @@ struct CustomChatQuizBuilderSheet: View {
         note.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
+    /// Deduplicated, because an option's text is its identity for a custom
+    /// quiz: two identical rows share a `ForEach` id, highlight together, and
+    /// would be stored twice.
     private var validOptions: [String] {
-        options
+        var seen = Set<String>()
+        return options
             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-            .filter { !$0.isEmpty }
+            .filter { !$0.isEmpty && seen.insert($0).inserted }
     }
 
     private var canSend: Bool {

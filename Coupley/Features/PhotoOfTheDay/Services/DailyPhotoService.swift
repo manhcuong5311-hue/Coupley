@@ -89,7 +89,10 @@ final class FirestoreDailyPhotoService: DailyPhotoServicing {
                 let photoId = "potd-\(sequence)"
                 let photo = DailyPhoto(
                     id: photoId,
-                    prompt: prompt,
+                    // Both shapes: the id is what a reader resolves, the text
+                    // is what a build without id support still draws.
+                    prompt: prompt.text,
+                    promptId: prompt.id,
                     createdAt: Date(),
                     photos: [:]
                 )

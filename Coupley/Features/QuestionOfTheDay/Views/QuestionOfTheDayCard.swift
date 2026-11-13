@@ -151,7 +151,7 @@ struct QuestionOfTheDayCard: View {
 
     private func awaitingMeContent(_ quiz: ChatQuiz) -> some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text(quiz.question)
+            Text(quiz.displayQuestion)
                 .font(isHero ? BrandType.hero : BrandType.title)
                 .foregroundStyle(Brand.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -196,12 +196,12 @@ struct QuestionOfTheDayCard: View {
 
     private func awaitingPartnerContent(_ quiz: ChatQuiz) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text(quiz.question)
+            Text(quiz.displayQuestion)
                 .font(.system(size: 16, weight: .semibold, design: .rounded))
                 .foregroundStyle(Brand.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
 
-            if let picked = quiz.answer(for: viewModel.myUserId)?.options.first {
+            if let picked = viewModel.myAnswerLabel {
                 HStack(spacing: 7) {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.system(size: 13, weight: .semibold))
@@ -236,7 +236,7 @@ struct QuestionOfTheDayCard: View {
 
     private func completeContent(_ quiz: ChatQuiz) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text(quiz.question)
+            Text(quiz.displayQuestion)
                 .font(.system(size: 16, weight: .semibold, design: .rounded))
                 .foregroundStyle(Brand.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -244,7 +244,7 @@ struct QuestionOfTheDayCard: View {
             if let result = quiz.result {
                 HStack(spacing: 8) {
                     Text(result.emoji).font(.system(size: 20))
-                    Text(result.summary)
+                    Text(quiz.resultSentence ?? result.summary)
                         .font(.system(size: 14, weight: .semibold, design: .rounded))
                         .foregroundStyle(Brand.textPrimary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -260,11 +260,11 @@ struct QuestionOfTheDayCard: View {
             VStack(spacing: 8) {
                 answerRow(
                     label: "You",
-                    options: quiz.answer(for: viewModel.myUserId)?.options ?? []
+                    options: quiz.optionLabels(ofUser: viewModel.myUserId)
                 )
                 answerRow(
                     label: partnerName,
-                    options: quiz.answer(for: viewModel.partnerUserId)?.options ?? []
+                    options: quiz.optionLabels(ofUser: viewModel.partnerUserId)
                 )
             }
 
@@ -280,7 +280,7 @@ struct QuestionOfTheDayCard: View {
                             viewerId: viewModel.myUserId,
                             partnerId: viewModel.partnerUserId)
 
-            if let option = quiz.answer(for: viewModel.partnerUserId)?.options.first,
+            if let option = viewModel.partnerAnswerLabel,
                let insight = viewModel.partnerAnswerInsight {
                 insightCard(option: option, body: insight)
             }

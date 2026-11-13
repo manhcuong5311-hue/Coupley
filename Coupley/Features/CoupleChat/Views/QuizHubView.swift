@@ -331,7 +331,7 @@ struct QuizHubView: View {
                         .font(.system(size: 18))
                 }
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(quiz.question)
+                    Text(quiz.displayQuestion)
                         .font(.system(size: 14, weight: .semibold, design: .rounded))
                         .foregroundStyle(Brand.textPrimary)
                         .lineLimit(1)
@@ -563,7 +563,7 @@ struct QuizHistorySheet: View {
                 statusChip(for: quiz)
             }
 
-            Text(quiz.question)
+            Text(quiz.displayQuestion)
                 .font(.system(size: 15, weight: .semibold, design: .rounded))
                 .foregroundStyle(Brand.textPrimary)
                 .multilineTextAlignment(.leading)
@@ -573,7 +573,7 @@ struct QuizHistorySheet: View {
                 HStack(spacing: 8) {
                     Text(result.emoji)
                         .font(.system(size: 16))
-                    Text(result.summary)
+                    Text(quiz.resultSentence ?? result.summary)
                         .font(.system(size: 12, design: .rounded))
                         .foregroundStyle(Brand.textSecondary)
                         .lineLimit(2)
@@ -648,7 +648,7 @@ private extension ChatQuiz {
         case .partial:
             return hasAnswered(viewerId) ? "Waiting on partner" : "Your turn"
         case .complete:
-            if let summary = result?.summary { return summary }
+            if let sentence = resultSentence { return sentence }
             return "Complete"
         }
     }

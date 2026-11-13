@@ -172,8 +172,12 @@ final class FirestoreCoupleChatService: CoupleChatServicing {
                 answered.insert(quiz.questionId)
                 // Only finished quizzes can score a guess: an unanswered
                 // partner has nothing to be right or wrong about.
-                if let outcome = quiz.answers[viewerId]?
-                    .guessWasRight(against: quiz.answers[partnerId]) {
+                // Scored by stable id. The old call compared the two stored
+                // label arrays, so a cross-language couple got every guess
+                // marked wrong and this score — surfaced as "you know them
+                // N%" — drifted to zero while reading like a real number.
+                if let outcome = quiz.guessWasRight(viewer: viewerId,
+                                                    partner: partnerId) {
                     guessesMade += 1
                     if outcome { guessesCorrect += 1 }
                 }
@@ -255,23 +259,12 @@ final class FirestoreCoupleChatService: CoupleChatServicing {
                     if bothAnswered && quiz.result == nil {
                         // Second answerer posts the result inside the same tx.
                         var result = resultBuilder(quiz)
-                        result = ChatQuizResult(
-                            match: result.match,
-                            summary: result.summary,
-                            emoji: result.emoji,
-                            traits: result.traits,
-                            postedAt: Date(),
-                            postedByClientId: clientId
-                        )
+                        result.postedAt = Date()
+                        result.postedByClientId = clientId
                         quiz.result = result
                         quiz.status = .complete
 
-                        let resultMsg = ChatMessage.resultCard(
-                            quizId: quiz.id,
-                            summary: result.summary,
-                            emoji: result.emoji,
-                            match: result.match
-                        )
+                        let resultMsg = ChatMessage.resultCard(quiz: quiz, result: result)
                         try tx.setData(from: resultMsg,
                                        forDocument: messagesRef.document(resultMsg.id))
                         tx.setData(["lastMessageAt": FieldValue.serverTimestamp()],

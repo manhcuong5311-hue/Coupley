@@ -21,6 +21,9 @@ struct QuizAnswerSheet: View {
     private enum Phase { case mine, guessing }
 
     @State private var phase: Phase = .mine
+    /// Stable option ids, not display text. Holding labels here was the root
+    /// of the whole bug: the set was written to Firestore as-is, so the pick
+    /// was stored in whatever language this device happened to be running.
     @State private var selected: Set<String> = []
     @State private var guessed: Set<String> = []
     @State private var freeText: String = ""
@@ -28,13 +31,20 @@ struct QuizAnswerSheet: View {
     @State private var lastToggled: String?
 
     /// Free text cannot be scored against a prediction.
-    private var supportsGuessing: Bool { !quiz.options.isEmpty }
+    private var supportsGuessing: Bool { !options.isEmpty }
 
     private var activeSelection: Set<String> {
         phase == .mine ? selected : guessed
     }
 
-    private var template: ChatQuizTemplate? { ChatQuizBank.byId(quiz.questionId) }
+    /// The option set this quiz offers, with labels resolved for the reader.
+    private var options: [ResolvedQuizOption] { quiz.resolvedOptions }
+
+    /// Picks in the quiz's own option order, so what gets stored does not
+    /// depend on `Set` iteration order.
+    private func picks(_ ids: Set<String>) -> [ResolvedQuizOption] {
+        options.filter { ids.contains($0.id) }
+    }
 
     var body: some View {
         ZStack {
@@ -51,25 +61,25 @@ struct QuizAnswerSheet: View {
                                 .font(.system(size: 22, weight: .bold, design: .rounded))
                                 .foregroundStyle(Brand.textPrimary)
                                 .fixedSize(horizontal: false, vertical: true)
-                            Text(quiz.question)
+                            Text(quiz.displayQuestion)
                                 .font(.system(size: 14, design: .rounded))
                                 .foregroundStyle(Brand.textSecondary)
                                 .fixedSize(horizontal: false, vertical: true)
                         } else {
-                            Text(quiz.question)
+                            Text(quiz.displayQuestion)
                                 .font(.system(size: 22, weight: .bold, design: .rounded))
                                 .foregroundStyle(Brand.textPrimary)
                                 .fixedSize(horizontal: false, vertical: true)
 
-                            if !quiz.subtitle.isEmpty {
-                                Text(quiz.subtitle)
+                            if !quiz.displaySubtitle.isEmpty {
+                                Text(quiz.displaySubtitle)
                                     .font(.system(size: 15, design: .rounded))
                                     .foregroundStyle(Brand.textSecondary)
                                     .fixedSize(horizontal: false, vertical: true)
                             }
                         }
 
-                        if quiz.options.isEmpty {
+                        if options.isEmpty {
                             freeTextField
                         } else {
                             optionsList
@@ -138,7 +148,7 @@ struct QuizAnswerSheet: View {
 
     private var optionsList: some View {
         VStack(spacing: 10) {
-            ForEach(quiz.options, id: \.self) { option in
+            ForEach(options) { option in
                 optionRow(option)
             }
             if quiz.allowsMultiple {
@@ -151,11 +161,11 @@ struct QuizAnswerSheet: View {
         }
     }
 
-    private func optionRow(_ option: String) -> some View {
-        let isSelected = activeSelection.contains(option)
+    private func optionRow(_ option: ResolvedQuizOption) -> some View {
+        let isSelected = activeSelection.contains(option.id)
         return Button {
             withAnimation(.spring(response: 0.32, dampingFraction: 0.72)) {
-                toggle(option)
+                toggle(option.id)
             }
         } label: {
             HStack(spacing: 14) {
@@ -189,7 +199,7 @@ struct QuizAnswerSheet: View {
                 }
                 .animation(.spring(response: 0.25, dampingFraction: 0.7), value: isSelected)
 
-                Text(option)
+                Text(option.label)
                     .font(.system(size: 16, weight: .medium, design: .rounded))
                     .foregroundStyle(isSelected ? Brand.textPrimary : Brand.textPrimary.opacity(0.85))
                     .multilineTextAlignment(.leading)
@@ -227,14 +237,16 @@ struct QuizAnswerSheet: View {
     // MARK: - Hint Card
 
     private var currentHint: String? {
-        guard let tpl = template, !tpl.optionHints.isEmpty else { return nil }
-        // For single select: hint of the one selected option
+        // Keyed by stable id, so this still resolves for a quiz posted by a
+        // partner whose app is in another language. Keying it by the option's
+        // display text — which is what the bank used to do — returned nil the
+        // moment the two devices disagreed about the wording, and the card
+        // simply did not appear.
         if !quiz.allowsMultiple, let pick = selected.first {
-            return tpl.optionHints[pick]
+            return quiz.hint(forOptionId: pick)
         }
-        // For multi-select: hint of last toggled option
         if let last = lastToggled, selected.contains(last) {
-            return tpl.optionHints[last]
+            return quiz.hint(forOptionId: last)
         }
         return nil
     }
@@ -322,7 +334,7 @@ struct QuizAnswerSheet: View {
     /// Gate for the primary button in whichever phase is showing.
     private var canAdvance: Bool {
         if submitting { return false }
-        if quiz.options.isEmpty {
+        if options.isEmpty {
             return !freeText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         }
         return phase == .mine ? !selected.isEmpty : !guessed.isEmpty
@@ -359,13 +371,20 @@ struct QuizAnswerSheet: View {
     private func submit() {
         guard !submitting else { return }
         submitting = true
+        let mine = picks(selected)
+        let prediction = picks(guessed)
+        let trimmed = freeText.trimmingCharacters(in: .whitespacesAndNewlines)
         let answer = ChatQuizAnswer(
-            options: Array(selected),
-            text: freeText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                ? nil
-                : freeText.trimmingCharacters(in: .whitespacesAndNewlines),
+            // Both shapes go in: the ids are what anything compares, the
+            // base-language labels are what a build without id support still
+            // renders — and what lets an id be recovered if that build's
+            // whole-document rewrite deletes `optionIds`.
+            options: mine.map(\.baseLabel),
+            optionIds: mine.map(\.id),
+            text: trimmed.isEmpty ? nil : trimmed,
             answeredAt: Date(),
-            guess: guessed.isEmpty ? nil : Array(guessed)
+            guess: prediction.isEmpty ? nil : prediction.map(\.baseLabel),
+            guessIds: prediction.isEmpty ? nil : prediction.map(\.id)
         )
         onSubmit(answer)
     }

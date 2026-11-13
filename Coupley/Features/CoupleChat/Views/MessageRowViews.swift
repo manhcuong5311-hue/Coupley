@@ -151,13 +151,13 @@ struct QuizCardBubble: View {
                         customNoteBlock(note)
                     }
 
-                    Text(quiz.question)
+                    Text(quiz.displayQuestion)
                         .font(.system(size: 17, weight: .semibold, design: .rounded))
                         .foregroundStyle(Brand.textPrimary)
                         .fixedSize(horizontal: false, vertical: true)
 
-                    if !quiz.subtitle.isEmpty {
-                        Text(quiz.subtitle)
+                    if !quiz.displaySubtitle.isEmpty {
+                        Text(quiz.displaySubtitle)
                             .font(.subheadline)
                             .foregroundStyle(Brand.textSecondary)
                             .fixedSize(horizontal: false, vertical: true)
@@ -330,8 +330,11 @@ struct QuizCardBubble: View {
 
 struct ResultCardBubble: View {
     let message: ChatMessage
-    /// Resolved from `message.quizId` by the caller. Present for curated
-    /// quizzes; nil for custom ones, which carry no bank insight.
+    /// Resolved from `message.quizId` by the caller — custom quizzes
+    /// included. It is nil when the quiz is simply no longer loaded, which is
+    /// routine: the quiz listener is capped at 20 while messages page back
+    /// without limit. The result sentence falls back to the message's own
+    /// verdict for exactly that case.
     let quiz: ChatQuiz?
     let viewerId: String
     let partnerId: String
@@ -344,7 +347,13 @@ struct ResultCardBubble: View {
                 Text(message.resultEmoji ?? "✨")
                     .font(.system(size: 34))
 
-                Text(message.resultSummary ?? "")
+                // Rendered from the stored verdict where there is one, so
+                // each partner reads it in their own language. Falls back to
+                // the message's frozen prose for results written before the
+                // verdict was stored — which is all of them so far.
+                Text(quiz?.resultSentence
+                     ?? message.renderedResultSentence
+                     ?? message.resultSummary ?? "")
                     .font(.system(size: 16, weight: .medium, design: .rounded))
                     .foregroundStyle(Brand.textPrimary)
                     .multilineTextAlignment(.center)
@@ -367,7 +376,7 @@ struct ResultCardBubble: View {
                 // Titled with the option, never with a name: the bank's
                 // hints address whoever picked in the second person, so
                 // attributing one to a person inverts its pronouns.
-                if let option = quiz?.answers[partnerId]?.options.first,
+                if let option = quiz?.insightOptionLabel(for: partnerId),
                    let insight = partnerInsight {
                     insightBlock(option: option, body: insight)
                 }
@@ -575,11 +584,11 @@ struct GuessOutcomeRow: View {
     let partnerId: String
 
     private var outcome: Bool? {
-        quiz.answers[viewerId]?.guessWasRight(against: quiz.answers[partnerId])
+        quiz.guessWasRight(viewer: viewerId, partner: partnerId)
     }
 
     private var guessText: String? {
-        quiz.answers[viewerId]?.guess?.joined(separator: ", ")
+        quiz.guessLabels(ofUser: viewerId)?.joined(separator: ", ")
     }
 
     var body: some View {

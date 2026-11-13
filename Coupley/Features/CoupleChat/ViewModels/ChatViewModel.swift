@@ -372,7 +372,8 @@ final class ChatViewModel: ObservableObject {
                 topic: template.topic,
                 question: template.question,
                 subtitle: template.subtitle,
-                options: template.options,
+                options: template.optionLabels,
+                optionIds: template.optionIds,
                 allowsMultiple: template.allowsMultiple,
                 createdAt: Date(),
                 status: .pending,
@@ -384,7 +385,11 @@ final class ChatViewModel: ObservableObject {
             )
             do {
                 try await chatService.postSystemMessage(
-                    "New quiz: \(quiz.topic.emoji) \(quiz.topic.label)",
+                    // Base language: this prose is stored and read back by
+                    // both partners, so it must not take this device's.
+                    // Still English for everyone until it becomes a key —
+                    // see the system-message item in PRE_L10N_AUDIT.md.
+                    "New quiz: \(quiz.topic.emoji) \(quiz.topic.baseLabel)",
                     coupleId: session.coupleId
                 )
                 try await chatService.postQuiz(quiz, coupleId: session.coupleId)
@@ -417,6 +422,17 @@ final class ChatViewModel: ObservableObject {
         note: String?
     ) {
         Task {
+            // A custom quiz has no bank, so an option's text is its identity.
+            // Two identical options therefore collapse into one id: the answer
+            // sheet would draw two rows that select together, a single tap
+            // would store the pick twice, and SwiftUI would be given duplicate
+            // ForEach ids. Deduplicate here, keeping the author's order.
+            var seenOption = Set<String>()
+            let options = options.filter { seenOption.insert($0).inserted }
+            var seenPick = Set<String>()
+            let authorAnswer = authorAnswer
+                .filter { options.contains($0) && seenPick.insert($0).inserted }
+
             let trimmedNote = note?.trimmingCharacters(in: .whitespacesAndNewlines)
             let trimmedTitle = title?.trimmingCharacters(in: .whitespacesAndNewlines)
             let now = Date()
@@ -427,7 +443,12 @@ final class ChatViewModel: ObservableObject {
             var prefilledAnswers: [String: ChatQuizAnswer] = [:]
             if !authorAnswer.isEmpty {
                 prefilledAnswers[session.userId] = ChatQuizAnswer(
+                    // A custom quiz has no bank entry, so its option text is
+                    // the author's own words — identical on both devices and
+                    // never translated. For these the label *is* the stable
+                    // id, which keeps every comparison downstream on one path.
                     options: authorAnswer,
+                    optionIds: authorAnswer,
                     text: nil,
                     answeredAt: now
                 )
@@ -440,6 +461,7 @@ final class ChatViewModel: ObservableObject {
                 question: question.trimmingCharacters(in: .whitespacesAndNewlines),
                 subtitle: trimmedTitle?.isEmpty == false ? trimmedTitle! : "From your partner ❤️",
                 options: options,
+                optionIds: options,   // user-authored text is its own identity
                 allowsMultiple: allowsMultiple,
                 createdAt: now,
                 status: prefilledAnswers.isEmpty ? .pending : .partial,

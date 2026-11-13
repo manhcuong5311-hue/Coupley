@@ -96,13 +96,22 @@ final class QuestionOfTheDayViewModel: ObservableObject {
 
     /// The hint attached to the option this user picked. Gives the card
     /// something to say after answering, instead of a bare "waiting".
+    ///
+    /// Was its own copy of the hint lookup, keyed by the stored display
+    /// string; it is now the same id-based resolution the chat card uses.
     var myAnswerHint: String? {
-        guard let quiz,
-              let answer = quiz.answer(for: session.userId),
-              let picked = answer.options.first,
-              let template = ChatQuizBank.byId(quiz.questionId)
-        else { return nil }
-        return template.optionHints[picked]
+        quiz?.insight(for: session.userId)
+    }
+
+    /// The option this user picked, labelled for them.
+    var myAnswerLabel: String? {
+        quiz?.optionLabels(ofUser: session.userId).first
+    }
+
+    /// The option the partner picked, labelled for this reader. Titles the
+    /// insight card.
+    var partnerAnswerLabel: String? {
+        quiz?.optionLabels(ofUser: session.partnerId).first
     }
 
     // MARK: - Lifecycle

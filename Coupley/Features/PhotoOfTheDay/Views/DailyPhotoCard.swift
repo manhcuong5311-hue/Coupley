@@ -131,7 +131,7 @@ struct DailyPhotoCard: View {
 
     private func awaitingMe(_ photo: DailyPhoto) -> some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text(photo.prompt)
+            Text(photo.promptText)
                 .font(isHero ? BrandType.hero : BrandType.title)
                 .foregroundStyle(Brand.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -168,7 +168,7 @@ struct DailyPhotoCard: View {
 
     private func awaitingPartner(_ photo: DailyPhoto) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text(photo.prompt)
+            Text(photo.promptText)
                 .font(isHero ? BrandType.hero : BrandType.title)
                 .foregroundStyle(Brand.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -186,7 +186,7 @@ struct DailyPhotoCard: View {
 
     private func revealed(_ photo: DailyPhoto) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text(photo.prompt)
+            Text(photo.promptText)
                 .font(isHero ? BrandType.hero : BrandType.title)
                 .foregroundStyle(Brand.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)

@@ -91,7 +91,8 @@ final class DefaultQuizOrchestrator: QuizOrchestrating {
             topic: t.topic,
             question: t.question,
             subtitle: t.subtitle,
-            options: t.options,
+            options: t.optionLabels,
+            optionIds: t.optionIds,
             allowsMultiple: t.allowsMultiple,
             createdAt: Date(),
             status: .pending,
@@ -117,9 +118,17 @@ final class DefaultInsightGenerator: InsightGenerating {
         let bAnswer = quiz.answers[userBId]
 
         // Treat overlap of selected options OR equal text as "match".
-        let aSet = Set(aAnswer?.options ?? [])
-        let bSet = Set(bAnswer?.options ?? [])
-        let optionOverlap = aSet.intersection(bSet)
+        //
+        // Compared by stable id, not by display text. The old version
+        // intersected the two stored label arrays, so two partners whose apps
+        // rendered the same choice differently never intersected: every
+        // result came back `match: false` and every answer was filed as a
+        // difference.
+        //
+        // `sharedOptionIds` returns them in the quiz's own option order. The
+        // old code took `Set.first`, which for the seven multi-select
+        // templates named a different option on different runs.
+        let optionOverlap = quiz.sharedOptionIds(userAId, userBId)
 
         let aText = (aAnswer?.text ?? "").trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         let bText = (bAnswer?.text ?? "").trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
@@ -127,20 +136,44 @@ final class DefaultInsightGenerator: InsightGenerating {
 
         let isMatch = !optionOverlap.isEmpty || textMatches
 
-        let summary: String
+        // The verdict is stored as a shape plus its parameters, so each
+        // partner renders it in their own language. The prose below is still
+        // written alongside it, for documents read by a build that predates
+        // `kind` — and it is the reason history cannot be localized
+        // retroactively: every result already in Firestore has only this.
+        let kind: QuizResultKind
+        let sharedId: String?
         if isMatch {
             if let shared = optionOverlap.first {
-                summary = "You both value \(shared.lowercased()) \(quiz.topic.emoji)"
+                kind = .matchShared
+                sharedId = shared
             } else {
-                summary = "You're on the same page here \(quiz.topic.emoji)"
+                kind = .matchGeneric
+                sharedId = nil
             }
         } else {
-            summary = "You see \(quiz.topic.label.lowercased()) a little differently — might be worth a chat."
+            kind = .mismatch
+            sharedId = nil
         }
 
+        // Base language, because it is written into Firestore and read by
+        // builds that have no idea which language wrote it.
+        let sharedLabel = sharedId.map { quiz.baseLabel(forOptionId: $0) }
+
+        let summary = QuizResultCopy.sentence(
+            kind: kind,
+            optionLabel: sharedLabel,
+            emoji: quiz.topic.emoji,
+            topicLabel: quiz.topic.label
+        )
+
+        // Write-only field, kept so existing documents keep their shape and
+        // their encoding: still base-language display text, as the shipped
+        // build writes it. Changing what an existing field means is not worth
+        // doing for data nothing reads.
         var traits: [String: String] = [:]
-        if let a = aAnswer?.options.first { traits["userA"] = a }
-        if let b = bAnswer?.options.first { traits["userB"] = b }
+        if let a = quiz.baseLabels(ofUser: userAId).first { traits["userA"] = a }
+        if let b = quiz.baseLabels(ofUser: userBId).first { traits["userB"] = b }
 
         return ChatQuizResult(
             match: isMatch,
@@ -148,7 +181,10 @@ final class DefaultInsightGenerator: InsightGenerating {
             emoji: quiz.topic.emoji,
             traits: traits,
             postedAt: Date(),
-            postedByClientId: ""     // filled by the service at transaction time
+            postedByClientId: "",    // filled by the service at transaction time
+            kind: kind,
+            sharedOptionId: sharedId,
+            sharedOptionLabel: sharedLabel
         )
     }
 }

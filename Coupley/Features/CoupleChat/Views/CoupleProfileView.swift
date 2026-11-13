@@ -204,17 +204,70 @@ private struct TopicCard: View {
                           trait: traitFor(partnerId, in: insight))
         }
 
-        if !insight.sharedTraits.isEmpty {
+        // Drawn from the stored references where the profile has them, so
+        // the chips read in this device's language rather than in whichever
+        // one wrote them. Profiles written before the references existed fall
+        // back to their accumulated text.
+        let shared = sharedItems(insight)
+        if !shared.isEmpty {
             chipsBlock(title: "In sync",
-                       items: insight.sharedTraits,
+                       items: shared,
                        tint: Brand.accentStart)
         }
 
-        if !insight.differences.isEmpty {
+        let differing = differenceItems(insight)
+        if !differing.isEmpty {
             chipsBlock(title: "Different takes",
-                       items: insight.differences,
+                       items: differing,
                        tint: Brand.textSecondary)
         }
+    }
+
+    /// Merges the two arrays rather than preferring one.
+    ///
+    /// Preferring refs whenever they were non-empty made the chips collapse:
+    /// a profile with months of accumulated legacy traits gains exactly one
+    /// ref the first time a quiz completes on this build, and the screen then
+    /// showed that one chip and dropped the rest — while the partner's older
+    /// build still showed all of them. It also flapped, because the older
+    /// build's whole-document write deletes the refs again.
+    ///
+    /// Deduped by the base label a ref resolves to, so a concept that is in
+    /// both arrays appears once.
+    private func merged(refs: [String]?, legacy: [String]) -> [String] {
+        guard let refs, !refs.isEmpty else { return legacy }
+        var seenBase = Set<String>()
+        var items: [String] = []
+        for ref in refs {
+            let base = QuizOptionRef.baseLabel(ref) ?? ref
+            guard seenBase.insert(base).inserted else { continue }
+            items.append(QuizOptionRef.label(ref) ?? base)
+        }
+        for entry in legacy where !seenBase.contains(entry) {
+            seenBase.insert(entry)
+            items.append(entry)
+        }
+        return items
+    }
+
+    private func sharedItems(_ insight: CoupleInsightProfile.TopicInsight) -> [String] {
+        merged(refs: insight.sharedTraitRefs, legacy: insight.sharedTraits)
+    }
+
+    private func differenceItems(_ insight: CoupleInsightProfile.TopicInsight) -> [String] {
+        merged(refs: insight.differenceRefs, legacy: insight.differences)
+    }
+
+    /// The trait line, rebuilt from its references when the profile carries
+    /// them. Falls back to the stored prose, which is also the right answer
+    /// for a free-text answer: there the summary is the user's own words.
+    private func traitSummary(_ trait: CoupleInsightProfile.PartnerTrait?) -> String {
+        guard let trait else { return "—" }
+        if let refs = trait.summaryRefs, !refs.isEmpty {
+            let labels = refs.compactMap { QuizOptionRef.label($0) }
+            if !labels.isEmpty { return labels.joined(separator: ", ") }
+        }
+        return trait.summary
     }
 
     private func traitFor(_ userId: String,
@@ -233,7 +286,7 @@ private struct TopicCard: View {
                 .foregroundStyle(Brand.textTertiary)
                 .textCase(.uppercase)
                 .kerning(0.5)
-            Text(trait?.summary ?? "—")
+            Text(traitSummary(trait))
                 .font(.system(size: 15, weight: .medium, design: .rounded))
                 .foregroundStyle(Brand.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)

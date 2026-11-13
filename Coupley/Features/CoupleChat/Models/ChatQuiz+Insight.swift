@@ -23,11 +23,29 @@ extension ChatQuiz {
 
     /// What the option this user picked says about them, from the curated
     /// bank. `nil` for custom quizzes, unanswered users, or free-text answers.
+    ///
+    /// Resolved through the stable option id rather than the stored display
+    /// string. The old lookup keyed the bank's hint dictionary by the text
+    /// read back out of Firestore, so it depended on the writing device and
+    /// the reading device spelling the option identically — which stops being
+    /// true the moment either translates it, or the bank is reworded. It
+    /// failed by returning nil, and the gate above it removed the card with
+    /// no empty state, so the payoff screen just quietly went missing.
     func insight(for userId: String) -> String? {
-        guard let pick = answers[userId]?.options.first,
-              let template = ChatQuizBank.byId(questionId)
+        guard let answer = answers[userId],
+              let id = stableIds(for: answer).first
         else { return nil }
-        return template.optionHints[pick]
+        return hint(forOptionId: id)
     }
+
+    /// The option this user picked, labelled for whoever is reading. Used as
+    /// the insight card's title.
+    func insightOptionLabel(for userId: String) -> String? {
+        guard let answer = answers[userId],
+              let id = stableIds(for: answer).first
+        else { return nil }
+        return label(forOptionId: id)
+    }
+
 
 }
