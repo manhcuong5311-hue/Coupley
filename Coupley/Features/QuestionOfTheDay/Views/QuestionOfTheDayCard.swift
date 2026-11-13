@@ -41,16 +41,11 @@ struct QuestionOfTheDayCard: View {
             }
         }
         .animation(.spring(response: 0.42, dampingFraction: 0.85), value: viewModel.state)
-        .sheet(item: $viewModel.quizBeingAnswered) { quiz in
-            QuizAnswerSheet(
-                quiz: quiz,
-                partnerName: partnerName,
-                onSubmit: { viewModel.submit(answer: $0, for: quiz) },
-                onCancel: { viewModel.quizBeingAnswered = nil }
-            )
-            .presentationDetents([.medium, .large])
-            .presentationBackground(Brand.backgroundTop)
-        }
+        // The answer sheet is presented by the dashboard, not here. This card
+        // is drawn in two places — the hero slot and the today zone — and
+        // moves between them when the hero changes (a partner coming online is
+        // enough). A sheet attached to the card was torn down with it, taking
+        // the user's half-made answer along.
     }
 
     // MARK: - Palette

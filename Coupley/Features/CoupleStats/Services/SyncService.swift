@@ -133,7 +133,10 @@ final class FirestoreSyncService: SyncService {
     }
 
     func saveSyncScore(_ score: SyncScore, coupleId: String) async throws {
-        try await db
+        // No `await`: `setData(from:)` is synchronous in the Firebase SDK and
+        // returns once the write is queued. This score is recomputed on every
+        // load, so a write that fails later is simply redone.
+        try db
             .collection(FirestorePath.syncScores(coupleId: coupleId))
             .document(score.date)
             .setData(from: score)

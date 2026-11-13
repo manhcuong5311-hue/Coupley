@@ -35,7 +35,15 @@ enum DayKey {
         let f = DateFormatter()
         f.locale = Locale(identifier: "en_US_POSIX")
         f.calendar = Calendar(identifier: .gregorian)
-        f.timeZone = TimeZone(secondsFromGMT: 0)
+        // Local day, not UTC. Scores are computed over the device's local
+        // day (`Calendar.current.startOfDay`), so the key has to name that
+        // same day: with a UTC key, a check-in between 00:00 and 07:00 in
+        // Vietnam was filed under — and overwrote — the previous day's score,
+        // while "today" looked up a document that did not exist. Locale and
+        // calendar stay pinned above; those are what made keys unreadable
+        // across devices. Partners in different timezones can still disagree
+        // about the date near midnight, exactly as their mood windows do.
+        f.timeZone = .autoupdatingCurrent
         f.dateFormat = "yyyy-MM-dd"
         return f
     }()

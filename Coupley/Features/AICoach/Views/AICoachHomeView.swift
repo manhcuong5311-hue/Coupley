@@ -125,7 +125,13 @@ struct AICoachHomeView: View {
             .presentationBackground(Brand.backgroundTop)
         }
         .dailyLimitAlert($limitReached)
-        .onAppear { viewModel.load() }
+        .onReceive(NotificationCenter.default.publisher(for: .aiCoachRequestServed)) { _ in
+            // One unit per served request: that is what the server deducts,
+            // so "left today" now means what the server will actually allow.
+            premiumStore.recordUsage(for: .aiCoach)
+        }
+        .aiDataConsentGate(onDecline: { dismiss() },
+                           onGranted: { viewModel.load() })
     }
 
     // MARK: - Ambient glows
@@ -395,7 +401,7 @@ struct AICoachHomeView: View {
 
     private var footer: some View {
         VStack(spacing: 8) {
-            Text("Your conversations are private and saved only on this device.")
+            Text("Replies are written by OpenAI from what you send. Your coach history is saved only on this device.")
                 .font(.system(size: 11, design: .rounded))
                 .foregroundStyle(Brand.textTertiary)
                 .multilineTextAlignment(.center)
@@ -411,7 +417,8 @@ struct AICoachHomeView: View {
             return
         }
         // Each full session counts toward the daily fair-use limit.
-        premiumStore.recordUsage(for: .aiCoach)
+        // Usage is recorded per request the server serves (see the
+        // `.aiCoachRequestServed` observer), not per conversation opened.
         selectedIssue = issue
         showChat = true
     }

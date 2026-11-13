@@ -187,6 +187,17 @@ struct ContentView: View {
                 handleWidgetDestination(destination)
             }
             .onAppear { handleWidgetDestination(deepLinkRouter.pendingDestination) }
+            // The streak only advances inside `loadStats`, which used to run
+            // on cold launch and when the Stats sheet opened — nowhere else.
+            // A day on which both partners checked in but neither relaunched
+            // was never counted, and the next launch then reset the streak to
+            // zero. Whoever checks in second now counts the day immediately.
+            .onReceive(NotificationCenter.default.publisher(for: .coupleyMoodSaved)) { _ in
+                if sessionStore.isPaired { statsViewModel.loadStats() }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
+                if sessionStore.isPaired { statsViewModel.loadStats() }
+            }
             .onChange(of: sessionStore.isPaired) { _, paired in
                 if paired {
                     coupleViewModel.startListening()

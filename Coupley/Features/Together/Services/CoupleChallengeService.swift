@@ -108,8 +108,20 @@ final class FirestoreCoupleChallengeService: CoupleChallengeService {
             }
 
             var updated = challenge
-            updated.checkInLog.append(date)
-            updated.checkInLog.sort()
+            // One raw log entry per cadence unit, however many partners check
+            // in during it. 1.2 measures progress in distinct units, but 1.1
+            // counts raw entries — so a second entry on the same day showed a
+            // partner still on 1.1 "Day 2" after day one, and let their app
+            // mark the challenge complete at half its length, for both.
+            // Who checked in stays recorded per user below.
+            let unit = challenge.cadence.bucket(for: date)
+            let unitAlreadyLogged = challenge.checkInLog.contains {
+                challenge.cadence.bucket(for: $0) == unit
+            }
+            if !unitAlreadyLogged {
+                updated.checkInLog.append(date)
+                updated.checkInLog.sort()
+            }
             updated.checkInsByUser[userId, default: []].append(date)
             updated.checkInsByUser[userId]?.sort()
             updated.contribution.add(1, for: userId)

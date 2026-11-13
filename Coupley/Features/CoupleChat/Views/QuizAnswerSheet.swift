@@ -20,6 +20,10 @@ struct QuizAnswerSheet: View {
     /// skippable, so nobody is forced to guess to take part.
     private enum Phase { case mine, guessing }
 
+    /// Set by the presenter when the last submission failed, so the button
+    /// can be pressed again with the choices still in place.
+    var submitFailed: Bool = false
+
     @State private var phase: Phase = .mine
     /// Stable option ids, not display text. Holding labels here was the root
     /// of the whole bug: the set was written to Firestore as-is, so the pick
@@ -101,6 +105,9 @@ struct QuizAnswerSheet: View {
 
                 submitBar
             }
+        }
+        .onChange(of: submitFailed) { _, failed in
+            if failed { submitting = false }
         }
     }
 

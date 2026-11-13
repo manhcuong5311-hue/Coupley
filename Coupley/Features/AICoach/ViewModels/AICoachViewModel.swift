@@ -115,6 +115,10 @@ final class AICoachViewModel: ObservableObject {
             persist()
         } catch {
             errorMessage = error.localizedDescription
+            // No view reads `errorMessage`, so say it in the conversation.
+            // Otherwise a refused request just looks like the coach ignoring
+            // the user.
+            messages.append(CoachChatMessage(role: .coach, text: error.localizedDescription))
         }
     }
 
@@ -154,6 +158,10 @@ final class AICoachViewModel: ObservableObject {
             persist()
         } catch {
             errorMessage = error.localizedDescription
+            // No view reads `errorMessage`, so say it in the conversation.
+            // Otherwise a refused request just looks like the coach ignoring
+            // the user.
+            messages.append(CoachChatMessage(role: .coach, text: error.localizedDescription))
         }
     }
 

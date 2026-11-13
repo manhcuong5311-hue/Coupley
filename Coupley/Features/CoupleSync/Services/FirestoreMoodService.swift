@@ -128,12 +128,14 @@ final class FirestoreMoodService: MoodService {
         }
 
         let shared = SharedMoodEntry(from: entry, userId: session.userId)
-        // Was missing `await`, which made the whole MoodQueueStore retry
-        // mechanism dead for exactly the network failures it was built for.
+        // `setData(from:)` has no async form, so a plain `try await` on it
+        // never saw a failure and the retry queue below could never fill.
+        // This throws when the server rejects the write; offline it returns
+        // after a short wait and Firestore syncs the write later.
         try await db
             .collection(FirestorePath.moods(coupleId: session.coupleId))
             .document(shared.id)
-            .setData(from: shared)
+            .setDataConfirmed(from: shared)
     }
 
     private func startMonitoring() {

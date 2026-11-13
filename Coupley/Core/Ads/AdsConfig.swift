@@ -73,6 +73,24 @@ enum AdsConfig {
     static func adaptiveBannerSize(width: CGFloat) -> AdSize {
         useLargeBanner
             ? largeAnchoredAdaptiveBanner(width: width)
-            : currentOrientationAnchoredAdaptiveBanner(width: width)
+            : (CompactBannerSize() as BannerSizing).size(width: width)
+    }
+}
+
+// The compact size is a deliberate use of a deprecated SDK function (see
+// `adaptiveBannerSize` above). Swift has no way to mark one call as an
+// accepted deprecation, so it is made through a protocol witness: the
+// deprecated implementation may call deprecated API without a warning, and
+// the protocol requirement it satisfies is not itself deprecated. The moment
+// the SDK removes the function this stops compiling, which is the signal that
+// matters.
+private protocol BannerSizing {
+    @MainActor func size(width: CGFloat) -> AdSize
+}
+
+private struct CompactBannerSize: BannerSizing {
+    @available(*, deprecated, message: "Deliberate; see AdsConfig.adaptiveBannerSize.")
+    @MainActor func size(width: CGFloat) -> AdSize {
+        currentOrientationAnchoredAdaptiveBanner(width: width)
     }
 }

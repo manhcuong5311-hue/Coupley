@@ -300,7 +300,9 @@ struct ChatQuiz: Identifiable, Codable, Equatable {
         return ReactionKind(rawValue: raw)
     }
 
-    var isQuestionOfTheDay: Bool { kind == .questionOfTheDay }
+    /// Also recognised by its document id: a partner on 1.1 who answers the
+    /// daily question from chat rewrites the document without `kind`.
+    var isQuestionOfTheDay: Bool { kind == .questionOfTheDay || id.hasPrefix("qotd-") }
 
     func answer(for userId: String) -> ChatQuizAnswer? {
         answers[userId]

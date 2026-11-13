@@ -99,11 +99,13 @@ final class DailyPhotoViewModel: ObservableObject {
            Date().timeIntervalSince(last) < Self.ensureRetryInterval { return }
         lastEnsureAttempt = Date()
 
-        Task { [service, session] in
+        Task { [weak self, service, session] in
             do {
                 try await service.ensureCurrentPrompt(coupleId: session.coupleId)
             } catch {
                 print("[DailyPhoto] ensureCurrentPrompt failed: \(error.localizedDescription)")
+                // Not an attempt worth throttling: allow the next trigger to retry.
+                self?.lastEnsureAttempt = nil
             }
         }
     }

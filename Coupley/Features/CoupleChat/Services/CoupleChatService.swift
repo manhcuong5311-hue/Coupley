@@ -319,11 +319,11 @@ final class FirestoreCoupleChatService: CoupleChatServicing {
     private func writeMessage(_ msg: ChatMessage, coupleId: String) async throws {
         let ref = db.collection(FirestorePath.messages(coupleId: coupleId))
             .document(msg.id)
-        // Without `await` this takes the SYNCHRONOUS overload and returns as
-        // soon as the write is queued locally. `sendDraft` has already cleared
-        // the composer by then and its catch never runs, so a message the
-        // server later rejects is gone with no trace.
-        try await ref.setData(from: msg)
+        // `setData(from:)` has no async form, so awaiting it changed nothing:
+        // it returned once the write was queued locally and a message the
+        // server rejected simply vanished later. This waits briefly for the
+        // server's answer and throws on a rejection (see setDataConfirmed).
+        try await ref.setDataConfirmed(from: msg)
     }
 
     private func touchLastMessage(coupleId: String) async throws {

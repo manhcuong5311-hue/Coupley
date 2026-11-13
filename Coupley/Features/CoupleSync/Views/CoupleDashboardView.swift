@@ -191,6 +191,27 @@ struct CoupleDashboardView: View {
             .presentationBackground(Brand.backgroundTop)
         }
         .dailyLimitAlert($limitReached)
+        .sheet(item: $qotdViewModel.quizBeingAnswered) { quiz in
+            // Presented from here so it survives the question card moving
+            // between the hero slot and the today zone.
+            QuizAnswerSheet(
+                quiz: quiz,
+                partnerName: partnerName,
+                onSubmit: { qotdViewModel.submit(answer: $0, for: quiz) },
+                onCancel: { qotdViewModel.quizBeingAnswered = nil },
+                submitFailed: qotdViewModel.errorMessage != nil
+            )
+            .alert("Couldn't send your answer", isPresented: Binding(
+                get: { qotdViewModel.errorMessage != nil },
+                set: { if !$0 { qotdViewModel.dismissError() } }
+            )) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text("Check your connection and try again. Your choices are still here.")
+            }
+            .presentationDetents([.medium, .large])
+            .presentationBackground(Brand.backgroundTop)
+        }
         .sheet(isPresented: $showAICoach) {
             NavigationStack {
                 AICoachHomeView(viewModel: aiCoachViewModel)
@@ -202,6 +223,13 @@ struct CoupleDashboardView: View {
         }
         .animation(.spring(response: 0.45, dampingFraction: 0.85),
                    value: viewModel.partnerIsOnline)
+        // `onAppear` does not fire when a suspended app comes back, so an app
+        // left open overnight kept showing yesterday's finished question until
+        // someone switched tabs. Both calls are throttled and idempotent.
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
+            qotdViewModel.start()
+            dailyPhotoViewModel.start()
+        }
         .onAppear {
             viewModel.startListening()
             if let s = sessionStore.session {

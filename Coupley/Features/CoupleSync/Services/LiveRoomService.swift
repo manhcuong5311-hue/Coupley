@@ -93,7 +93,9 @@ actor FirestoreLiveRoomService: LiveRoomServicing {
         coupleId: String,
         onUpdate: @escaping (LiveRoomState) -> Void
     ) -> ListenerRegistration {
-        db.collection(FirestorePath.couples)
+        // The shared instance, not `db`: this method is nonisolated so it can
+        // hand back a registration synchronously, and `db` belongs to the actor.
+        Firestore.firestore().collection(FirestorePath.couples)
             .document(coupleId)
             .collection("liveState")
             .document("room")

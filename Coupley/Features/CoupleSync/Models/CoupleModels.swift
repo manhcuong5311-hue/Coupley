@@ -122,7 +122,7 @@ struct SharedMoodEntry: Identifiable, Codable, Equatable {
 
 // MARK: - Firestore Collection Paths
 
-enum FirestorePath {
+nonisolated enum FirestorePath {
     static let couples = "couples"
     static let users = "users"
     static let pairingCodes = "pairingCodes"

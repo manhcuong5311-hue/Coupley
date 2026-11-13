@@ -46,6 +46,40 @@ protocol QuestionOfTheDayServicing {
     func ensureCurrentQuestion(coupleId: String, userId: String) async throws -> Bool
 }
 
+// MARK: - Chained listener handle
+
+/// One handle for two listeners: the couple document's pointer, and whichever
+/// quiz it currently points at. Removing it removes both.
+private final class QotDRegistration: NSObject, ListenerRegistration {
+    var pointer: ListenerRegistration?
+    private var quiz: ListenerRegistration?
+    private var attachedId: String?
+    private var hasAttached = false
+
+    func isAttached(to id: String?) -> Bool {
+        hasAttached && attachedId == id
+    }
+
+    func attach(id: String?, listener: ListenerRegistration?) {
+        quiz?.remove()
+        quiz = listener
+        attachedId = id
+        hasAttached = true
+    }
+
+    func remove() {
+        pointer?.remove()
+        pointer = nil
+        quiz?.remove()
+        quiz = nil
+    }
+
+    deinit {
+        pointer?.remove()
+        quiz?.remove()
+    }
+}
+
 // MARK: - Firestore implementation
 
 final class FirestoreQuestionOfTheDayService: QuestionOfTheDayServicing {
@@ -69,20 +103,43 @@ final class FirestoreQuestionOfTheDayService: QuestionOfTheDayServicing {
         onUpdate: @escaping (ChatQuiz?) -> Void,
         onError: @escaping (Error) -> Void
     ) -> ListenerRegistration {
-        db.collection(FirestorePath.chatQuizzes(coupleId: coupleId))
-            .whereField("kind", isEqualTo: ChatQuizKind.questionOfTheDay.rawValue)
-            .order(by: "createdAt", descending: true)
-            .limit(to: 1)
-            .addSnapshotListener { snapshot, error in
+        // Follows the couple document's `qotdCurrentId` pointer instead of
+        // querying quizzes by `kind`.
+        //
+        // The daily question is mirrored into chat, where a partner still on
+        // 1.1 can answer it. 1.1 rewrites the whole quiz document from its
+        // own model (`setData(from:)`, no merge), and that model has no
+        // `kind` — so the field is deleted, a `kind == "qotd"` query stops
+        // matching, and the Home card vanished at exactly the moment the
+        // answers were due to be revealed. The pointer lives on a document
+        // 1.1 never rewrites. It also means this listener needs no composite
+        // index, so a missed `firebase deploy --only firestore:indexes` can
+        // no longer leave the card silently empty.
+        let quizzes = db.collection(FirestorePath.chatQuizzes(coupleId: coupleId))
+        let registration = QotDRegistration()
+
+        registration.pointer = db.collection(FirestorePath.couples).document(coupleId)
+            .addSnapshotListener { [weak registration] snapshot, error in
+                guard let registration else { return }
                 if let error {
                     onError(error)
                     return
                 }
-                let quiz = snapshot?.documents
-                    .compactMap { try? $0.data(as: ChatQuiz.self) }
-                    .first
-                onUpdate(quiz)
+                let currentId = snapshot?.data()?["qotdCurrentId"] as? String
+                guard !registration.isAttached(to: currentId) else { return }
+
+                registration.attach(id: currentId, listener: currentId.map { id in
+                    quizzes.document(id).addSnapshotListener { document, error in
+                        if let error {
+                            onError(error)
+                            return
+                        }
+                        onUpdate(document.flatMap { try? $0.data(as: ChatQuiz.self) })
+                    }
+                })
+                if currentId == nil { onUpdate(nil) }
             }
+        return registration
     }
 
     // MARK: - Create

@@ -143,15 +143,18 @@ struct DailyPhotoCard: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
 
+            // Read here, on the main actor: the picker's label closure is not
+            // isolated to it.
+            let isUploading = viewModel.isUploading
             PhotosPicker(selection: $pickerItem, matching: .images) {
                 HStack(spacing: 7) {
-                    if viewModel.isUploading {
+                    if isUploading {
                         ProgressView().tint(.white).controlSize(.small)
                     } else {
                         Image(systemName: "camera.fill")
                             .font(.system(size: 14, weight: .semibold))
                     }
-                    Text(viewModel.isUploading ? "Sending…" : "Send a photo")
+                    Text(isUploading ? "Sending…" : "Send a photo")
                         .font(.system(size: 15, weight: .semibold, design: .rounded))
                 }
                 .foregroundStyle(.white)

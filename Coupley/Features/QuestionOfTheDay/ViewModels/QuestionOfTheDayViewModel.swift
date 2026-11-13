@@ -180,7 +180,7 @@ final class QuestionOfTheDayViewModel: ObservableObject {
         }
         lastEnsureAttempt = Date()
 
-        Task { [service, session] in
+        Task { [weak self, service, session] in
             do {
                 try await service.ensureCurrentQuestion(
                     coupleId: session.coupleId,
@@ -188,13 +188,21 @@ final class QuestionOfTheDayViewModel: ObservableObject {
                 )
             } catch {
                 // A failure here is not worth surfacing: the listener still
-                // shows yesterday's question, and the next launch retries.
+                // shows yesterday's question. But it must not count as an
+                // attempt — the stamp above is taken before the call, so one
+                // offline launch used to block every retry for an hour.
                 print("[QotD] ensureCurrentQuestion failed: \(error.localizedDescription)")
+                self?.lastEnsureAttempt = nil
             }
         }
     }
 
     // MARK: - Answering
+
+    /// Called when the failure alert is dismissed.
+    func dismissError() {
+        errorMessage = nil
+    }
 
     func beginAnswering() {
         guard let quiz, !quiz.hasAnswered(session.userId) else { return }
@@ -204,6 +212,7 @@ final class QuestionOfTheDayViewModel: ObservableObject {
     func submit(answer: ChatQuizAnswer, for quiz: ChatQuiz) {
         guard !isSubmitting else { return }
         isSubmitting = true
+        errorMessage = nil
 
         Task {
             defer { isSubmitting = false }
@@ -225,7 +234,9 @@ final class QuestionOfTheDayViewModel: ObservableObject {
                 quizBeingAnswered = nil
 
                 if updated.status == .complete {
-                    try await aggregator.aggregate(
+                    // Best effort: the answer is already saved by this point,
+                    // so a failure here must not read as "couldn't send".
+                    try? await aggregator.aggregate(
                         updated,
                         coupleId: session.coupleId,
                         userAId: session.userId,

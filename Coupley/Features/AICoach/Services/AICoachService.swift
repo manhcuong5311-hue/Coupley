@@ -61,8 +61,15 @@ enum AICoachServiceError: LocalizedError {
         case .networkError(let e): return "Network error: \(e.localizedDescription)"
         case .serverError(_, let m): return m
         case .decodingError:      return "Couldn't read the coach's response."
-        case .rateLimited:        return "Too many requests. Give it a moment."
+        case .rateLimited:        return "The coach has reached its limit for now. If you've used today's questions it resets tomorrow; otherwise try again in a moment."
         }
+    }
+
+    /// True when the server answered and said no, as opposed to not being
+    /// reachable. A refusal must be shown to the user, never papered over.
+    var isRefusal: Bool {
+        if case .rateLimited = self { return true }
+        return false
     }
 }
 
@@ -328,6 +335,11 @@ private struct RecoveryResponseBody: Decodable {
 
 /// Tries the remote first, falls back to the mock so users always get a
 /// response even before the Cloud Function is deployed.
+///
+/// The fallback is for an unreachable backend only. When the server refuses
+/// (429: the daily allowance or the cooldown), the refusal is rethrown: the
+/// mock used to answer in its place, so past the limit a user was reading
+/// canned text presented as the real coach, with no sign anything had changed.
 final class HybridAICoachService: AICoachService {
 
     private let remote: AICoachService
@@ -342,7 +354,12 @@ final class HybridAICoachService: AICoachService {
     }
 
     func reply(to m: String, transcript: [CoachChatMessage], context: CoachContext) async throws -> String {
-        do { return try await remote.reply(to: m, transcript: transcript, context: context) }
+        do {
+            let served = try await remote.reply(to: m, transcript: transcript, context: context)
+            NotificationCenter.default.post(name: .aiCoachRequestServed, object: nil)
+            return served
+        }
+        catch let refusal as AICoachServiceError where refusal.isRefusal { throw refusal }
         catch {
             print("[AICoach] remote.reply failed: \(error.localizedDescription). Falling back.")
             return try await fallback.reply(to: m, transcript: transcript, context: context)
@@ -350,7 +367,12 @@ final class HybridAICoachService: AICoachService {
     }
 
     func guidedResponse(issue: CoachIssueType, userInput: String, context: CoachContext) async throws -> GuidedResponse {
-        do { return try await remote.guidedResponse(issue: issue, userInput: userInput, context: context) }
+        do {
+            let served = try await remote.guidedResponse(issue: issue, userInput: userInput, context: context)
+            NotificationCenter.default.post(name: .aiCoachRequestServed, object: nil)
+            return served
+        }
+        catch let refusal as AICoachServiceError where refusal.isRefusal { throw refusal }
         catch {
             print("[AICoach] remote.guided failed: \(error.localizedDescription). Falling back.")
             return try await fallback.guidedResponse(issue: issue, userInput: userInput, context: context)
@@ -358,7 +380,12 @@ final class HybridAICoachService: AICoachService {
     }
 
     func rewrite(message: String, context: CoachContext) async throws -> [MessageRewrite] {
-        do { return try await remote.rewrite(message: message, context: context) }
+        do {
+            let served = try await remote.rewrite(message: message, context: context)
+            NotificationCenter.default.post(name: .aiCoachRequestServed, object: nil)
+            return served
+        }
+        catch let refusal as AICoachServiceError where refusal.isRefusal { throw refusal }
         catch {
             print("[AICoach] remote.rewrite failed: \(error.localizedDescription). Falling back.")
             return try await fallback.rewrite(message: message, context: context)
@@ -366,7 +393,12 @@ final class HybridAICoachService: AICoachService {
     }
 
     func healthCheck(context: CoachContext) async throws -> RelationshipHealth {
-        do { return try await remote.healthCheck(context: context) }
+        do {
+            let served = try await remote.healthCheck(context: context)
+            NotificationCenter.default.post(name: .aiCoachRequestServed, object: nil)
+            return served
+        }
+        catch let refusal as AICoachServiceError where refusal.isRefusal { throw refusal }
         catch {
             print("[AICoach] remote.health failed: \(error.localizedDescription). Falling back.")
             return try await fallback.healthCheck(context: context)
@@ -374,10 +406,22 @@ final class HybridAICoachService: AICoachService {
     }
 
     func recoveryPlan(length: RecoveryPlan.Length, issue: CoachIssueType?, context: CoachContext) async throws -> RecoveryPlan {
-        do { return try await remote.recoveryPlan(length: length, issue: issue, context: context) }
+        do {
+            let served = try await remote.recoveryPlan(length: length, issue: issue, context: context)
+            NotificationCenter.default.post(name: .aiCoachRequestServed, object: nil)
+            return served
+        }
+        catch let refusal as AICoachServiceError where refusal.isRefusal { throw refusal }
         catch {
             print("[AICoach] remote.recovery failed: \(error.localizedDescription). Falling back.")
             return try await fallback.recoveryPlan(length: length, issue: issue, context: context)
         }
     }
+}
+
+extension Notification.Name {
+    /// Posted each time the backend actually serves a coach request. The
+    /// server charges the daily allowance per request, so this is what the
+    /// app's own counter follows.
+    static let aiCoachRequestServed = Notification.Name("coupley.aiCoachRequestServed")
 }

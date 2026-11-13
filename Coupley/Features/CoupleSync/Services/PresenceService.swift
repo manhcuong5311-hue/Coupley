@@ -42,7 +42,8 @@ final class FirestorePresenceService: PresenceService {
         partnerId: String,
         onUpdate: @escaping (Date?, Bool) -> Void
     ) -> ListenerRegistration {
-        db.collection(FirestorePath.users).document(partnerId)
+        let expiry = PresenceExpiry()
+        return db.collection(FirestorePath.users).document(partnerId)
             .addSnapshotListener { [weak self] snapshot, _ in
                 guard let self else { return }
                 let data = snapshot?.data()
@@ -64,7 +65,37 @@ final class FirestorePresenceService: PresenceService {
                     online = false
                 }
                 onUpdate(lastSeen, online)
+
+                // "Online" was only ever re-evaluated when this document
+                // changed. A partner who drops off without the background
+                // write (crash, lost network, or a 1.1 build that never
+                // writes `presenceActive`) leaves it unchanged forever, so
+                // the Home hero kept saying they had the app open — still
+                // there the next morning. Time it out locally instead.
+                expiry.schedule(online: online, lastSeen: lastSeen, window: self.onlineWindow) {
+                    onUpdate(lastSeen, false)
+                }
             }
+    }
+}
+
+// MARK: - Expiry
+
+/// Flips presence to offline once the online window lapses with no newer
+/// heartbeat. Every snapshot supersedes the previous timer.
+private final class PresenceExpiry {
+    private var generation = 0
+
+    func schedule(online: Bool, lastSeen: Date?, window: TimeInterval,
+                  expire: @escaping () -> Void) {
+        generation += 1
+        guard online, let lastSeen else { return }
+        let token = generation
+        let remaining = max(0, window - Date().timeIntervalSince(lastSeen)) + 1
+        DispatchQueue.main.asyncAfter(deadline: .now() + remaining) { [weak self] in
+            guard let self, self.generation == token else { return }
+            expire()
+        }
     }
 }
 

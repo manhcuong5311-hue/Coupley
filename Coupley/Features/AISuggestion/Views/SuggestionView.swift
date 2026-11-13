@@ -54,9 +54,8 @@ struct SuggestionView: View {
                 }
             }
         }
-        .onAppear {
-            viewModel.loadSuggestions()
-        }
+        .aiDataConsentGate(onDecline: { dismiss() },
+                           onGranted: { viewModel.loadSuggestions() })
     }
 
     // MARK: - Loading View

@@ -171,12 +171,22 @@ final class PremiumStore: ObservableObject {
         return dailyUsage(for: feature) < limit
     }
 
+    /// Daily allowances roll over with the UTC day, because that is the day
+    /// the server keys its own counter by. On a local-midnight reset the app
+    /// showed a full allowance from 00:00 to 07:00 in Vietnam while the
+    /// server was still refusing.
+    private static func quotaDay(_ date: Date = Date()) -> Date {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(secondsFromGMT: 0) ?? .gmt
+        return calendar.startOfDay(for: date)
+    }
+
     func dailyLimit(for feature: PremiumFeature) -> Int? {
         isLegacySubscriber ? feature.subscriberDailyLimit : feature.dailyLimit
     }
 
     func dailyUsage(for feature: PremiumFeature) -> Int {
-        let today = Calendar.current.startOfDay(for: Date())
+        let today = Self.quotaDay()
         if let storedDate = defaults.object(forKey: dailyDateKey(for: feature)) as? Date,
            Calendar.current.isDate(storedDate, inSameDayAs: today) {
             return defaults.integer(forKey: dailyCountKey(for: feature))
@@ -186,7 +196,7 @@ final class PremiumStore: ObservableObject {
 
     func recordUsage(for feature: PremiumFeature) {
         guard feature.dailyLimit != nil else { return }
-        let today = Calendar.current.startOfDay(for: Date())
+        let today = Self.quotaDay()
         let currentCount: Int
         if let storedDate = defaults.object(forKey: dailyDateKey(for: feature)) as? Date,
            Calendar.current.isDate(storedDate, inSameDayAs: today) {

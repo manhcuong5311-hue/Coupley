@@ -11,6 +11,7 @@
 
 import Foundation
 import FirebaseFirestore
+import FirebaseStorage
 
 // MARK: - Protocol
 
@@ -143,11 +144,38 @@ final class FirestoreConnectionService: ConnectionService {
             "quizzes",
             "syncScores",
             "coupleProfile",
-            "notifications"
+            "notifications",
+            "photoOfDay",
+            "liveState"
         ]
+
+        // Chat photos and daily photos live in Storage. They have to go
+        // before the couple document does: the Storage rules check membership
+        // against that document, so afterwards nobody can delete them and
+        // their download URLs keep working.
+        await deleteStoredPhotos(of: coupleRef)
 
         for name in simpleSubcollections {
             try await deleteCollection(coupleRef.collection(name))
+        }
+
+        // Everything else that hangs off the couple. These were never purged
+        // before, so they outlived the couple document as orphans nobody
+        // could reach or delete. Best effort: some of them only let their
+        // creator delete, and a refusal here must not stop the deletion.
+        let remainingSubcollections = [
+            "memories",
+            "anniversaries",
+            "togetherGoals",
+            "coupleChallenges",
+            "dreams",
+            "timeTreeMeta",
+            "nudges",
+            "pings",
+            "chat"
+        ]
+        for name in remainingSubcollections {
+            try? await deleteCollection(coupleRef.collection(name))
         }
 
         // Moods have nested `reactions` under each mood doc — purge those
@@ -257,3 +285,28 @@ final class FirestoreConnectionService: ConnectionService {
 //  - Set `disconnectedAt` with `FieldValue.serverTimestamp()` (as we do
 //    in `disconnect(session:)`) so the 30-day window is clock-skew safe.
 
+
+/// Best effort: a photo that cannot be deleted must not block the user from
+/// deleting their account.
+///
+/// Chat and daily photos sit in one flat folder. Memory and anniversary photos
+/// sit in a folder per document, so those ids are read from Firestore first —
+/// which is another reason this has to run before the collections are purged.
+private func deleteStoredPhotos(of coupleRef: DocumentReference) async {
+    let root = Storage.storage().reference().child("couples/\(coupleRef.documentID)")
+    await deleteFiles(in: root.child("chat-photos"))
+
+    for name in ["memories", "anniversaries"] {
+        guard let snapshot = try? await coupleRef.collection(name).getDocuments() else { continue }
+        for document in snapshot.documents {
+            await deleteFiles(in: root.child("\(name)/\(document.documentID)"))
+        }
+    }
+}
+
+private func deleteFiles(in folder: StorageReference) async {
+    guard let listing = try? await folder.listAll() else { return }
+    for item in listing.items {
+        try? await item.delete()
+    }
+}

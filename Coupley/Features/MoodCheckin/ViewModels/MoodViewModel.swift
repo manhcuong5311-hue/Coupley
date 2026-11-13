@@ -90,15 +90,16 @@ final class MoodViewModel: ObservableObject {
             } catch let writeError as MoodWriteError where writeError.isQueued {
                 todayCheckinCount += 1
                 submissionState = .queued
-            } catch let writeError as MoodWriteError {
-                // `.notPaired` reaches here now that the service stops wrapping
-                // it as "queued". It has its own copy -- "Connect a partner
-                // before saving moods." -- which was unreachable until today.
-                // The counter is deliberately NOT incremented: the write cannot
-                // land, so it must not spend the daily allowance.
-                submissionState = .error(writeError.errorDescription
-                                         ?? "Failed to save. Please try again.")
-                return
+            } catch is MoodWriteError {
+                // `.notPaired`: there is no couple to write to yet, which is
+                // not a failure for someone using the app on their own. The
+                // entry still goes into the on-device journal below, as it did
+                // in 1.1. Treating this as an error (an earlier fix did) meant
+                // an unpaired user could not save a mood at all — and the
+                // account App Review tests with is unpaired. It is not queued
+                // for Firestore, so nothing claims it "will sync".
+                todayCheckinCount += 1
+                submissionState = .success
             } catch {
                 submissionState = .error("Failed to save. Please try again.")
                 return
@@ -108,6 +109,9 @@ final class MoodViewModel: ObservableObject {
             // has data even when the Firestore round-trip is queued or the
             // user is fully solo. Idempotent on entry.id.
             MoodLocalHistoryStore.shared.append(.init(from: entry))
+
+            // Lets the stats layer count today toward the streak right away.
+            NotificationCenter.default.post(name: .coupleyMoodSaved, object: nil)
 
             // Prompt for an App Store review after the user's very first check-in.
             RatingManager.shared.recordFirstMoodCheckIn()
@@ -134,4 +138,9 @@ final class MoodViewModel: ObservableObject {
         selectedEnergy = .medium
         noteText = ""
     }
+}
+
+extension Notification.Name {
+    /// Posted after a mood check-in has been saved.
+    static let coupleyMoodSaved = Notification.Name("coupley.moodSaved")
 }

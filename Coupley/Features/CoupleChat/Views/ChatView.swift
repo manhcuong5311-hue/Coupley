@@ -217,10 +217,19 @@ struct ChatView: View {
         }
         .animation(.spring(response: 0.3, dampingFraction: 0.85),
                    value: viewModel.partnerIsTyping)
-        // Below the composer, so the ad never comes between the message
-        // field and the keyboard. AdsManager also removes the banner outright
-        // while the keyboard is up, so typing is never done over an ad.
-        .adBannerInset()
+        .alert("Message not sent", isPresented: Binding(
+            get: { viewModel.sendFailure != nil },
+            set: { if !$0 { viewModel.sendFailure = nil } }
+        )) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(viewModel.sendFailure ?? "")
+        }
+        // No banner on this screen, as in 1.1. Under the composer it sat 10pt
+        // from Send, photo and quiz, and it loaded a moment after the keyboard
+        // closed — taking the spot the composer had just dropped into, so a
+        // tap aimed at Send landed on the ad. That is the accidental-click
+        // pattern AdMob limits small accounts for.
     }
 
     private var messagesScroll: some View {

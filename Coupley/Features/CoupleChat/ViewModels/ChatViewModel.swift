@@ -19,6 +19,8 @@ final class ChatViewModel: ObservableObject {
 
     // MARK: - Published state
 
+    /// Set when a message could not be sent; shown as an alert by ChatView.
+    @Published var sendFailure: String?
     @Published private(set) var messages: [ChatMessage] = []
     @Published private(set) var quizzes:  [ChatQuiz]    = []
     /// True while the partner has typed in the last few seconds.
@@ -243,6 +245,7 @@ final class ChatViewModel: ObservableObject {
                 await MainActor.run {
                     self.errorMessage = error.localizedDescription
                     self.draftText = body      // restore so the user doesn't lose it
+                    self.sendFailure = "It's back in the message box so you can try again."
                 }
             }
         }

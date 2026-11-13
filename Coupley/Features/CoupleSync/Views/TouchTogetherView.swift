@@ -39,9 +39,11 @@ final class TouchTogetherViewModel: ObservableObject {
     private var partnerExpiry: Task<Void, Never>?
     private var buzzTask: Task<Void, Never>?
 
-    init(session: UserSession, liveRoom: LiveRoomServicing = FirestoreLiveRoomService()) {
+    init(session: UserSession, liveRoom: LiveRoomServicing? = nil) {
         self.session = session
-        self.liveRoom = liveRoom
+        // Built here rather than as a default argument: default arguments are
+        // evaluated outside the main actor, where this initializer cannot run.
+        self.liveRoom = liveRoom ?? FirestoreLiveRoomService()
     }
 
     /// `UserSession.demo` reports `isPaired == true` behind a placeholder
