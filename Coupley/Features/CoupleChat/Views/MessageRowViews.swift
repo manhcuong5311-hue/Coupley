@@ -220,9 +220,7 @@ struct QuizCardBubble: View {
                 Image(systemName: "heart.fill")
                     .font(.system(size: 11, weight: .semibold))
                 Text(customAuthorshipLabel(for: quiz))
-                    .font(.system(size: 12, weight: .semibold, design: .rounded))
-                    .textCase(.uppercase)
-                    .kerning(0.5)
+                    .font(BrandType.meta)
             }
             .foregroundStyle(Brand.accentStart)
             .padding(.horizontal, 9)
@@ -235,10 +233,8 @@ struct QuizCardBubble: View {
             HStack(spacing: 6) {
                 Text(quiz.topic.emoji)
                 Text(quiz.topic.label)
-                    .font(.system(size: 12, weight: .semibold, design: .rounded))
-                    .foregroundStyle(Brand.accentStart)
-                    .textCase(.uppercase)
-                    .kerning(0.5)
+                    .font(BrandType.meta)
+                    .foregroundStyle(Brand.textSecondary)
             }
         }
     }
@@ -413,10 +409,8 @@ struct ResultCardBubble: View {
     private func insightBlock(option: String, body: String) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text("What \u{201C}\(option)\u{201D} means")
-                .font(.system(size: 11, weight: .semibold, design: .rounded))
-                .textCase(.uppercase)
-                .tracking(0.4)
-                .foregroundStyle(Brand.accentStart)
+                .font(BrandType.meta)
+                .foregroundStyle(Brand.textSecondary)
 
             Text(body)
                 .font(.system(size: 13, design: .rounded))

@@ -298,8 +298,6 @@ struct QuizHubView: View {
                         .foregroundStyle(Brand.accentStart)
                     Text("Most recent")
                         .font(.system(size: 12, weight: .semibold, design: .rounded))
-                        .kerning(0.4)
-                        .textCase(.uppercase)
                         .foregroundStyle(Brand.textSecondary)
                 }
 
@@ -310,7 +308,13 @@ struct QuizHubView: View {
     }
 
     private var mostRecentQuiz: ChatQuiz? {
-        viewModel.quizzes.max(by: { $0.createdAt < $1.createdAt })
+        // A job belongs to exactly one screen. The daily question is written
+        // into the same `chatQuizzes` collection, so it was almost always the
+        // newest item here -- meaning the hub led with the identical question
+        // Home already features, and the user's own quiz activity never showed.
+        viewModel.quizzes
+            .filter { !$0.isQuestionOfTheDay }
+            .max(by: { $0.createdAt < $1.createdAt })
     }
 
     private func recentRow(_ quiz: ChatQuiz) -> some View {
@@ -551,9 +555,8 @@ struct QuizHistorySheet: View {
                 HStack(spacing: 6) {
                     Text(quiz.isCustom ? "❤️" : quiz.topic.emoji)
                     Text(quiz.isCustom ? "Custom" : quiz.topic.label)
-                        .font(.system(size: 11, weight: .semibold, design: .rounded))
-                        .foregroundStyle(quiz.isCustom ? Brand.accentStart : Brand.textSecondary)
-                        .textCase(.uppercase)
+                        .font(BrandType.meta)
+                        .foregroundStyle(Brand.textSecondary)
                         .kerning(0.5)
                 }
                 Spacer()

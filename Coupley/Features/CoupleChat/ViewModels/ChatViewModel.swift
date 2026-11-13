@@ -190,7 +190,12 @@ final class ChatViewModel: ObservableObject {
 
     func loadOlder() {
         guard !isLoadingOlder, hasMoreOlder else { return }
-        guard let oldest = messages.first else { return }
+        // Was a bare `return`, which left hasMoreOlder true forever on a
+        // thread that has never had a message.
+        guard let oldest = messages.first else {
+            hasMoreOlder = false
+            return
+        }
         isLoadingOlder = true
         Task {
             defer { Task { @MainActor in self.isLoadingOlder = false } }

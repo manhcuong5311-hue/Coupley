@@ -360,8 +360,18 @@ final class TogetherViewModel: ObservableObject {
 
     // MARK: - Derived
 
+    // The free tier is enforced POSITIONALLY downstream -- `index >= freeLimit`
+    // -- over arrays fed by `createdAt` DESCENDING listeners. That made index 0
+    // the NEWEST item, so creating a goal locked the one the couple had been
+    // building, and re-sorting goals by progress flipped which ones were free
+    // every time progress moved.
+    //
+    // Sorting oldest-first makes the entitled set the items the couple has had
+    // longest, and makes it stable: nothing a user does can push an existing
+    // item behind the paywall.
+
     var activeGoals: [TogetherGoal] {
-        goals.filter { !$0.isComplete }.sorted { $0.progress > $1.progress }
+        goals.filter { !$0.isComplete }.sorted { $0.createdAt < $1.createdAt }
     }
 
     var completedGoals: [TogetherGoal] {
@@ -369,7 +379,15 @@ final class TogetherViewModel: ObservableObject {
     }
 
     var activeChallenges: [CoupleChallenge] {
-        challenges.filter { !$0.isComplete }
+        challenges.filter { !$0.isComplete }.sorted { $0.createdAt < $1.createdAt }
+    }
+
+    /// Dreams were passed to the board RAW -- the newest-first listener array
+    /// -- so adding a dream pushed the previous one behind the paywall.
+    /// (`Dream` has no completion flag, so unlike goals and challenges there is
+    /// nothing to filter out; only the order was wrong.)
+    var orderedDreams: [Dream] {
+        dreams.sorted { $0.createdAt < $1.createdAt }
     }
 
     var headlineInsight: TogetherInsight? {

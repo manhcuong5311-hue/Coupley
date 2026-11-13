@@ -103,19 +103,44 @@ final class NotificationViewModel: ObservableObject {
 
     // MARK: - Preferences
 
+    /// False until a load has succeeded. Saving before that would persist
+    /// defaults over whatever is really stored.
+    @Published private(set) var preferencesLoaded = false
+    @Published private(set) var preferencesError: String?
+
     func savePreferences() {
         let userId = session.userId
         guard !userId.isEmpty else { return }
+        // A save on top of a failed load would write framework defaults over
+        // the user's real document. Block until a load has actually succeeded.
+        guard preferencesLoaded else { return }
         let prefs = preferences
         Task {
-            try? await notificationService.savePreferences(prefs, userId: userId)
+            do {
+                try await notificationService.savePreferences(prefs, userId: userId)
+                preferencesError = nil
+            } catch {
+                // Was `try?`: the toggle kept its new position with nothing
+                // persisted and nothing said.
+                preferencesError = error.localizedDescription
+            }
         }
     }
 
     private func loadPreferencesFromFirestore() async {
         guard !session.userId.isEmpty else { return }
-        preferences = (try? await notificationService.loadPreferences(userId: session.userId))
-            ?? NotificationPreferences()
+        do {
+            // Was `(try? …) ?? NotificationPreferences()`, which turned a
+            // TRANSIENT read failure into a silent reset to defaults -- and the
+            // next toggle tap then wrote those defaults back over the real
+            // document. An absent document is a legitimate empty state; a
+            // failed read is not, and must leave `preferences` untouched.
+            preferences = try await notificationService.loadPreferences(userId: session.userId)
+            preferencesLoaded = true
+            preferencesError = nil
+        } catch {
+            preferencesError = error.localizedDescription
+        }
     }
 
     // MARK: - Heartbeat

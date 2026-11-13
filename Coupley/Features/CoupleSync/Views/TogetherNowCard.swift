@@ -23,6 +23,9 @@ struct TogetherNowCard: View {
     let sentReaction: ReactionKind?
     let onSend: (ReactionKind) -> Void
     let onTouchTogether: () -> Void
+    var tier: SurfaceTier = .card
+
+    private var isHero: Bool { tier == .hero }
 
     @State private var pulsing = false
 
@@ -53,16 +56,7 @@ struct TogetherNowCard: View {
             }
             .buttonStyle(BouncyButtonStyle())
         }
-        .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: 20)
-                .fill(Brand.surfaceLight)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 20)
-                        .strokeBorder(liveGreen.opacity(0.45), lineWidth: 1.5)
-                )
-                .shadow(color: liveGreen.opacity(0.18), radius: 14, y: 4)
-        )
+        .modifier(TierContainer(tier: tier, accent: liveGreen))
         .onAppear { pulsing = true }
     }
 
@@ -90,7 +84,7 @@ struct TogetherNowCard: View {
 
             VStack(alignment: .leading, spacing: 1) {
                 Text("You're both here")
-                    .font(.system(size: 15, weight: .bold, design: .rounded))
+                    .font(isHero ? BrandType.hero : BrandType.title)
                     .foregroundStyle(Brand.textPrimary)
                 Text("\(partnerName) has Coupley open right now")
                     .font(.system(size: 12, design: .rounded))

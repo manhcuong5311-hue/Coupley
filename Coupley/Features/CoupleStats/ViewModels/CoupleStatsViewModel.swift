@@ -87,6 +87,24 @@ final class CoupleStatsViewModel: ObservableObject {
 
         Task {
             do {
+                // Recompute before reading.
+                //
+                // `updateStreak`, `calculateDailyScore` and `saveSyncScore`
+                // existed but had ZERO call sites anywhere in the app or in the
+                // Cloud Functions, so nothing ever wrote these fields. The only
+                // writer was PairingService seeding zeros at pair time, which
+                // is why the streak, the sync score and the weekly chart were
+                // permanently empty no matter how often the couple checked in.
+                //
+                // Best-effort: a failure here must still let the cached values
+                // render rather than blanking the screen.
+                _ = try? await streakService.updateStreak(
+                    coupleId: session.coupleId, session: session
+                )
+                _ = try? await syncService.recomputeTodayScore(
+                    coupleId: session.coupleId, session: session
+                )
+
                 async let streakResult = streakService.fetchStreak(coupleId: session.coupleId)
                 async let scoresResult = syncService.fetchRecentScores(
                     coupleId: session.coupleId, days: 7
@@ -101,10 +119,7 @@ final class CoupleStatsViewModel: ObservableObject {
                 trend = syncService.calculateTrend(scores: fetchedScores)
 
                 // Today's score is the most recent
-                let dateFormatter = DateFormatter()
-                dateFormatter.dateFormat = "yyyy-MM-dd"
-                let todayString = dateFormatter.string(from: Date())
-                todaySyncScore = fetchedScores.first { $0.date == todayString }
+                todaySyncScore = fetchedScores.first { $0.date == DayKey.today }
 
                 loadState = .loaded
             } catch {

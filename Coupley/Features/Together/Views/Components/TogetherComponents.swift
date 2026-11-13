@@ -27,12 +27,12 @@ struct TogetherSectionTitle: View {
         HStack(alignment: .firstTextBaseline) {
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
-                    .font(.system(size: 22, weight: .semibold, design: .rounded))
+                    .font(BrandType.title)
                     .foregroundStyle(Brand.textPrimary)
                 if let subtitle {
                     Text(subtitle)
-                        .font(.system(size: 13, weight: .regular, design: .rounded))
-                        .foregroundStyle(Brand.textSecondary)
+                        .font(BrandType.meta)
+                        .foregroundStyle(Brand.textTertiary)
                 }
             }
             Spacer()
@@ -55,46 +55,27 @@ struct TogetherCard<Content: View>: View {
     @ViewBuilder var content: () -> Content
 
     var body: some View {
-        content()
+        // Card tier, not a second hero. Every row on this tab used to carry an
+        // accent-tinted gradient border AND a coloured 18pt glow, so a goal
+        // row made the same chromatic claim as the one object that is
+        // actually today's job. The colorway survives as a faint wash -- it
+        // tells goals apart from each other -- but the edge and the elevation
+        // now come from the shared tier.
+        let shape = RoundedRectangle(cornerRadius: Brand.cardCornerRadius,
+                                     style: Brand.cornerStyle)
+        return content()
             .padding(padding)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(
                 ZStack {
-                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                        .fill(Brand.surfaceLight)
-
+                    shape.fill(Brand.surfaceLight)
                     if let tint {
-                        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                            .fill(
-                                LinearGradient(
-                                    colors: [
-                                        tint.primary.opacity(0.10),
-                                        tint.deep.opacity(0.02)
-                                    ],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
+                        shape.fill(tint.primary.opacity(0.07))
                     }
                 }
             )
-            .overlay(
-                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .strokeBorder(
-                        LinearGradient(
-                            colors: [
-                                (tint?.primary ?? Brand.accentStart).opacity(0.30),
-                                Brand.divider.opacity(0.40)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: 1
-                    )
-            )
-            .shadow(color: (tint?.primary ?? Brand.accentStart).opacity(0.10),
-                    radius: 18, y: 8)
-            .shadow(color: .black.opacity(0.04), radius: 6, y: 2)
+            .overlay(shape.strokeBorder(Brand.divider, lineWidth: 1))
+            .shadow(color: .black.opacity(0.10), radius: 12, y: 3)
     }
 }
 
@@ -280,34 +261,33 @@ struct TogetherHeroBackground: View {
     var colorway: TogetherColorway = .blossom
 
     var body: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 30, style: .continuous)
+        // This was a fully saturated gradient with a 0.20 white blob and a
+        // 24pt coloured glow -- roughly three times the chromatic claim of
+        // the hero tier used on every other tab, which is why the Together
+        // tab read as one enormous orange object followed by nothing. Same
+        // identity, brought back into the system's range.
+        let radius = Brand.heroCornerRadius
+        return ZStack {
+            RoundedRectangle(cornerRadius: radius, style: Brand.cornerStyle)
                 .fill(colorway.gradient)
 
-            // Top-left highlight blob
             Circle()
-                .fill(.white.opacity(0.20))
+                .fill(.white.opacity(0.10))
                 .frame(width: 220, height: 220)
                 .blur(radius: 60)
                 .offset(x: -80, y: -90)
 
-            // Bottom-right deepening blob
             Circle()
-                .fill(colorway.deep.opacity(0.55))
+                .fill(colorway.deep.opacity(0.40))
                 .frame(width: 280, height: 280)
                 .blur(radius: 70)
                 .offset(x: 100, y: 110)
-
-            // Subtle grain to keep it from feeling like a flat asset
-            RoundedRectangle(cornerRadius: 30, style: .continuous)
-                .fill(.white.opacity(0.04))
-                .blendMode(.overlay)
         }
         .overlay(
-            RoundedRectangle(cornerRadius: 30, style: .continuous)
-                .strokeBorder(.white.opacity(0.18), lineWidth: 1)
+            RoundedRectangle(cornerRadius: radius, style: Brand.cornerStyle)
+                .strokeBorder(.white.opacity(0.22), lineWidth: 1)
         )
-        .shadow(color: colorway.deep.opacity(0.45), radius: 24, y: 12)
+        .shadow(color: colorway.deep.opacity(0.20), radius: 14, y: 6)
     }
 }
 

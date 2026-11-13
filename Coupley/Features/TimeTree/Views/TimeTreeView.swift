@@ -54,10 +54,27 @@ struct TimeTreeView: View {
                     VStack(spacing: 24) {
                         Color.clear.frame(height: 8)
 
+                        // -- T0 -- an in-scroll masthead instead of the system
+                        // large title, which cost ~96pt of fixed chrome and
+                        // said "Time Tree" while the tab said "Journey".
+                        journeyMasthead
+                            .padding(.horizontal, Brand.Space.gutter)
+
+                        // The view model has always recorded failures here;
+                        // nothing rendered them, so a rejected photo upload or
+                        // a failed save looked exactly like success.
+                        if let error = viewModel.errorMessage {
+                            errorStrip(error)
+                                .padding(.horizontal, Brand.Space.gutter)
+                                .padding(.top, 12)
+                        }
+
                         if !session.isPaired {
                             notPairedCard
                                 .padding(.horizontal, 20)
-                        } else if viewModel.isListening && !viewModel.hasReceivedFirstUpdate {
+                        } else if viewModel.isListening,
+                                  !viewModel.hasReceivedFirstUpdate,
+                                  viewModel.errorMessage == nil {
                             timelineLoadingState
                                 .padding(.horizontal, 20)
                         } else {
@@ -105,15 +122,7 @@ struct TimeTreeView: View {
             }
             .animation(.spring(response: 0.5, dampingFraction: 0.85),
                        value: viewModel.pendingCrownCelebration?.id)
-            .navigationTitle("Time Tree")
-            .navigationBarTitleDisplayMode(.large)
-            .toolbar {
-                if session.isPaired && viewModel.anchor != nil {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        addButton
-                    }
-                }
-            }
+            .navigationBarHidden(true)
             .onAppear {
                 viewModel.startListening()
             }
@@ -165,33 +174,12 @@ struct TimeTreeView: View {
     private var treeStage: some View {
         VStack(spacing: 12) {
             // The animated tree
+            // No container. The tree is a decorative ornament, and it is the
+            // only MOVING object on the tab (a TimelineView at 30fps) --
+            // motion is pre-attentive and already outranks any surface step,
+            // so giving it a bordered, accent-tinted box made it a second
+            // hero competing with the real one.
             ZStack {
-                RoundedRectangle(cornerRadius: 28, style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                Brand.surfaceLight.opacity(0.85),
-                                Brand.surfaceLight.opacity(0.45)
-                            ],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 28, style: .continuous)
-                            .strokeBorder(
-                                LinearGradient(
-                                    colors: [
-                                        Brand.divider,
-                                        Brand.accentStart.opacity(0.18)
-                                    ],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
-                                lineWidth: 1
-                            )
-                    )
-
                 RelationshipTreeCanvas(
                     stage: viewModel.growthStage,
                     season: viewModel.currentSeason,
@@ -199,8 +187,13 @@ struct TimeTreeView: View {
                     memoryCount: viewModel.visibleMemories.count,
                     crownActive: viewModel.growthStage.showsAmbientCrown
                 )
+                // The canvas sizes itself off size.WIDTH
+                // (canopyRadius = size.width * 0.36), so narrowing the frame
+                // shrinks the tree into an unreadable smudge while clamping
+                // only the height clips the canopy. Keep full width, cut the
+                // height: at 353pt wide the canopy is ~127pt and fits in 220.
                 .frame(maxWidth: .infinity)
-                .frame(height: 360)
+                .frame(height: 220)
 
                 // Bottom-left tap target on the tree (edit anchor)
                 VStack {
@@ -222,8 +215,8 @@ struct TimeTreeView: View {
                             .padding(.vertical, 6)
                             .background(
                                 Capsule()
-                                    .fill(.ultraThinMaterial)
-                                    .overlay(Capsule().strokeBorder(Brand.divider, lineWidth: 0.5))
+                                    .fill(Brand.surfaceLight)
+                                    .overlay(Capsule().strokeBorder(Brand.divider, lineWidth: 1))
                             )
                         }
                         .buttonStyle(BouncyButtonStyle(scale: 0.94))
@@ -232,7 +225,7 @@ struct TimeTreeView: View {
                     }
                 }
             }
-            .frame(height: 360)
+            .frame(height: 240)
             .padding(.horizontal, 8)
 
             // Stage + season chips
@@ -302,6 +295,62 @@ struct TimeTreeView: View {
     }
 
     // MARK: - Add button
+
+    private func errorStrip(_ message: String) -> some View {
+        HStack(alignment: .top, spacing: 8) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(Color(red: 1.0, green: 0.45, blue: 0.45))
+            VStack(alignment: .leading, spacing: 8) {
+                Text(message)
+                    .font(BrandType.body)
+                    .foregroundStyle(Brand.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Button("Try again") {
+                    viewModel.stopListening()
+                    viewModel.startListening()
+                }
+                .font(BrandType.label)
+                .foregroundStyle(Brand.accentStart)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 12, style: Brand.cornerStyle)
+                .fill(Color(red: 1.0, green: 0.45, blue: 0.45).opacity(0.12))
+        )
+    }
+
+    private var journeyMasthead: some View {
+        HStack(alignment: .top) {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Journey")
+                    .font(BrandType.display)
+                    .foregroundStyle(Brand.textPrimary)
+                Text(mastheadStandfirst)
+                    .font(BrandType.meta)
+                    .foregroundStyle(Brand.textSecondary)
+                    .lineLimit(1)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            if session.isPaired && viewModel.anchor != nil {
+                addButton
+            }
+        }
+    }
+
+    private var mastheadStandfirst: String {
+        guard session.isPaired else { return "Pair up to start your tree" }
+        guard let days = viewModel.daysTogether else { return "Set the day it started" }
+        let count = viewModel.visibleMemories.count
+        if count == 0 { return "\(days) days in — add your first memory" }
+        if count == 1 { return "\(days) days, 1 memory" }
+        return "\(days) days, \(count) memories"
+    }
 
     private var addButton: some View {
         Button {

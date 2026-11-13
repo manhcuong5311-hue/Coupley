@@ -131,7 +131,12 @@ struct TogetherView: View {
                             // Section 1 — Today Together
                             TogetherTodayHero(
                                 stats: viewModel.stats,
-                                headline: viewModel.headlineInsight,
+                                // `headlineInsight` is `insights.first`, and
+                                // CoupleCoachSection locks that exact array
+                                // behind `hasCoach` -- so the hero was giving
+                                // a free user the coach's top insight while
+                                // the section below it showed a Premium badge.
+                                headline: hasCoach ? viewModel.headlineInsight : nil,
                                 leadingGoal: leadingGoal,
                                 longestStreakChallenge: longestStreakChallenge,
                                 onOpenLeadingGoal: {
@@ -179,7 +184,7 @@ struct TogetherView: View {
 
                             // Section 3 — Dream Board
                             DreamBoardSection(
-                                dreams: viewModel.dreams,
+                                dreams: viewModel.orderedDreams,
                                 isPremium: hasFullDreamBoard,
                                 onSelect: { presentedSheet = .dreamDetail($0) },
                                 onCreate: { presentedSheet = .createDream(prefilledTitle: nil) },
@@ -298,6 +303,7 @@ struct TogetherView: View {
                 .presentationDetents([.large])
         case .challengeDetail(let challenge):
             ChallengeDetailSheet(challenge: challenge, viewModel: viewModel)
+                .environmentObject(premiumStore)
                 .presentationDetents([.large])
         case .createDream:
             DreamEditorSheet(viewModel: viewModel, mode: .create)
@@ -365,7 +371,13 @@ struct TogetherView: View {
     }
 
     private var longestStreakChallenge: CoupleChallenge? {
-        viewModel.activeChallenges.max(by: { $0.streak.current < $1.streak.current })
+        // Scoped to what this user can actually open. Unscoped, the hero
+        // promoted a paywalled challenge and its tile opened a detail sheet
+        // with a working "Check in for today" button.
+        let entitled = hasUnlimitedChallenges
+            ? viewModel.activeChallenges
+            : Array(viewModel.activeChallenges.prefix(TogetherFreeLimits.challenges))
+        return entitled.max(by: { $0.streak.current < $1.streak.current })
     }
 
     // MARK: - Premium accessors

@@ -36,6 +36,15 @@ final class FirestoreMoodService: MoodService {
         do {
             try await writeToFirestore(entry)
             queue.dequeue(id: entry.id)
+        } catch let error as MoodWriteError where !error.isQueued {
+            // Not retryable. `.notPaired` used to fall into the blanket catch
+            // below and be reported as "Saved locally — will sync when online",
+            // which is never true: every flush hits the same guard and breaks
+            // on the first entry, so the queue could only grow. The user was
+            // told to wait for connectivity for a problem connectivity cannot
+            // fix, while their 3/day allowance was spent on writes that can
+            // never land.
+            throw error
         } catch {
             // Queue for retry. Firestore offline cache will usually also persist
             // the write, but our queue guarantees retry semantics across relaunches.
@@ -119,7 +128,9 @@ final class FirestoreMoodService: MoodService {
         }
 
         let shared = SharedMoodEntry(from: entry, userId: session.userId)
-        try db
+        // Was missing `await`, which made the whole MoodQueueStore retry
+        // mechanism dead for exactly the network failures it was built for.
+        try await db
             .collection(FirestorePath.moods(coupleId: session.coupleId))
             .document(shared.id)
             .setData(from: shared)

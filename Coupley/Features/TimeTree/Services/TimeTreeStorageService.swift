@@ -23,7 +23,14 @@ final class TimeTreeStorageService {
         coupleId: String,
         memoryId: String
     ) async throws -> String {
-        guard let data = image.jpegData(compressionQuality: 0.80) else {
+        // Was `image.jpegData(compressionQuality: 0.80)` on the picker's
+        // full-resolution image. A modern iPhone shot is ~4000px and lands
+        // at several MB that way -- a large one can exceed the 10 MB ceiling
+        // in storage.rules and be rejected outright. Nothing in this app
+        // renders a memory photo larger than a phone screen, and the chat
+        // uploader already solved this; its helper's own doc comment names
+        // Time Tree as a caller.
+        guard let data = ChatPhotoStorageService.downscaledJPEG(image) else {
             throw TimeTreeStorageError.encodingFailed
         }
         let ref = photoRef(coupleId: coupleId, memoryId: memoryId)

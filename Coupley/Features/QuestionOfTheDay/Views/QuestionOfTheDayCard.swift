@@ -21,6 +21,9 @@ struct QuestionOfTheDayCard: View {
 
     @ObservedObject var viewModel: QuestionOfTheDayViewModel
     let partnerName: String
+    var tier: SurfaceTier = .card
+
+    private var isHero: Bool { tier == .hero }
 
     var body: some View {
         Group {
@@ -65,30 +68,23 @@ struct QuestionOfTheDayCard: View {
             header(accent: accent)
             content()
         }
-        .padding(18)
-        .background(
-            RoundedRectangle(cornerRadius: 22)
-                .fill(Brand.surfaceLight)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 22)
-                        .strokeBorder(accent.opacity(0.22), lineWidth: 1)
-                )
-                .shadow(color: .black.opacity(0.08), radius: 12, y: 3)
-        )
+        .modifier(TierContainer(tier: tier, accent: accent))
     }
 
     private func header(accent: Color) -> some View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
+                // Was a 13pt uppercase tracked eyebrow, identical to the five
+                // others on this screen. Only the dateline keeps small caps.
                 Text("Question of the day")
-                    .font(.system(size: 13, weight: .semibold, design: .rounded))
+                    .font(BrandType.label)
                     .foregroundStyle(Brand.textSecondary)
-                    .textCase(.uppercase)
-                    .tracking(0.5)
 
-                Text(headerSubtitle)
-                    .font(.system(size: 13, weight: .regular, design: .rounded))
-                    .foregroundStyle(Brand.textTertiary)
+                if !isHero {
+                    Text(headerSubtitle)
+                        .font(BrandType.meta)
+                        .foregroundStyle(Brand.textTertiary)
+                }
             }
 
             Spacer()
@@ -156,7 +152,7 @@ struct QuestionOfTheDayCard: View {
     private func awaitingMeContent(_ quiz: ChatQuiz) -> some View {
         VStack(alignment: .leading, spacing: 14) {
             Text(quiz.question)
-                .font(.system(size: 18, weight: .semibold, design: .rounded))
+                .font(isHero ? BrandType.hero : BrandType.title)
                 .foregroundStyle(Brand.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
 
@@ -297,9 +293,7 @@ struct QuestionOfTheDayCard: View {
                 Image(systemName: "lightbulb.fill")
                     .font(.system(size: 11, weight: .semibold))
                 Text("What \u{201C}\(option)\u{201D} means")
-                    .font(.system(size: 11, weight: .semibold, design: .rounded))
-                    .textCase(.uppercase)
-                    .tracking(0.4)
+                    .font(BrandType.meta)
                     .fixedSize(horizontal: false, vertical: true)
             }
             .foregroundStyle(completeAccent)
@@ -322,6 +316,10 @@ struct QuestionOfTheDayCard: View {
             Text(label)
                 .font(.system(size: 12, weight: .semibold, design: .rounded))
                 .foregroundStyle(Brand.textTertiary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+                // Fixed width keeps the two rows aligned; the shrink keeps a
+                // two-word name from breaking mid-word inside it.
                 .frame(width: 64, alignment: .leading)
 
             Text(options.isEmpty ? "—" : options.joined(separator: ", "))
@@ -342,14 +340,6 @@ struct QuestionOfTheDayCard: View {
                 .foregroundStyle(Brand.textSecondary)
             Spacer()
         }
-        .padding(18)
-        .background(
-            RoundedRectangle(cornerRadius: 22)
-                .fill(Brand.surfaceLight)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 22)
-                        .strokeBorder(Brand.divider, lineWidth: 1)
-                )
-        )
+        .modifier(TierContainer(tier: tier))
     }
 }

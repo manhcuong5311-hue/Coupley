@@ -90,6 +90,15 @@ final class MoodViewModel: ObservableObject {
             } catch let writeError as MoodWriteError where writeError.isQueued {
                 todayCheckinCount += 1
                 submissionState = .queued
+            } catch let writeError as MoodWriteError {
+                // `.notPaired` reaches here now that the service stops wrapping
+                // it as "queued". It has its own copy -- "Connect a partner
+                // before saving moods." -- which was unreachable until today.
+                // The counter is deliberately NOT incremented: the write cannot
+                // land, so it must not spend the daily allowance.
+                submissionState = .error(writeError.errorDescription
+                                         ?? "Failed to save. Please try again.")
+                return
             } catch {
                 submissionState = .error("Failed to save. Please try again.")
                 return

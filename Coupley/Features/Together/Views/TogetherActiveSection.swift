@@ -24,7 +24,7 @@ struct ActiveGoalsSection: View {
     let onCreate: () -> Void
     let onShowPaywall: () -> Void
 
-    private let freeLimit = 2
+    private let freeLimit = TogetherFreeLimits.goals
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -186,7 +186,7 @@ struct GoalProgressCard: View {
     private var progressBadge: some View {
         VStack(alignment: .trailing, spacing: 0) {
             Text("\(Int(goal.progress * 100))%")
-                .font(.system(size: 22, weight: .bold, design: .rounded))
+                .font(BrandType.title)
                 .foregroundStyle(goal.colorway.deep)
                 .monospacedDigit()
             Text(goal.progressLabel)
@@ -239,7 +239,7 @@ struct ActiveChallengesSection: View {
     let onCreate: () -> Void
     let onShowPaywall: () -> Void
 
-    private let freeLimit = 1
+    private let freeLimit = TogetherFreeLimits.challenges
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -368,7 +368,7 @@ struct ChallengeProgressCard: View {
                         Spacer()
 
                         Text("\(Int(challenge.progress * 100))%")
-                            .font(.system(size: 22, weight: .bold, design: .rounded))
+                            .font(BrandType.title)
                             .foregroundStyle(challenge.colorway.deep)
                             .monospacedDigit()
                     }

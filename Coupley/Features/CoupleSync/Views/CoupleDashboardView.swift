@@ -35,6 +35,9 @@ struct CoupleDashboardView: View {
     @State private var sentReaction: ReactionKind? = nil
     @State private var sentLiveReaction: ReactionKind? = nil
     @State private var showTouchTogether = false
+    /// Loaded from local storage on appear so the suggestion sheet opens with
+    /// the real partner rather than the "Alex" fixture.
+    @State private var suggestionProfile: PartnerProfile?
     @State private var isSendingReaction = false
 
     @StateObject private var aiCoachViewModel: AICoachViewModel = AICoachViewModel(session: .demo)
@@ -42,6 +45,12 @@ struct CoupleDashboardView: View {
         QuestionOfTheDayViewModel(session: .demo)
     @StateObject private var dailyPhotoViewModel: DailyPhotoViewModel =
         DailyPhotoViewModel(session: .demo)
+    /// Owned here, not built inside the sheet closure: a closure-built
+    /// @ObservedObject is replaced on every dashboard re-render, and the
+    /// partner's 60-second presence heartbeat guarantees those. The sheet
+    /// would silently lose its listener about once a minute.
+    @StateObject private var touchTogetherViewModel: TouchTogetherViewModel =
+        TouchTogetherViewModel(session: .demo)
 
     private let reactionService: ReactionService = FirestoreReactionService()
     private let presenceService: PresenceService = FirestorePresenceService()
@@ -51,72 +60,65 @@ struct CoupleDashboardView: View {
 
     var body: some View {
         ScrollView(showsIndicators: false) {
-            VStack(spacing: 20) {
-                Color.clear.frame(height: 20)
+            // Explicit spacers, not a uniform VStack spacing: the gaps are
+            // what encode grouping, so they cannot all be the same number.
+            VStack(spacing: 0) {
+                Color.clear.frame(height: 8)
 
-                greetingHeader
-                    .padding(.horizontal, 20)
+                // ── T0 ────────────────────────────────────────────────────
+                masthead
+                    .padding(.horizontal, Brand.Space.gutter)
 
-                coupleAvatarsAndStats
-                    .padding(.horizontal, 20)
-
-                // Sits above MicroAction on purpose: this is the one thing
-                // that is new every day and that the partner also has to act
-                // on, so it earns the first slot.
-                QuestionOfTheDayCard(
-                    viewModel: qotdViewModel,
-                    partnerName: profileViewModel.partnerProfile.displayName
-                )
-                .padding(.horizontal, 20)
-
-                DailyPhotoCard(
-                    viewModel: dailyPhotoViewModel,
-                    partnerName: profileViewModel.partnerProfile.displayName
-                )
-                .padding(.horizontal, 20)
-
-                MicroActionCard(viewModel: microActionViewModel)
-                    .padding(.horizontal, 20)
-
-                activitiesSection
-                    .padding(.horizontal, 20)
-
-                if viewModel.partnerIsOnline {
-                    TogetherNowCard(
-                        partnerName: profileViewModel.partnerProfile.displayName,
-                        sentReaction: sentLiveReaction,
-                        onSend: sendLiveReaction,
-                        onTouchTogether: {
-                            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-                            showTouchTogether = true
-                        }
-                    )
-                    .padding(.horizontal, 20)
-                    .transition(.scale(scale: 0.97).combined(with: .opacity))
+                // ── T1 ── the one hero. It sits directly under the masthead
+                // because it has to be ABOVE THE FOLD to mean anything: the
+                // visible box is ~674pt on an iPhone 15 once the tab bar and
+                // the AdMob banner are subtracted, and anything below that is
+                // hierarchy nobody sees.
+                if homeHero != .none {
+                    Color.clear.frame(height: Brand.Space.sibling)
+                    heroSlot
+                        .padding(.horizontal, SurfaceTier.hero.gutter)
+                        .transition(.opacity)
                 }
 
-                presenceRow
-                    .padding(.horizontal, 20)
+                // ── T4 ── us, ambient. No containers, one hairline each.
+                Color.clear.frame(height: Brand.Space.zone)
+                ambientZone
+                    .padding(.horizontal, Brand.Space.gutter)
 
-                partnerMoodSection
-                    .padding(.horizontal, 20)
+                // ── T2 ── the rest of today.
+                if hasTodayZone {
+                    Color.clear.frame(height: Brand.Space.zone)
+                    todayZone
+                        .padding(.horizontal, Brand.Space.gutter)
+                }
+
+                // ── T3 ── navigation, recessed below the content it leads to.
+                Color.clear.frame(height: Brand.Space.zone)
+                activitiesSection
+                    .padding(.horizontal, Brand.Space.gutter)
 
                 if !viewModel.weeklyHistory.isEmpty {
-                    weeklyHistorySection
-                        .padding(.horizontal, 20)
-                }
-
-                if viewModel.partnerNeedsAttention {
-                    attentionBanner
-                        .padding(.horizontal, 20)
+                    Color.clear.frame(height: Brand.Space.zone)
+                    BrandCard(tier: .quiet) { weeklyHistorySection }
+                        .padding(.horizontal, Brand.Space.gutter)
                 }
 
                 Color.clear.frame(height: 120)
             }
+            .animation(.spring(response: 0.45, dampingFraction: 0.85), value: homeHero)
         }
+        .task { suggestionProfile = await viewModel.loadPartnerProfile() }
         .sheet(isPresented: $viewModel.showAISuggestions) {
             if let context = viewModel.suggestionContext {
-                SuggestionView(moodContext: context, partnerProfile: .samplePartner)
+                // Was `partnerProfile: .samplePartner` with no service, so the
+                // sheet ran MockAISuggestionService against a fixture named
+                // "Alex" while the real daily quota was being decremented.
+                SuggestionView(
+                    moodContext: context,
+                    partnerProfile: suggestionProfile ?? .samplePartner,
+                    suggestionService: HybridAISuggestionService()
+                )
                     .presentationDetents([.large])
                     .presentationDragIndicator(.visible)
             }
@@ -183,7 +185,7 @@ struct CoupleDashboardView: View {
         .sheet(isPresented: $showTouchTogether) {
             TouchTogetherView(
                 partnerName: profileViewModel.partnerProfile.displayName,
-                viewModel: TouchTogetherViewModel(session: sessionStore.session ?? .demo)
+                viewModel: touchTogetherViewModel
             )
             .presentationDetents([.large])
             .presentationBackground(Brand.backgroundTop)
@@ -219,18 +221,42 @@ struct CoupleDashboardView: View {
         .onDisappear { viewModel.stopListening() }
     }
 
-    // MARK: - Greeting Header
+    // MARK: - Masthead (T0)
 
-    private var greetingHeader: some View {
-        HStack(alignment: .center, spacing: 10) {
-            Text(greetingTitle)
-                .font(.system(size: 22, weight: .bold, design: .rounded))
+    /// The buttons get their own row so the headline can run the full measure.
+    /// A 34pt line beside two 36pt circles would have to wrap at 2 words.
+    private var masthead: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(spacing: 10) {
+                Spacer(minLength: 0)
+                mastheadButtons
+            }
+
+            Eyebrow(dateline)
+                .padding(.top, 8)
+
+            // The screen's ceiling used to be 22pt. At 34pt this is the only
+            // thing the eye can land on first, and because it lives in the one
+            // view that renders unconditionally it can never go missing.
+            Text(heroHeadline)
+                .font(BrandType.display)
                 .foregroundStyle(Brand.textPrimary)
                 .lineLimit(2)
-                .minimumScaleFactor(0.8)
+                .minimumScaleFactor(0.72)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.top, 4)
 
-            Spacer()
+            Text(heroStandfirst)
+                .font(BrandType.meta)
+                .foregroundStyle(Brand.textSecondary)
+                .lineLimit(1)
+                .padding(.top, 6)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
 
+    private var mastheadButtons: some View {
+        HStack(alignment: .center, spacing: 10) {
             aiCoachHeaderButton
 
             Button {
@@ -300,13 +326,163 @@ struct CoupleDashboardView: View {
         showAICoach = true
     }
 
-    private var greetingTitle: String {
-        let me      = profileViewModel.myProfile.displayName
-        let partner = profileViewModel.partnerProfile.displayName
-        if sessionStore.isPaired {
-            return "Hello, \(me) & \(partner)"
+    private var partnerName: String { profileViewModel.partnerProfile.displayName }
+
+    private static let datelineFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.setLocalizedDateFormatFromTemplate("EEEEdMMMM")
+        return f
+    }()
+
+    private var dateline: String {
+        Self.datelineFormatter.string(from: Date())
+    }
+
+    // MARK: - Hero resolution
+
+    /// Which single block is today's job.
+    ///
+    /// Tier is a function of state, never of scroll position, so QotD, Photo
+    /// and TogetherNow can all render nothing and the hierarchy is unchanged.
+    private enum HomeHero: Equatable {
+        case togetherNow, question, photo, microAction, mood, none
+    }
+
+    private var homeHero: HomeHero {
+        // Co-presence first: it is the only thing on this screen that is true
+        // *right now* rather than true all day.
+        if viewModel.partnerIsOnline { return .togetherNow }
+
+        // Something still to do.
+        if case .awaitingMe = qotdViewModel.state       { return .question }
+        if case .awaitingMe = dailyPhotoViewModel.state { return .photo }
+
+        // The day's payoff. Falling through these is what used to put a 230pt
+        // micro-action in the hero slot while a 290pt photo reveal sat below
+        // it at card tier — tier and visual mass disagreeing, and mass wins.
+        if case .complete = qotdViewModel.state         { return .question }
+        if case .revealed = dailyPhotoViewModel.state   { return .photo }
+
+        // Only ever promote an action that can still be acted on. A
+        // struck-through finished task wrapped in the screen's only accent
+        // wash is the exact inversion of what this slot is for.
+        if microActionViewModel.todaysActions.contains(where: { $0.isActionable }) {
+            return .microAction
         }
-        return "Hello, \(me)"
+
+        if case .available = viewModel.partnerMoodState { return .mood }
+
+        // Nothing is pending. Rather than dress up an apology — emptyMoodCard
+        // is "Waiting for your partner", with no CTA — the slot collapses and
+        // the masthead carries the screen alone. An empty day should look empty.
+        return .none
+    }
+
+    private var heroHeadline: String {
+        switch homeHero {
+        case .togetherNow: return "You're both here."
+        case .question:
+            if case .awaitingMe = qotdViewModel.state { return "One question today." }
+            return "Your answers are in."
+        case .photo:
+            if case .awaitingMe = dailyPhotoViewModel.state { return "One photo today." }
+            return "Today, side by side."
+        case .microAction: return "One small thing."
+        case .mood:        return "\(partnerName) checked in."
+        case .none:        return "All done for today."
+        }
+    }
+
+    private var heroStandfirst: String {
+        switch homeHero {
+        case .togetherNow: return "Reach for them while they are here"
+        case .question:
+            if case .awaitingMe = qotdViewModel.state { return "Answer blind, then compare" }
+            return "See how the two of you lined up"
+        case .photo:
+            if case .awaitingMe = dailyPhotoViewModel.state { return "Send yours to unlock theirs" }
+            return "Both of you, the same moment"
+        case .microAction: return "A gentle idea, just for you"
+        case .mood:        return "Here is how their day is going"
+        case .none:        return "Nothing waiting — enjoy the quiet"
+        }
+    }
+
+    // MARK: - Hero slot (T1)
+
+    @ViewBuilder
+    private var heroSlot: some View {
+        switch homeHero {
+        case .togetherNow:
+            TogetherNowCard(
+                partnerName: partnerName,
+                sentReaction: sentLiveReaction,
+                onSend: sendLiveReaction,
+                onTouchTogether: {
+                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                    if let s = sessionStore.session {
+                        touchTogetherViewModel.rebind(session: s)
+                    }
+                    showTouchTogether = true
+                },
+                tier: .hero
+            )
+        case .question:
+            QuestionOfTheDayCard(viewModel: qotdViewModel, partnerName: partnerName, tier: .hero)
+        case .photo:
+            DailyPhotoCard(viewModel: dailyPhotoViewModel, partnerName: partnerName, tier: .hero)
+        case .microAction:
+            MicroActionCard(viewModel: microActionViewModel, tier: .hero)
+        case .mood:
+            partnerMoodSection(tier: .hero)
+        case .none:
+            EmptyView()
+        }
+    }
+
+    // MARK: - Zones
+
+    private var showsQotDBelow:  Bool { homeHero != .question && qotdViewModel.state != .hidden }
+    private var showsPhotoBelow: Bool { homeHero != .photo && dailyPhotoViewModel.state != .hidden }
+    private var showsMicroBelow: Bool { homeHero != .microAction }
+    private var showsMoodBelow:  Bool { homeHero != .mood }
+
+    private var hasTodayZone: Bool {
+        showsQotDBelow || showsPhotoBelow || showsMicroBelow || showsMoodBelow
+    }
+
+    /// Everything today still holds, at card tier. The spacers are conditional
+    /// because both daily cards return `EmptyView` when hidden, and an
+    /// unconditional spacer around nothing is just dead air the size of a gap
+    /// that is supposed to mean something.
+    @ViewBuilder
+    private var todayZone: some View {
+        VStack(spacing: Brand.Space.sibling) {
+            if showsQotDBelow {
+                QuestionOfTheDayCard(viewModel: qotdViewModel, partnerName: partnerName)
+            }
+            if showsPhotoBelow {
+                DailyPhotoCard(viewModel: dailyPhotoViewModel, partnerName: partnerName)
+            }
+            if showsMicroBelow {
+                MicroActionCard(viewModel: microActionViewModel)
+            }
+            if showsMoodBelow {
+                partnerMoodSection(tier: .card)
+            }
+        }
+    }
+
+    /// Ambient readouts: true, but not a job. No containers at all — contrast
+    /// is a ratio, and deleting the denominator is what lets the hero read.
+    @ViewBuilder
+    private var ambientZone: some View {
+        VStack(spacing: Brand.Space.sibling) {
+            BrandCard(tier: .quiet) { coupleAvatarsAndStats }
+            if homeHero != .togetherNow {
+                BrandCard(tier: .quiet) { presenceRow }
+            }
+        }
     }
 
     // MARK: - Avatars + Stats Row
@@ -338,13 +514,11 @@ struct CoupleDashboardView: View {
 
             statsPreviewCompact
         }
-        .padding(14)
-        .background(
-            RoundedRectangle(cornerRadius: 20)
-                .fill(Brand.surfaceLight)
-                .overlay(RoundedRectangle(cornerRadius: 20).strokeBorder(Brand.divider, lineWidth: 1))
-                .shadow(color: .black.opacity(0.10), radius: 14, y: 4)
-        )
+        // statsPreviewCompact is this HStack's only flexible child; both
+        // avatar tiles are hard-pinned. Without this the pair would re-centre
+        // itself under a leading-aligned masthead if the stats chip ever
+        // stopped rendering.
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private func avatarTile(
@@ -364,20 +538,23 @@ struct CoupleDashboardView: View {
                             .clipShape(Circle())
                             .padding(3)
                     }
-                    .frame(width: 92, height: 92)
+                    .frame(width: 72, height: 72)
                 }
                 .buttonStyle(BouncyButtonStyle(scale: tappable ? 0.94 : 1))
                 .disabled(!tappable)
 
                 if let editAction {
                     Button(action: editAction) {
+                        // Neutral, not accent. This badge used to be the most
+                        // saturated object above the fold, so the eye landed
+                        // on a 24pt edit affordance before anything else.
                         Circle()
-                            .fill(Brand.accentStart)
-                            .frame(width: 28, height: 28)
+                            .fill(Brand.surfaceMid)
+                            .frame(width: 24, height: 24)
                             .overlay(
                                 Image(systemName: "pencil")
-                                    .font(.system(size: 12, weight: .bold))
-                                    .foregroundStyle(.white)
+                                    .font(.system(size: 10, weight: .bold))
+                                    .foregroundStyle(Brand.textSecondary)
                             )
                             .overlay(Circle().strokeBorder(Brand.backgroundTop, lineWidth: 2))
                     }
@@ -386,12 +563,18 @@ struct CoupleDashboardView: View {
             }
 
             Text(profile.displayName)
-                .font(.system(size: 13, weight: .semibold, design: .rounded))
-                .foregroundStyle(Brand.textPrimary)
+                .font(BrandType.meta)
+                .foregroundStyle(Brand.textSecondary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
         }
-        .frame(maxWidth: .infinity)
+        // Was maxWidth: .infinity. Two tiles each taking everything they
+        // could left the stats box ~50pt of text width, which is why
+        // "check-ins" clipped on every device at the default text size.
+        // Was also 92pt, which made a static avatar pair the largest object
+        // on the screen — visual mass beats type size, so no headline could
+        // outrank it no matter how big it got set.
+        .frame(width: 72)
     }
 
     private var statsPreviewCompact: some View {
@@ -419,10 +602,15 @@ struct CoupleDashboardView: View {
         }
         .padding(10)
         .frame(maxWidth: .infinity)
+        // The block around this is now container-less, so a 0.6-alpha fill of
+        // the page's own background colour would have read as nothing at all.
         .background(
-            RoundedRectangle(cornerRadius: 14)
-                .fill(Brand.backgroundTop.opacity(0.6))
-                .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Brand.divider, lineWidth: 1))
+            RoundedRectangle(cornerRadius: 14, style: Brand.cornerStyle)
+                .fill(Brand.surfaceLight)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14, style: Brand.cornerStyle)
+                        .strokeBorder(Brand.divider, lineWidth: 1)
+                )
         )
         .onTapGesture {
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
@@ -445,6 +633,7 @@ struct CoupleDashboardView: View {
                 .font(.system(size: 11, weight: .medium, design: .rounded))
                 .foregroundStyle(Brand.textSecondary)
                 .lineLimit(1)
+                .minimumScaleFactor(0.8)
 
             Spacer(minLength: 0)
         }
@@ -453,19 +642,20 @@ struct CoupleDashboardView: View {
     // MARK: - Activities
 
     private var activitiesSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 10) {
+            // Not an Eyebrow: the dateline is the screen's only uppercase
+            // tracked label, so that signal keeps meaning one thing.
             Text("Our Activities")
-                .font(.system(size: 13, weight: .semibold, design: .rounded))
-                .foregroundStyle(Brand.textSecondary)
-                .textCase(.uppercase)
-                .tracking(0.5)
+                .font(BrandType.label)
+                .foregroundStyle(Brand.textTertiary)
                 .padding(.leading, 4)
+                .padding(.bottom, 2)
 
-            HStack(spacing: 12) {
+            HStack(spacing: 10) {
                 activityCard(
                     icon: "heart.fill",
                     tint: Brand.accentStart,
-                    title: "Mood Check-in",
+                    title: "Mood",
                     subtitle: "Share today"
                 ) { selectedTab = .mood }
 
@@ -477,12 +667,12 @@ struct CoupleDashboardView: View {
                 ) { selectedTab = .chat }
             }
 
-            HStack(spacing: 12) {
+            HStack(spacing: 10) {
                 activityCard(
                     icon: "sparkles",
                     tint: Color(red: 1.0, green: 0.55, blue: 0.20),
                     title: "Date Ideas",
-                    subtitle: "Get suggestions"
+                    subtitle: "Plan a night"
                 ) {
                     if !premiumStore.hasAccess(to: .dateIdeas) {
                         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
@@ -611,49 +801,40 @@ struct CoupleDashboardView: View {
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
             action()
         } label: {
-            HStack(spacing: 12) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(tint.opacity(0.15))
-                        .frame(width: 44, height: 44)
+            // The subtitles are gone. "Couple Chat / Talk together" and
+            // "Our Stats / Track progress" said the title twice and cost five
+            // rows of height that the hero needed.
+            BrandCard(tier: .chip) {
+                HStack(spacing: 10) {
                     Image(systemName: icon)
-                        .font(.system(size: 17, weight: .semibold))
+                        .font(.system(size: 15, weight: .semibold))
                         .foregroundStyle(tint)
-                }
+                        .frame(width: 26, height: 26)
 
-                VStack(alignment: .leading, spacing: 2) {
                     Text(title)
-                        .font(.system(size: 14, weight: .semibold, design: .rounded))
+                        .font(BrandType.label)
                         .foregroundStyle(Brand.textPrimary)
                         .lineLimit(1)
-                    Text(subtitle)
-                        .font(.system(size: 11, weight: .regular, design: .rounded))
-                        .foregroundStyle(Brand.textSecondary)
-                        .lineLimit(1)
-                }
+                        .minimumScaleFactor(0.85)
 
-                Spacer(minLength: 0)
+                    Spacer(minLength: 0)
+                }
             }
-            .padding(12)
-            .frame(maxWidth: .infinity)
-            .background(
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(Brand.surfaceLight)
-                    .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(Brand.divider, lineWidth: 1))
-                    .shadow(color: .black.opacity(0.08), radius: 10, y: 3)
-            )
         }
         .buttonStyle(BouncyButtonStyle(scale: 0.96))
     }
 
     // MARK: - Partner Mood
 
-    private var partnerMoodSection: some View {
+    @ViewBuilder
+    private func partnerMoodSection(tier: SurfaceTier) -> some View {
         VStack(spacing: 0) {
             switch viewModel.partnerMoodState {
             case .unknown:   emptyMoodCard
             case .loading:   loadingMoodCard
-            case .available(let entry): liveMoodCard(entry: entry)
+            case .available(let entry): liveMoodCard(entry: entry, tier: tier)
+            // A placeholder and an error may never be hero, whatever the
+            // resolver says: neither is a job and neither has a CTA.
             case .error(let msg): errorMoodCard(message: msg)
             }
         }
@@ -712,33 +893,34 @@ struct CoupleDashboardView: View {
         )
     }
 
-    private func liveMoodCard(entry: SharedMoodEntry) -> some View {
-        VStack(spacing: 20) {
+    private func liveMoodCard(entry: SharedMoodEntry, tier: SurfaceTier = .card) -> some View {
+        let isHero = tier == .hero
+        return VStack(spacing: isHero ? 20 : 14) {
             HStack {
-                Text("Partner's mood")
-                    .font(.system(size: 13, weight: .semibold, design: .rounded))
+                Text("\(partnerName)'s mood")
+                    .font(BrandType.label)
                     .foregroundStyle(Brand.textSecondary)
-                    .textCase(.uppercase)
-                    .tracking(0.5)
 
                 Spacer()
 
                 HStack(spacing: 4) {
                     Image(systemName: "clock")
-                        .font(.system(size: 11))
+                        .font(.system(size: 10))
                     Text(entry.relativeTimestamp)
-                        .font(.system(size: 12, design: .rounded))
+                        .font(BrandType.meta)
                 }
                 .foregroundStyle(Brand.textTertiary)
             }
 
-            VStack(spacing: 14) {
+            VStack(spacing: isHero ? 14 : 10) {
+                // 72pt made a demoted mood card the biggest object on the
+                // screen, out-massing both the masthead and the hero title.
                 Text(entry.moodValue.emoji)
-                    .font(.system(size: 72))
+                    .font(.system(size: isHero ? 60 : 34))
                     .shadow(color: moodColor(entry).opacity(0.35), radius: 20, y: 6)
 
                 Text(entry.moodValue.label)
-                    .font(.system(size: 22, weight: .bold, design: .rounded))
+                    .font(isHero ? BrandType.hero : BrandType.title)
                     .foregroundStyle(Brand.textPrimary)
 
                 HStack(spacing: 6) {
@@ -772,11 +954,10 @@ struct CoupleDashboardView: View {
                         .lineSpacing(2)
                 }
                 .padding(14)
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Brand.surfaceLight)
-                        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Brand.divider, lineWidth: 1))
-                )
+                // A nested panel is always one step DOWN its own card's
+                // ladder. This used to fill surfaceLight on a surfaceLight
+                // card — a 1pt outline around nothing.
+                .wellBackground(in: tier, radius: 12)
             }
 
             reactionBar(for: entry)
@@ -811,19 +992,7 @@ struct CoupleDashboardView: View {
                 .buttonStyle(BouncyButtonStyle())
             }
         }
-        .padding(22)
-        .background(
-            RoundedRectangle(cornerRadius: 24)
-                .fill(Brand.surfaceLight)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 24)
-                        .strokeBorder(
-                            moodColor(entry).opacity(entry.needsAttention ? 0.45 : 0.15),
-                            lineWidth: entry.needsAttention ? 1.5 : 1
-                        )
-                )
-                .shadow(color: .black.opacity(0.18), radius: 20, y: 6)
-        )
+        .modifier(TierContainer(tier: tier))
     }
 
     private func errorMoodCard(message: String) -> some View {
@@ -861,39 +1030,6 @@ struct CoupleDashboardView: View {
 
     // MARK: - Attention Banner
 
-    private var attentionBanner: some View {
-        HStack(spacing: 14) {
-            Image(systemName: "heart.fill")
-                .font(.system(size: 20))
-                .foregroundStyle(Brand.accentStart)
-                .symbolEffect(.pulse, isActive: true)
-
-            VStack(alignment: .leading, spacing: 3) {
-                Text("Your partner might need you")
-                    .font(.system(size: 14, weight: .semibold, design: .rounded))
-                    .foregroundStyle(Brand.textPrimary)
-                Text("They seem to be having a tough time")
-                    .font(.system(size: 12, weight: .regular, design: .rounded))
-                    .foregroundStyle(Brand.textSecondary)
-            }
-
-            Spacer()
-        }
-        .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: 18)
-                .fill(Brand.accentStart.opacity(0.08))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 18)
-                        .strokeBorder(Brand.accentStart.opacity(0.25), lineWidth: 1)
-                )
-        )
-        .transition(.asymmetric(
-            insertion: .scale(scale: 0.9).combined(with: .opacity),
-            removal: .opacity
-        ))
-    }
-
     // MARK: - Presence Row
 
     private var presenceRow: some View {
@@ -913,12 +1049,16 @@ struct CoupleDashboardView: View {
             }
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(viewModel.partnerIsOnline ? "Partner is online" : "Partner")
-                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                // Was the literal string "Partner" while the avatar directly
+                // above it, the question card and the photo card all used the
+                // real name — one person, two names, one screen.
+                Text(partnerName)
+                    .font(BrandType.label)
                     .foregroundStyle(Brand.textPrimary)
+                    .lineLimit(1)
 
                 Text(presenceSubtitle)
-                    .font(.system(size: 12, weight: .regular, design: .rounded))
+                    .font(BrandType.meta)
                     .foregroundStyle(Brand.textSecondary)
             }
 
@@ -932,24 +1072,26 @@ struct CoupleDashboardView: View {
                         Image(systemName: didSendPing ? "checkmark" : "heart.fill")
                             .font(.system(size: 12, weight: .semibold))
                     }
-                    Text(didSendPing ? "Sent" : "Thinking of you")
+                    Text(didSendPing ? "Sent" : "Ping")
                         .font(.system(size: 13, weight: .semibold, design: .rounded))
                 }
-                .foregroundStyle(.white)
+                // Outlined, not filled. The accent used to appear on the Ping
+                // pill, the Answer button, the Send button, the Done button
+                // and the AI banner at once — an accent that is everywhere
+                // points at nothing. The hero's CTA is now the only accent
+                // fill on the screen.
+                .foregroundStyle(Brand.accentStart)
                 .padding(.horizontal, 14)
                 .padding(.vertical, 9)
-                .background(Capsule().fill(Brand.accentGradient))
-                .shadow(color: Brand.accentStart.opacity(0.35), radius: 10, y: 3)
+                .background(
+                    Capsule()
+                        .fill(Brand.surfaceLight)
+                        .overlay(Capsule().strokeBorder(Brand.accentStart.opacity(0.45), lineWidth: 1))
+                )
             }
             .buttonStyle(BouncyButtonStyle())
             .disabled(isSendingPing || didSendPing || !isRealSession)
         }
-        .padding(14)
-        .background(
-            RoundedRectangle(cornerRadius: 18)
-                .fill(Brand.surfaceLight)
-                .overlay(RoundedRectangle(cornerRadius: 18).strokeBorder(Brand.divider, lineWidth: 1))
-        )
     }
 
     private var presenceSubtitle: String {
@@ -1096,15 +1238,13 @@ struct CoupleDashboardView: View {
         VStack(alignment: .leading, spacing: 14) {
             HStack {
                 Text("Past 7 days")
-                    .font(.system(size: 13, weight: .semibold, design: .rounded))
-                    .foregroundStyle(Brand.textSecondary)
-                    .textCase(.uppercase)
-                    .tracking(0.5)
+                    .font(BrandType.label)
+                    .foregroundStyle(Brand.textTertiary)
 
                 Spacer()
 
                 Text("\(viewModel.weeklyHistory.count) check-ins")
-                    .font(.system(size: 12, weight: .medium, design: .rounded))
+                    .font(BrandType.meta)
                     .foregroundStyle(Brand.textTertiary)
             }
 
@@ -1114,12 +1254,6 @@ struct CoupleDashboardView: View {
                 }
             }
         }
-        .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: 20)
-                .fill(Brand.surfaceLight)
-                .overlay(RoundedRectangle(cornerRadius: 20).strokeBorder(Brand.divider, lineWidth: 1))
-        )
     }
 
     private var weekDays: [Date] {

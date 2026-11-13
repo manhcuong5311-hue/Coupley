@@ -41,11 +41,11 @@ struct MemoryTimelineSection: View {
         HStack(alignment: .firstTextBaseline) {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Memory Timeline")
-                    .font(.system(size: 22, weight: .bold, design: .rounded))
+                    .font(BrandType.title)
                     .foregroundStyle(Brand.textPrimary)
                 Text("The moments your tree was built from.")
-                    .font(.system(size: 13, weight: .regular, design: .rounded))
-                    .foregroundStyle(Brand.textSecondary)
+                    .font(BrandType.meta)
+                    .foregroundStyle(Brand.textTertiary)
             }
 
             Spacer()
@@ -57,13 +57,15 @@ struct MemoryTimelineSection: View {
                     Text("Add")
                         .font(.system(size: 13, weight: .semibold, design: .rounded))
                 }
-                .foregroundStyle(.white)
+                .foregroundStyle(Brand.accentStart)
                 .padding(.horizontal, 14)
                 .padding(.vertical, 8)
                 .background(
-                    Capsule().fill(Brand.accentGradient)
+                    Capsule()
+                        .fill(Brand.surfaceLight)
+                        .overlay(Capsule().strokeBorder(
+                            Brand.accentStart.opacity(0.45), lineWidth: 1))
                 )
-                .shadow(color: Brand.accentStart.opacity(0.30), radius: 8, y: 3)
             }
             .buttonStyle(BouncyButtonStyle(scale: 0.94))
         }

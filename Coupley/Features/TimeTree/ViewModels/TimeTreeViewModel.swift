@@ -35,6 +35,11 @@ final class TimeTreeViewModel: ObservableObject {
     /// during the initial fetch window.
     @Published private(set) var hasReceivedFirstUpdate: Bool = false
     @Published private(set) var errorMessage: String?
+    /// True while `errorMessage` holds a failure from something the user did
+    /// (a photo upload, a save) rather than from a listener. A local write
+    /// echoes back through the snapshot listener in the same frame, so without
+    /// this the listener's own clear wipes the message before it is ever seen.
+    private var errorIsFromUserAction = false
     @Published var isSavingMemory: Bool = false
     @Published var isUploadingPhoto: Bool = false
     @Published var isSavingAnchor: Bool = false
@@ -157,6 +162,8 @@ final class TimeTreeViewModel: ObservableObject {
             setBy: session.userId,
             setByName: displayName
         )
+        errorMessage = nil
+        errorIsFromUserAction = false
         do {
             try await anchorService.setAnchor(coupleId: session.coupleId, anchor: anchor)
             await scheduler.rescheduleCrowns(anchor: anchor)
@@ -181,17 +188,28 @@ final class TimeTreeViewModel: ObservableObject {
         guard session.isPaired else { return }
         isSavingMemory = true
         defer { isSavingMemory = false }
+        // Cleared here, not between the upload and the write: a photo failure
+        // reported below must survive until the user has seen it.
+        errorMessage = nil
 
         let memoryId = UUID().uuidString
         var photoURL: String?
 
         if let photo {
             isUploadingPhoto = true
-            photoURL = try? await storageService.uploadPhoto(
-                photo,
-                coupleId: session.coupleId,
-                memoryId: memoryId
-            )
+            do {
+                photoURL = try await storageService.uploadPhoto(
+                    photo,
+                    coupleId: session.coupleId,
+                    memoryId: memoryId
+                )
+            } catch {
+                // Was `try?`. A failed upload left photoURL nil and the memory
+                // saved silently without its picture, so a rejected or dropped
+                // upload was indistinguishable from never having picked one.
+                errorMessage = "Couldn't upload the photo: \(error.localizedDescription)"
+                errorIsFromUserAction = true
+            }
             isUploadingPhoto = false
             // Pre-warm the disk cache so the uploader doesn't re-download
             // the photo it just sent up.
@@ -239,6 +257,8 @@ final class TimeTreeViewModel: ObservableObject {
         guard session.isPaired else { return }
         isSavingMemory = true
         defer { isSavingMemory = false }
+        errorMessage = nil
+        errorIsFromUserAction = false
 
         var updated = memory
         updated.kind = kind
@@ -253,11 +273,16 @@ final class TimeTreeViewModel: ObservableObject {
 
         if let photo {
             isUploadingPhoto = true
-            updated.photoURL = try? await storageService.uploadPhoto(
-                photo,
-                coupleId: session.coupleId,
-                memoryId: memory.id
-            )
+            do {
+                updated.photoURL = try await storageService.uploadPhoto(
+                    photo,
+                    coupleId: session.coupleId,
+                    memoryId: memory.id
+                )
+            } catch {
+                errorMessage = "Couldn't upload the photo: \(error.localizedDescription)"
+                errorIsFromUserAction = true
+            }
             isUploadingPhoto = false
             if let urlString = updated.photoURL, let url = URL(string: urlString) {
                 ImageCache.shared.store(photo, for: url)
@@ -277,6 +302,8 @@ final class TimeTreeViewModel: ObservableObject {
 
     func deleteMemory(_ memory: TimeMemory) async {
         guard session.isPaired else { return }
+        errorMessage = nil
+        errorIsFromUserAction = false
         do {
             try await memoryService.delete(coupleId: session.coupleId, id: memory.id)
             await scheduler.cancelCapsule(memory.id)
@@ -299,6 +326,9 @@ final class TimeTreeViewModel: ObservableObject {
     // MARK: - Private — remote sync
 
     private func handleRemoteMemoriesUpdate(_ items: [TimeMemory]) {
+        // A successful update means whatever LISTENER failure came before is
+        // over -- but not a photo upload the user is still waiting to hear about.
+        if !errorIsFromUserAction { errorMessage = nil }
         let previous = Dictionary(uniqueKeysWithValues: memories.map { ($0.id, $0) })
         memories = items
         hasReceivedFirstUpdate = true
@@ -316,6 +346,7 @@ final class TimeTreeViewModel: ObservableObject {
     }
 
     private func handleRemoteAnchorUpdate(_ anchor: RelationshipAnchor?) {
+        if !errorIsFromUserAction { errorMessage = nil }
         self.anchor = anchor
         saveAnchorCache(anchor)
         if let anchor {

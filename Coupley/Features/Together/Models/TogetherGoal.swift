@@ -224,3 +224,17 @@ struct GoalSuggestion: Identifiable {
         GoalSuggestion(title: "Reading Challenge",   category: .learning,  trackingMode: .count,    target: 6,     emoji: "📚")
     ]
 }
+
+// MARK: - Free tier caps
+
+/// One source of truth for the free-tier caps.
+///
+/// These numbers were duplicated across five files (two in
+/// `TogetherActiveSection`, one in `TogetherDreamBoardSection`, two in
+/// `TogetherViewModel`), so a change had to be made in five places and the
+/// hero selector had no way to agree with the list it was summarising.
+enum TogetherFreeLimits {
+    static let goals = 2
+    static let challenges = 1
+    static let dreams = 1
+}

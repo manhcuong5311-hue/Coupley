@@ -17,7 +17,12 @@ struct SuggestionView: View {
     init(
         moodContext: MoodContext,
         partnerProfile: PartnerProfile,
-        suggestionService: AISuggestionService = MockAISuggestionService()
+        // No default. The one production call site never passed a service, so
+        // it silently got the mock -- the button said "5 left today",
+        // `recordUsage` decremented it, and the sheet showed canned fixtures.
+        // Removing the default makes the next call site a compile error
+        // instead of a silent fallback.
+        suggestionService: AISuggestionService
     ) {
         _viewModel = StateObject(wrappedValue: SuggestionViewModel(
             moodContext: moodContext,
@@ -292,6 +297,7 @@ private struct ActionCard: View {
             note: "Had a rough day at work",
             lastInteraction: Calendar.current.date(byAdding: .hour, value: -3, to: Date())
         ),
-        partnerProfile: .samplePartner
+        partnerProfile: .samplePartner,
+        suggestionService: MockAISuggestionService()
     )
 }

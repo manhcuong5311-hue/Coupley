@@ -1,0 +1,61 @@
+# Chỉ mục nhanh
+
+- **[blocker]** 🌐 Together: errorMessage is written 13 times and read by no view — every goal/challenge/dream mutation fails silently — `TogetherViewModel.swift:37`
+- **[blocker]** 🌐 Chat: errorMessage is written 10 times and read by no view — a failed send, photo, quiz answer or reaction is invisible — `ChatViewModel.swift:29`
+- **[blocker]** 🌐 Chat has no empty state: a brand-new couple's first screen says "Pull up to see older messages" on a thread with zero messages — `ChatViewModel.swift:193`
+- **[blocker]** Together hero promotes a paywall-locked challenge and hands a free user a working check-in for it — `TogetherView.swift:372`
+- **[blocker]** 🌐 Quiz answers are stored and compared as display strings, so translating an option breaks matching, hints, guesses and insights — `QuizAnswerSheet.swift:363`
+- **[blocker]** 🌐 Firestore day keys are built with a locale-sensitive DateFormatter, so a non-Gregorian region produces unmatchable keys — `SyncService.swift:69`
+- **[blocker]** 🌐 276 user-facing literals live inside `-> String` computed properties, where Xcode's string extractor cannot see them — `TreeGrowthStage.swift:65`
+- **[blocker]** 🌐 Display copy is denormalized into Firestore, so the partner's device renders the sender's language and some of it cannot be re-localized at all — `DailyPhotoService.swift:92`
+- **[blocker]** 🌐 No AI request carries the user's locale, so every coach reply and suggestion comes back in English — `AICoachService.swift:263`
+- **[blocker]** 🌐 Firestore day keys built with device-locale DateFormatter — writes non-Gregorian years into shared documents — `SyncService.swift:68`
+- **[blocker]** 🌐 Day-key parser also unpinned — chart labels silently show weekdays from the wrong millennium — `CoupleStatsView.swift:435`
+- **[blocker]** 🌐 English word "streak" welded onto user data, then truncated at 117pt — `TogetherTodayHero.swift:139`
+- **[blocker]** 🌐 Hardcoded \n baked into a 34pt masthead LocalizedStringKey, with no lineLimit or minimumScaleFactor — `MoodCheckinView.swift:120`
+- **[blocker]** Streak and sync score are never written — every stats number is permanently 0 — `CoupleStatsViewModel.swift:84`
+- **[blocker]** 🌐 The user-facing AI suggestion sheet runs on MockAISuggestionService while real quota is spent — `SuggestionView.swift:20`
+- **[blocker]** 🌐 Quiz result summaries are built as English prose in Swift and persisted to Firestore — `QuizOrchestrator.swift:133`
+- **[major]** Free-tier locking is positional over an array whose order is createdAt-descending, so creating a challenge locks the user's existing one — `TogetherActiveSection.swift:276`
+- **[major]** The nav-bar + menu creates goals/challenges/dreams with no cap check, so a free user at the limit fills the whole editor before being rejected — `TogetherView.swift:227`
+- **[major]** Journey is a permanent spinner whenever the Firestore listener errors — the error strip renders above a loading state that never ends — `TimeTreeView.swift:75`
+- **[major]** "History — your past quizzes & results" shows at most 20 quizzes, while the hero's score counts all of them — `CoupleChatService.swift:126`
+- **[major]** 🌐 The one error surface that was added renders Firestore's raw localizedDescription, which will stay English after you add a second language — `TimeTreeView.swift:302`
+- **[major]** 🌐 `Text(String)` is the verbatim overload, and the design system's own button and eyebrow components funnel literals into it — `DesignSystem.swift:117`
+- **[major]** 🌐 Two `Text("…" + "…")` sites compile to the verbatim overload and will be missed by extraction and by grep alike — `DeleteAccountView.swift:224`
+- **[major]** 🌐 Twelve plural ternaries produce catalog keys with the noun stripped out, so the translator receives `%lld %@` — `TimeTreeView.swift:282`
+- **[major]** 🌐 English prose assembled at runtime in plain `String`s, in a word order no translator can change — `QuizOrchestrator.swift:133`
+- **[major]** 🌐 Local notification titles and bodies are plain `String` assignments, so none of them can ever be localized — `TogetherNotificationScheduler.swift:101`
+- **[major]** Fixed `dateFormat` patterns leak English AM/PM and wrong date order into other locales — `NotificationSettingsView.swift:318`
+- **[major]** 🌐 The widget extension is a second target with no localization and its own hardcoded English copy — `WidgetCountdownEngine.swift:49`
+- **[major]** 🌐 Reminder-hour picker forces a 12-hour clock and emits English AM/PM into 24-hour locales — `NotificationSettingsView.swift:318`
+- **[major]** 🌐 "MMM d · h:mm a" pins day-month field order and a 12-hour clock — `MonthlyMoodInsightView.swift:569`
+- **[major]** 🌐 "LLLL yyyy" month header is ungrammatical in Vietnamese and reversed in Japanese — `MonthlyMoodInsightView.swift:563`
+- **[major]** Challenge heatmap weekday labels are off by one today and ignore firstWeekday — `ChallengeDetailSheet.swift:188`
+- **[major]** 🌐 Localized relative dates concatenated into English sentences inside String-returning model code — `CoupleChallenge.swift:218`
+- **[major]** 🌐 Plurals selected by == 1 ternary; five sites interpolate the noun so it can never be translated — `TimeTreeView.swift:282`
+- **[major]** statTile titles truncate in Vietnamese at 117pt with no minimumScaleFactor — `TogetherTodayHero.swift:229`
+- **[major]** Milestone tile subtitle has 2.6pt of headroom in English; truncates in VI and DE — `MilestonePickerSheet.swift:81`
+- **[major]** "AI Relationship Coach" and the NEW pill share a row with no lineLimit on either — `CoupleDashboardView.swift:726`
+- **[major]** activityCard title truncates in Vietnamese past its own 0.85 scale floor — `CoupleDashboardView.swift:803`
+- **[major]** 🌐 No locale is sent on any AI request, so the server always answers in English — `RemoteAISuggestionService.swift:26`
+- **[major]** ChatViewModel.errorMessage is never rendered — nine failure paths including message send are silent — `ChatViewModel.swift:29`
+- **[major]** TogetherViewModel.errorMessage is never rendered — thirteen failure paths silent — `TogetherViewModel.swift:37`
+- **[major]** Widget timeline is reloaded every 60 seconds, burning the OS refresh budget — `SessionStore.swift:274`
+- **[major]** A failed Time Tree photo upload is reported and then wiped before the user can see it — `TimeTreeViewModel.swift:228`
+- **[major]** Chat messages are written with a non-awaited setData, so server rejections are invisible — `CoupleChatService.swift:329`
+- **[major]** Anniversary cover upload failure swallowed by try?, saving a coverless anniversary silently — `AnniversaryViewModel.swift:109`
+- **[major]** An unpaired user's mood save is reported as "will sync when online" and queued forever — `FirestoreMoodService.swift:39`
+- **[major]** Auto-prefetch spends server AI quota uncounted and throws the result away — `CoupleViewModel.swift:196`
+- **[minor]** The Quiz Hub's only quiz row is a dead end — it closes the sheet instead of opening the quiz — `QuizHubView.swift:321`
+- **[minor]** One identical paywall row is emitted per locked item, so a free user with 9 goals gets 7 byte-identical lock cards — `TogetherActiveSection.swift:63`
+- **[minor]** Forty currency display names are hardcoded in English although the OS already translates them — `CurrencyCatalog.swift:35`
+- **[minor]** Int interpolated into Text produces %lld with no grouping separator — `TimeTreeHeader.swift:85`
+- **[minor]** 🌐 Currency search uses lowercased().contains, which is not diacritic-folded — `CurrencyPickerSheet.swift:87`
+- **[minor]** Dead `subtitle:` parameter sends five never-rendered English strings to translation — `CoupleDashboardView.swift:648`
+- **[minor]** QuestionOfTheDayViewModel.errorMessage never rendered; a failed answer leaves the sheet stuck open — `QuestionOfTheDayViewModel.swift:231`
+- **[minor]** MicroAction isGenerating can never be observed, so its loading branch is unreachable — `MicroActionViewModel.swift:105`
+- **[minor]** SharedMoodEntry.needsAttention has a dead && term, so low energy never counts — `CoupleModels.swift:77`
+- **[minor]** maybeSuggestQuiz runs before the quiz listener fires, defeating both orchestrator guards — `ChatViewModel.swift:87`
+- **[minor]** QotD and DailyPhoto listeners are started but never stopped and skip the sign-out teardown chain — `CoupleDashboardView.swift:201`
+- **[minor]** Account deletion swallows every Firestore step, so PII can outlive the auth user with no retry — `AccountDeletionService.swift:343`

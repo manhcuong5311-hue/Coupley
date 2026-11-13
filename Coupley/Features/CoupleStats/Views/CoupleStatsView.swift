@@ -432,10 +432,7 @@ struct CoupleStatsView: View {
     }
 
     private func dayLabel(for dateString: String) -> String {
-        let inputFormatter = DateFormatter()
-        inputFormatter.dateFormat = "yyyy-MM-dd"
-
-        guard let date = inputFormatter.date(from: dateString) else { return "?" }
+        guard let date = DayKey.date(from: dateString) else { return "?" }
 
         if Calendar.current.isDateInToday(date) { return "Today" }
 

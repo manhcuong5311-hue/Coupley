@@ -106,11 +106,15 @@ final class AnniversaryViewModel: ObservableObject {
 
         if let image {
             isUploadingImage = true
-            imageURL = try? await storageService.uploadCover(
-                image,
-                coupleId: session.coupleId,
-                anniversaryId: anniversaryId
-            )
+            do {
+                imageURL = try await storageService.uploadCover(
+                    image,
+                    coupleId: session.coupleId,
+                    anniversaryId: anniversaryId
+                )
+            } catch {
+                errorMessage = "Couldn't upload the cover photo: \(error.localizedDescription)"
+            }
             isUploadingImage = false
             if let urlString = imageURL, let url = URL(string: urlString) {
                 ImageCache.shared.store(image, for: url)
@@ -148,11 +152,18 @@ final class AnniversaryViewModel: ObservableObject {
 
         if let image {
             isUploadingImage = true
-            updated.imageURL = try? await storageService.uploadCover(
-                image,
-                coupleId: session.coupleId,
-                anniversaryId: anniversary.id
-            )
+            do {
+                updated.imageURL = try await storageService.uploadCover(
+                    image,
+                    coupleId: session.coupleId,
+                    anniversaryId: anniversary.id
+                )
+            } catch {
+                // Keep whatever cover the anniversary already had. Letting this
+                // fall through as nil silently deleted the existing photo.
+                updated.imageURL = anniversary.imageURL
+                errorMessage = "Couldn't upload the cover photo: \(error.localizedDescription)"
+            }
             isUploadingImage = false
             if let urlString = updated.imageURL, let url = URL(string: urlString) {
                 ImageCache.shared.store(image, for: url)

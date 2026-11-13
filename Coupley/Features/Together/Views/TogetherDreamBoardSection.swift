@@ -25,7 +25,7 @@ struct DreamBoardSection: View {
     let onShowPaywall: () -> Void
 
     /// Free users see exactly 1 fully-visible dream. The rest are blurred + locked.
-    private let freeFullyVisible = 1
+    private let freeFullyVisible = TogetherFreeLimits.dreams
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {

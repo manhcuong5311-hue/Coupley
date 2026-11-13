@@ -17,8 +17,11 @@ struct DailyPhotoCard: View {
 
     @ObservedObject var viewModel: DailyPhotoViewModel
     let partnerName: String
+    var tier: SurfaceTier = .card
 
     @State private var pickerItem: PhotosPickerItem?
+
+    private var isHero: Bool { tier == .hero }
 
     var body: some View {
         Group {
@@ -26,7 +29,10 @@ struct DailyPhotoCard: View {
             case .hidden:
                 EmptyView()
             case .loading:
-                EmptyView()
+                // QotD reserves its space while loading; this returned
+                // EmptyView, so everything below it jumped down the moment
+                // the photo card resolved.
+                loadingCard
             case .awaitingMe(let photo):
                 card(accent: Brand.accentStart) { awaitingMe(photo) }
             case .awaitingPartner(let photo):
@@ -48,6 +54,17 @@ struct DailyPhotoCard: View {
         }
     }
 
+    private var loadingCard: some View {
+        HStack(spacing: 12) {
+            ProgressView().tint(Brand.accentStart)
+            Text("Loading today's photo\u{2026}")
+                .font(.system(size: 14, design: .rounded))
+                .foregroundStyle(Brand.textSecondary)
+            Spacer()
+        }
+        .modifier(TierContainer(tier: tier))
+    }
+
     private var waiting: Color { Color(red: 0.52, green: 0.44, blue: 0.95) }
     private var done: Color { Color(red: 0.25, green: 0.75, blue: 0.50) }
 
@@ -56,20 +73,22 @@ struct DailyPhotoCard: View {
     private func card<C: View>(accent: Color, @ViewBuilder content: () -> C) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Photo of the day")
-                        .font(.system(size: 13, weight: .semibold, design: .rounded))
-                        .foregroundStyle(Brand.textSecondary)
-                        .textCase(.uppercase)
-                        .tracking(0.5)
-                    Text(subtitle)
-                        .font(.system(size: 13, design: .rounded))
-                        .foregroundStyle(Brand.textTertiary)
-                }
+                // One line, not a stacked uppercase eyebrow plus a subtitle.
+                // Home carried six identical 13pt tracked eyebrows, so small
+                // caps had stopped carrying any information at all.
+                Text("Photo of the day")
+                    .font(BrandType.label)
+                    .foregroundStyle(Brand.textSecondary)
                 Spacer()
                 Image(systemName: "camera.fill")
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(accent)
+            }
+            if !isHero {
+                Text(subtitle)
+                    .font(BrandType.meta)
+                    .foregroundStyle(Brand.textTertiary)
+                    .padding(.top, -6)
             }
             content()
 
@@ -96,16 +115,7 @@ struct DailyPhotoCard: View {
                 )
             }
         }
-        .padding(18)
-        .background(
-            RoundedRectangle(cornerRadius: 22)
-                .fill(Brand.surfaceLight)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 22)
-                        .strokeBorder(accent.opacity(0.22), lineWidth: 1)
-                )
-                .shadow(color: .black.opacity(0.08), radius: 12, y: 3)
-        )
+        .modifier(TierContainer(tier: tier, accent: accent))
     }
 
     private var subtitle: String {
@@ -122,7 +132,7 @@ struct DailyPhotoCard: View {
     private func awaitingMe(_ photo: DailyPhoto) -> some View {
         VStack(alignment: .leading, spacing: 14) {
             Text(photo.prompt)
-                .font(.system(size: 18, weight: .semibold, design: .rounded))
+                .font(isHero ? BrandType.hero : BrandType.title)
                 .foregroundStyle(Brand.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
 
@@ -159,7 +169,7 @@ struct DailyPhotoCard: View {
     private func awaitingPartner(_ photo: DailyPhoto) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             Text(photo.prompt)
-                .font(.system(size: 16, weight: .semibold, design: .rounded))
+                .font(isHero ? BrandType.hero : BrandType.title)
                 .foregroundStyle(Brand.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
 
@@ -177,7 +187,7 @@ struct DailyPhotoCard: View {
     private func revealed(_ photo: DailyPhoto) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             Text(photo.prompt)
-                .font(.system(size: 16, weight: .semibold, design: .rounded))
+                .font(isHero ? BrandType.hero : BrandType.title)
                 .foregroundStyle(Brand.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
 
@@ -193,7 +203,6 @@ struct DailyPhotoCard: View {
     private func thumbnail(_ urlString: String?, label: String) -> some View {
         VStack(spacing: 5) {
             ZStack {
-                RoundedRectangle(cornerRadius: 14).fill(Brand.backgroundTop)
                 if let urlString, let url = URL(string: urlString) {
                     // Not AsyncImage: it refetches whenever the row is
                     // rebuilt, which inside a ScrollView is every time it
@@ -209,7 +218,8 @@ struct DailyPhotoCard: View {
             }
             .frame(height: 112)
             .frame(maxWidth: .infinity)
-            .clipShape(RoundedRectangle(cornerRadius: 14))
+            .clipShape(RoundedRectangle(cornerRadius: 14, style: Brand.cornerStyle))
+            .wellBackground(in: tier, radius: 14)
 
             Text(label)
                 .font(.system(size: 11, weight: .semibold, design: .rounded))
@@ -219,19 +229,12 @@ struct DailyPhotoCard: View {
 
     private var lockedThumbnail: some View {
         VStack(spacing: 5) {
-            RoundedRectangle(cornerRadius: 14)
-                .fill(Brand.backgroundTop)
-                .overlay(
-                    Image(systemName: "lock.fill")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundStyle(Brand.textTertiary)
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 14)
-                        .strokeBorder(Brand.divider, lineWidth: 1)
-                )
+            Image(systemName: "lock.fill")
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundStyle(Brand.textTertiary)
                 .frame(height: 112)
                 .frame(maxWidth: .infinity)
+                .wellBackground(in: tier, radius: 14)
 
             Text(partnerName)
                 .font(.system(size: 11, weight: .semibold, design: .rounded))

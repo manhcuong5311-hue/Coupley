@@ -14,10 +14,10 @@ struct MoodCheckinView: View {
     private var greeting: String {
         let hour = Calendar.current.component(.hour, from: Date())
         switch hour {
-        case 5..<12:  return "Good morning 🌤"
-        case 12..<17: return "Good afternoon ☀️"
-        case 17..<21: return "Good evening 🌅"
-        default:      return "Good night 🌙"
+        case 5..<12:  return "Good morning"
+        case 12..<17: return "Good afternoon"
+        case 17..<21: return "Good evening"
+        default:      return "Good night"
         }
     }
 
@@ -40,57 +40,56 @@ struct MoodCheckinView: View {
 
                 ScrollView {
                     VStack(spacing: 0) {
-                        // Header
+                        // -- T0 --------------------------------------------
                         headerSection
-                            .padding(.horizontal, 28)
+                            .padding(.horizontal, Brand.Space.gutter)
                             .padding(.top, 8)
-                            .padding(.bottom, 36)
                             .opacity(appearedAt ? 1 : 0)
                             .offset(y: appearedAt ? 0 : 12)
 
-                        if viewModel.hasReachedDailyLimit {
-                            dailyLimitBanner
-                                .padding(.horizontal, 24)
-                                .padding(.bottom, 48)
+                        // `todayCheckinCount += 1` runs on the line BEFORE
+                        // `submissionState = .success`, and both are @Published
+                        // on the same actor, so SwiftUI coalesces them into one
+                        // render pass: the limit branch replaced the button in
+                        // the very frame it was meant to say "Saved", and the
+                        // third check-in of the day could never confirm.
+                        if viewModel.hasReachedDailyLimit,
+                           viewModel.submissionState == .idle {
+                            Color.clear.frame(height: Brand.Space.zone)
+                            BrandCard(tier: .quiet) { dailyLimitBanner }
+                                .padding(.horizontal, Brand.Space.gutter)
                                 .opacity(appearedAt ? 1 : 0)
                         } else {
-                            // Mood cards
-                            MoodSelectorView(selectedMood: $viewModel.selectedMood)
-                                .padding(.horizontal, 24)
-                                .padding(.bottom, 32)
+                            // -- T1 -- picking a mood and saving it are ONE
+                            // act, so they are one container. That is also what
+                            // lifts the goal-completing button from ~613pt to
+                            // ~300pt inside a ~674pt visible box.
+                            Color.clear.frame(height: Brand.Space.sibling)
+                            checkinHero
+                                .padding(.horizontal, SurfaceTier.hero.gutter)
                                 .opacity(appearedAt ? 1 : 0)
                                 .offset(y: appearedAt ? 0 : 16)
 
-                            // Energy capsule
-                            EnergySelectorView(selectedEnergy: $viewModel.selectedEnergy)
-                                .padding(.horizontal, 24)
-                                .padding(.bottom, 32)
-                                .opacity(appearedAt ? 1 : 0)
-                                .offset(y: appearedAt ? 0 : 20)
-
-                            // Note
-                            NoteInputView(text: $viewModel.noteText)
-                                .padding(.horizontal, 24)
-                                .padding(.bottom, 32)
-                                .opacity(appearedAt ? 1 : 0)
-                                .offset(y: appearedAt ? 0 : 24)
-
-                            // Submit
-                            SubmitButtonView(
-                                state: viewModel.submissionState,
-                                isEnabled: viewModel.isSubmitEnabled
-                            ) {
-                                UIApplication.shared.sendAction(
-                                    #selector(UIResponder.resignFirstResponder),
-                                    to: nil, from: nil, for: nil
-                                )
-                                viewModel.submitMood()
+                            // -- T4 -- optional detail, below the act. zone-16
+                            // because a ruled quiet block carries its own 16pt.
+                            Color.clear.frame(height: Brand.Space.zone - 16)
+                            BrandCard(tier: .quiet) {
+                                EnergySelectorView(selectedEnergy: $viewModel.selectedEnergy)
                             }
-                            .padding(.horizontal, 24)
-                            .padding(.bottom, 48)
+                            .padding(.horizontal, Brand.Space.gutter)
+                            .opacity(appearedAt ? 1 : 0)
+                            .offset(y: appearedAt ? 0 : 20)
+
+                            Color.clear.frame(height: Brand.Space.sibling)
+                            BrandCard(tier: .quiet, showsRule: false) {
+                                NoteInputView(text: $viewModel.noteText)
+                            }
+                            .padding(.horizontal, Brand.Space.gutter)
                             .opacity(appearedAt ? 1 : 0)
                             .offset(y: appearedAt ? 0 : 24)
                         }
+
+                        Color.clear.frame(height: 120)
                     }
                 }
                 .scrollDismissesKeyboard(.interactively)
@@ -113,19 +112,40 @@ struct MoodCheckinView: View {
     private var headerSection: some View {
         HStack(alignment: .top) {
             VStack(alignment: .leading, spacing: 6) {
-                Text(greeting)
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                    .foregroundStyle(Brand.textSecondary)
+                // The screen's one uppercase tracked label, in the masthead,
+                // on the page -- never on a hero wash, where 13pt
+                // textSecondary measures 3.1-3.8:1 in all four resolutions.
+                Eyebrow(greeting)
 
                 Text("How are you\nfeeling today?")
-                    .font(.system(size: 34, weight: .bold, design: .rounded))
+                    .font(BrandType.display)
                     .foregroundStyle(Brand.textPrimary)
                     .lineSpacing(2)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
             insightsButton
+        }
+    }
+
+    /// The whole act of checking in: pick, then save, in one container.
+    private var checkinHero: some View {
+        BrandCard(tier: .hero,
+                  accent: viewModel.selectedMood?.color ?? Brand.accentStart) {
+            VStack(spacing: 18) {
+                MoodSelectorView(selectedMood: $viewModel.selectedMood)
+
+                SubmitButtonView(
+                    state: viewModel.submissionState,
+                    isEnabled: viewModel.isSubmitEnabled
+                ) {
+                    UIApplication.shared.sendAction(
+                        #selector(UIResponder.resignFirstResponder),
+                        to: nil, from: nil, for: nil
+                    )
+                    viewModel.submitMood()
+                }
+            }
         }
     }
 
@@ -138,14 +158,17 @@ struct MoodCheckinView: View {
             showInsights = true
         }) {
             ZStack {
+                // surfaceLight + a divider ring, matching Home's masthead
+                // buttons. NOT the chip tier: a chip's fill is backgroundTop,
+                // which is the page gradient's own first stop, so up here a
+                // chip would be the exact colour of the page behind it.
                 Circle()
                     .fill(Brand.surfaceLight)
                     .overlay(Circle().strokeBorder(Brand.divider, lineWidth: 1))
                     .frame(width: 42, height: 42)
-                    .shadow(color: .black.opacity(0.06), radius: 6, y: 2)
                 Image(systemName: "chart.bar.xaxis")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(Brand.accentStart)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(Brand.textSecondary)
             }
         }
         .buttonStyle(BouncyButtonStyle(scale: 0.92))
@@ -154,36 +177,27 @@ struct MoodCheckinView: View {
     }
 
     private var dailyLimitBanner: some View {
-        VStack(spacing: 20) {
-            ZStack {
-                Circle()
-                    .fill(Brand.accentStart.opacity(0.12))
-                    .frame(width: 80, height: 80)
-                Text("✅")
-                    .font(.system(size: 38))
-            }
-
-            VStack(spacing: 8) {
-                Text("You've checked in \(MoodViewModel.dailyLimit) times today")
-                    .font(.system(size: 18, weight: .bold, design: .rounded))
-                    .foregroundStyle(Brand.textPrimary)
-                    .multilineTextAlignment(.center)
-
-                Text("Come back tomorrow to share how you're feeling. Your partner can still see your moods.")
-                    .font(.system(size: 14, weight: .regular, design: .rounded))
+        // A finished state never claims emphasis. This was an 80pt accent
+        // circle around a 38pt tick inside a full card -- the loudest object
+        // on the screen, saying only that there is nothing left to do.
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 8) {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 18, weight: .semibold))
                     .foregroundStyle(Brand.textSecondary)
-                    .multilineTextAlignment(.center)
-                    .lineSpacing(3)
+                Text("You've checked in \(MoodViewModel.dailyLimit) times today")
+                    .font(BrandType.title)
+                    .foregroundStyle(Brand.textPrimary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
+
+            Text("Come back tomorrow to share how you're feeling. Your partner can still see your moods.")
+                .font(BrandType.body)
+                .foregroundStyle(Brand.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+                .lineSpacing(3)
         }
-        .padding(28)
-        .frame(maxWidth: .infinity)
-        .background(
-            RoundedRectangle(cornerRadius: 22)
-                .fill(Brand.surfaceLight)
-                .overlay(RoundedRectangle(cornerRadius: 22).strokeBorder(Brand.divider, lineWidth: 1))
-                .shadow(color: .black.opacity(0.08), radius: 14, y: 4)
-        )
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
@@ -194,10 +208,8 @@ struct MoodSelectorView: View {
     @Binding var selectedMood: Mood?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            SectionLabel("Mood")
-
-            HStack(spacing: 12) {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(spacing: 10) {
                 ForEach(Mood.allCases) { mood in
                     MoodCard(mood: mood, isSelected: selectedMood == mood) {
                         let impact = UIImpactFeedbackGenerator(style: .light)
@@ -226,7 +238,7 @@ private struct MoodCard: View {
         Button(action: action) {
             VStack(spacing: 10) {
                 Text(mood.emoji)
-                    .font(.system(size: 38))
+                    .font(.system(size: 30))
                     .scaleEffect(isSelected ? 1.18 : isPressed ? 0.92 : 1.0)
                     .shadow(
                         color: isSelected ? mood.color.opacity(0.5) : .clear,
@@ -236,28 +248,25 @@ private struct MoodCard: View {
                     .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isSelected)
 
                 Text(mood.label)
-                    .font(.system(size: 12, weight: isSelected ? .semibold : .regular))
+                    .font(.system(size: 11, weight: isSelected ? .semibold : .regular))
                     .foregroundStyle(isSelected ? mood.color : Brand.textSecondary)
                     .animation(.easeInOut(duration: 0.2), value: isSelected)
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 18)
+            .padding(.vertical, 14)
             .background(
-                RoundedRectangle(cornerRadius: Brand.cardCornerRadius)
-                    .fill(isSelected
-                          ? AnyShapeStyle(mood.color.opacity(0.12))
-                          : AnyShapeStyle(Brand.surfaceLight))
-                    .shadow(
-                        color: isSelected ? mood.color.opacity(0.18) : Color.black.opacity(0.04),
-                        radius: isSelected ? 12 : 4,
-                        y: isSelected ? 4 : 2
+                RoundedRectangle(cornerRadius: SurfaceTier.chip.radius, style: Brand.cornerStyle)
+                    .fill(Brand.surfaceLight)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: SurfaceTier.chip.radius, style: Brand.cornerStyle)
+                            .fill(isSelected ? mood.color.opacity(0.30) : Color.clear)
                     )
             )
             .overlay(
-                RoundedRectangle(cornerRadius: Brand.cardCornerRadius)
+                RoundedRectangle(cornerRadius: SurfaceTier.chip.radius, style: Brand.cornerStyle)
                     .strokeBorder(
-                        isSelected ? mood.color.opacity(0.5) : Brand.divider,
-                        lineWidth: 1
+                        isSelected ? mood.color.opacity(0.7) : Brand.divider,
+                        lineWidth: isSelected ? 1.5 : 1
                     )
             )
             .scaleEffect(isPressed ? 0.95 : 1.0)
@@ -303,15 +312,6 @@ struct EnergySelectorView: View {
                     }
                 }
             }
-            .padding(4)
-            .background(
-                RoundedRectangle(cornerRadius: 18)
-                    .fill(Brand.surfaceLight)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 18)
-                            .strokeBorder(Brand.divider, lineWidth: 1)
-                    )
-            )
         }
     }
 }
@@ -368,35 +368,39 @@ struct NoteInputView: View {
             SectionLabel("Note")
 
             ZStack(alignment: .topLeading) {
-                RoundedRectangle(cornerRadius: Brand.cardCornerRadius)
+                // The focus ring was the accent at 1.5pt -- a hero signature
+                // on an optional field. Same width, no accent spent.
+                RoundedRectangle(cornerRadius: Brand.cardCornerRadius, style: Brand.cornerStyle)
                     .fill(Brand.surfaceLight)
                     .overlay(
-                        RoundedRectangle(cornerRadius: Brand.cardCornerRadius)
+                        RoundedRectangle(cornerRadius: Brand.cardCornerRadius, style: Brand.cornerStyle)
                             .strokeBorder(
-                                focused ? Brand.accentStart.opacity(0.5) : Brand.divider,
-                                lineWidth: focused ? 1.5 : 1
+                                focused ? Brand.textTertiary : Brand.divider,
+                                lineWidth: 1
                             )
                     )
                     .animation(.easeInOut(duration: 0.2), value: focused)
 
                 if text.isEmpty {
                     Text("What's on your mind today?")
-                        .font(.system(size: 16))
+                        .font(BrandType.body)
                         .foregroundStyle(Brand.textTertiary)
-                        .padding(.horizontal, 18)
-                        .padding(.top, 17)
+                        .padding(.horizontal, 16)
+                        .padding(.top, 14)
                         .allowsHitTesting(false)
                 }
 
                 TextField("", text: $text, axis: .vertical)
-                    .font(.system(size: 16))
+                    .font(BrandType.body)
                     .foregroundStyle(Brand.textPrimary)
-                    .lineLimit(3...7)
-                    .padding(.horizontal, 18)
-                    .padding(.vertical, 16)
+                    .lineLimit(2...5)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 13)
                     .focused($focused)
             }
-            .frame(minHeight: 110)
+            // Was 110 -- the largest container on the screen, holding the one
+            // field nobody has to fill in.
+            .frame(minHeight: 64)
         }
     }
 }
@@ -414,19 +418,32 @@ struct SubmitButtonView: View {
     var body: some View {
         let radius = Brand.buttonCornerRadius
         let showGlow = ThemeVariant.current.showsAmbientGlow
+        // `resetForm()` nils `selectedMood` BEFORE the confirmation sleep, and
+        // `isSubmitEnabled` requires a mood -- so driving the fill off
+        // `isEnabled` painted the white "Saved" label on the disabled surface.
+        // The fill follows the STATE; only idle/error follow the enablement.
+        let isFilled: Bool = {
+            switch state {
+            case .loading, .success, .queued: return true
+            case .idle, .error:               return isEnabled
+            }
+        }()
 
         Button(action: action) {
             ZStack {
                 // Brand-aware background (gradient in classic, flat terracotta in CoupleSync)
-                RoundedRectangle(cornerRadius: radius)
+                RoundedRectangle(cornerRadius: radius, style: Brand.cornerStyle)
                     .fill(
-                        isEnabled
+                        isFilled
                         ? AnyShapeStyle(Brand.accentGradient)
-                        : AnyShapeStyle(Brand.surfaceMid)
+                        // The app's existing disabled idiom (PrimaryButton):
+                        // a dimmed accent, so the control still reads as a
+                        // button. surfaceMid read as a dead grey slab.
+                        : AnyShapeStyle(Brand.accentStart.opacity(0.35))
                     )
                     .frame(height: 58)
                     .shadow(
-                        color: (isEnabled && showGlow) ? Brand.accentStart.opacity(0.35) : .clear,
+                        color: (isFilled && showGlow) ? Brand.accentStart.opacity(0.35) : .clear,
                         radius: isPressed ? 4 : 14,
                         y: isPressed ? 2 : 6
                     )
@@ -456,8 +473,8 @@ struct SubmitButtonView: View {
                         .transition(.scale(scale: 0.8).combined(with: .opacity))
                     default:
                         Text("Save how I feel")
-                            .font(.system(size: 17, weight: .semibold))
-                            .foregroundStyle(isEnabled ? Color.white : Brand.textTertiary)
+                            .font(BrandType.cta)
+                            .foregroundStyle(isFilled ? Color.white : Color.white.opacity(0.75))
                     }
                 }
                 .animation(.spring(response: 0.35, dampingFraction: 0.75), value: state)
@@ -481,11 +498,11 @@ struct SectionLabel: View {
     init(_ title: String) { self.title = title }
 
     var body: some View {
+        // Was a 13pt uppercase tracked label, identical to the two others on
+        // this screen plus the greeting. Four of anything carries no signal.
         Text(title)
-            .font(.system(size: 13, weight: .semibold))
-            .foregroundStyle(Brand.textSecondary)
-            .kerning(0.6)
-            .textCase(.uppercase)
+            .font(BrandType.label)
+            .foregroundStyle(Brand.textTertiary)
     }
 }
 

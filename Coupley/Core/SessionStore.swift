@@ -268,21 +268,33 @@ final class SessionStore: ObservableObject {
                     self.pendingDisconnectNotice =
                         (data[ConnectionField.pendingDisconnectNotice] as? Bool) ?? false
 
+                    // Republish only on a real change.
+                    //
+                    // This listener fires on every /users/{uid} write, and the
+                    // 60-second presence heartbeat is one. Assigning an equal
+                    // value still republishes @Published, which re-rendered the
+                    // whole tree once a minute and -- worse -- drove
+                    // WidgetSyncCoordinator to reloadTimelines twice per
+                    // heartbeat (local write + server ack). iOS throttles widget
+                    // reloads after a few dozen a day, so the sync service was
+                    // spending the budget that keeps the widget alive.
+                    let next: AppState
                     if let coupleId = data["coupleId"] as? String,
                        let partnerId = data["partnerId"] as? String,
                        !coupleId.isEmpty, !partnerId.isEmpty {
-                        self.appState = .ready(UserSession(
+                        next = .ready(UserSession(
                             userId: userId,
                             coupleId: coupleId,
                             partnerId: partnerId
                         ))
                     } else {
                         // Authenticated but partner not connected yet
-                        self.appState = .needsPairing(
+                        next = .needsPairing(
                             userId: userId,
                             displayName: displayName
                         )
                     }
+                    if self.appState != next { self.appState = next }
                 }
             }
     }

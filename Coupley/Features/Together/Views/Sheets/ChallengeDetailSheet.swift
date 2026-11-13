@@ -12,6 +12,22 @@ import SwiftUI
 
 struct ChallengeDetailSheet: View {
 
+    /// This sheet had NO entitlement check of any kind, so any entry point that
+    /// reached it handed a free user a working check-in for a challenge the
+    /// list had locked. Gating here means a future entry point cannot reopen
+    /// the hole.
+    @EnvironmentObject private var premiumStore: PremiumStore
+
+    /// True when this specific challenge is inside the free allowance (or the
+    /// user is premium). Mirrors the list's own rule, but tests the ITEM's
+    /// place in the stable oldest-first order rather than a row index.
+    private var isEntitled: Bool {
+        if premiumStore.hasAccess(to: .togetherChallengesUnlimited) { return true }
+        return viewModel.activeChallenges
+            .prefix(TogetherFreeLimits.challenges)
+            .contains { $0.id == challenge.id }
+    }
+
     let challenge: CoupleChallenge
     @ObservedObject var viewModel: TogetherViewModel
 
@@ -150,6 +166,11 @@ struct ChallengeDetailSheet: View {
                         .multilineTextAlignment(.center)
                 } else if !live.hasStarted {
                     Text("This challenge isn't live yet. The first check-in starts your streak.")
+                        .font(.system(size: 13, design: .rounded))
+                        .foregroundStyle(Brand.textSecondary)
+                        .multilineTextAlignment(.center)
+                } else if !isEntitled {
+                    Text("This challenge is on Premium. Upgrade to check in again.")
                         .font(.system(size: 13, design: .rounded))
                         .foregroundStyle(Brand.textSecondary)
                         .multilineTextAlignment(.center)

@@ -43,6 +43,8 @@ struct ChatView: View {
             }
             .navigationTitle("Chat")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(Brand.backgroundTop.opacity(0.96), for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
             .toolbar {
                 if session.isPaired {
                     ToolbarItem(placement: .topBarTrailing) {
@@ -60,13 +62,14 @@ struct ChatView: View {
                                     Text("Quiz")
                                         .font(.system(size: 13, weight: .bold, design: .rounded))
                                 }
-                                .foregroundStyle(.white)
+                                .foregroundStyle(Brand.accentStart)
                                 .padding(.horizontal, 10)
                                 .padding(.vertical, 5)
                                 .background(
                                     Capsule()
-                                        .fill(Brand.accentGradient)
-                                        .shadow(color: Brand.accentStart.opacity(0.30), radius: 6, y: 2)
+                                        .fill(Brand.surfaceLight)
+                                        .overlay(Capsule().strokeBorder(
+                                            Brand.accentStart.opacity(0.45), lineWidth: 1))
                                 )
                             }
                             .accessibilityLabel("Open Quiz Hub")
@@ -227,6 +230,13 @@ struct ChatView: View {
                     loadOlderIndicator
                         .id("__loadOlder")
 
+                    // A freshly paired couple used to see nothing here but the
+                    // "Pull up to see older messages" sentinel, on a thread
+                    // that has never held a message.
+                    if viewModel.messages.isEmpty && !viewModel.isLoadingOlder {
+                        emptyThreadNote
+                    }
+
                     ForEach(viewModel.messages) { msg in
                         MessageRow(
                             message: msg,
@@ -258,9 +268,24 @@ struct ChatView: View {
         }
     }
 
+    private var emptyThreadNote: some View {
+        VStack(spacing: 8) {
+            Text("Say the first thing")
+                .font(BrandType.title)
+                .foregroundStyle(Brand.textPrimary)
+            Text("Everything you send each other lives here.")
+                .font(BrandType.body)
+                .foregroundStyle(Brand.textSecondary)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 48)
+        .padding(.horizontal, 24)
+    }
+
     @ViewBuilder
     private var loadOlderIndicator: some View {
-        if viewModel.hasMoreOlder {
+        if viewModel.hasMoreOlder && !viewModel.messages.isEmpty {
             HStack {
                 Spacer()
                 if viewModel.isLoadingOlder {

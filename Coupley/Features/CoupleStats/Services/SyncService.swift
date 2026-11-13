@@ -16,6 +16,14 @@ protocol SyncService {
     func saveSyncScore(_ score: SyncScore, coupleId: String) async throws
     func calculateWeeklyAverage(scores: [SyncScore]) -> Int
     func calculateTrend(scores: [SyncScore]) -> SyncTrend
+
+    /// Computes and stores today's score when BOTH partners have checked in.
+    ///
+    /// `calculateDailyScore` and `saveSyncScore` existed but had no callers
+    /// anywhere in the app, so no sync score was ever written and every number
+    /// on the stats screen was permanently zero.
+    @discardableResult
+    func recomputeTodayScore(coupleId: String, session: UserSession) async throws -> SyncScore?
 }
 
 // MARK: - Mood Scoring Matrix
@@ -65,9 +73,7 @@ final class FirestoreSyncService: SyncService {
         let energyPts = MoodScoringMatrix.energyScore(userA.energyValue, userB.energyValue)
         let total = moodPts + energyPts
 
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy-MM-dd"
-        let dateString = dateFormatter.string(from: userA.timestamp)
+        let dateString = DayKey.string(from: userA.timestamp)
 
         return SyncScore(
             date: dateString,
@@ -84,10 +90,8 @@ final class FirestoreSyncService: SyncService {
     // MARK: - Fetch
 
     func fetchRecentScores(coupleId: String, days: Int = 7) async throws -> [SyncScore] {
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy-MM-dd"
         let cutoffDate = Calendar.current.date(byAdding: .day, value: -days, to: Date()) ?? Date()
-        let cutoffString = dateFormatter.string(from: cutoffDate)
+        let cutoffString = DayKey.string(from: cutoffDate)
 
         let snapshot = try await db
             .collection(FirestorePath.syncScores(coupleId: coupleId))
@@ -102,8 +106,34 @@ final class FirestoreSyncService: SyncService {
 
     // MARK: - Save
 
+    @discardableResult
+    func recomputeTodayScore(coupleId: String, session: UserSession) async throws -> SyncScore? {
+        let calendar = Calendar.current
+        let todayStart = calendar.startOfDay(for: Date())
+        let todayEnd = calendar.date(byAdding: .day, value: 1, to: todayStart)!
+
+        let snapshot = try await db
+            .collection(FirestorePath.moods(coupleId: coupleId))
+            .whereField("timestamp", isGreaterThanOrEqualTo: Timestamp(date: todayStart))
+            .whereField("timestamp", isLessThan: Timestamp(date: todayEnd))
+            .getDocuments()
+
+        let moods = snapshot.documents.compactMap { try? $0.data(as: SharedMoodEntry.self) }
+
+        // Most recent entry per person — a user may check in up to 3x a day.
+        func latest(_ userId: String) -> SharedMoodEntry? {
+            moods.filter { $0.userId == userId }.max(by: { $0.timestamp < $1.timestamp })
+        }
+        guard let mine = latest(session.userId),
+              let theirs = latest(session.partnerId) else { return nil }
+
+        let score = calculateDailyScore(userA: mine, userB: theirs)
+        try await saveSyncScore(score, coupleId: coupleId)
+        return score
+    }
+
     func saveSyncScore(_ score: SyncScore, coupleId: String) async throws {
-        try db
+        try await db
             .collection(FirestorePath.syncScores(coupleId: coupleId))
             .document(score.date)
             .setData(from: score)
@@ -151,13 +181,11 @@ final class MockSyncService: SyncService {
     func fetchRecentScores(coupleId: String, days: Int = 7) async throws -> [SyncScore] {
         try await Task.sleep(nanoseconds: 400_000_000)
 
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy-MM-dd"
         let calendar = Calendar.current
 
         return (0..<days).map { daysAgo in
             let date = calendar.date(byAdding: .day, value: -daysAgo, to: Date())!
-            let dateStr = dateFormatter.string(from: date)
+            let dateStr = DayKey.string(from: date)
             let score = Int.random(in: 45...98)
 
             return SyncScore(
@@ -175,6 +203,11 @@ final class MockSyncService: SyncService {
 
     func saveSyncScore(_ score: SyncScore, coupleId: String) async throws {
         try await Task.sleep(nanoseconds: 200_000_000)
+    }
+
+    @discardableResult
+    func recomputeTodayScore(coupleId: String, session: UserSession) async throws -> SyncScore? {
+        nil
     }
 
     func calculateWeeklyAverage(scores: [SyncScore]) -> Int {

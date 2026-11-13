@@ -22,7 +22,7 @@ final class AnniversaryStorageService {
         coupleId: String,
         anniversaryId: String
     ) async throws -> String {
-        guard let data = image.jpegData(compressionQuality: 0.80) else {
+        guard let data = ChatPhotoStorageService.downscaledJPEG(image) else {
             throw AnniversaryStorageError.encodingFailed
         }
         let ref = coverRef(coupleId: coupleId, anniversaryId: anniversaryId)

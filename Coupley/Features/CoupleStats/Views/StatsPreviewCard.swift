@@ -55,7 +55,7 @@ struct StatsPreviewCard: View {
                     .foregroundStyle(Brand.textPrimary)
             }
 
-            Text(viewModel.streak.currentStreak == 1 ? "day streak" : "day streak")
+            Text("day streak")
                 .font(.caption2)
                 .foregroundStyle(Brand.textSecondary)
         }

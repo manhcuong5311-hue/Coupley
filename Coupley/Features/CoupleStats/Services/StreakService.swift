@@ -66,7 +66,6 @@ final class FirestoreStreakService: StreakService {
         let userIds = Set(todayMoods.map(\.userId))
         let bothCheckedIn = userIds.contains(session.userId) && userIds.contains(session.partnerId)
 
-        // Fetch current streak
         var streak = try await fetchStreak(coupleId: coupleId)
 
         if bothCheckedIn {
@@ -75,32 +74,51 @@ final class FirestoreStreakService: StreakService {
                 return streak
             }
 
-            // Check if yesterday was active (continuation) or gap (restart)
+            // Transactional, because BOTH partners' devices run this the moment
+            // the second check-in lands. A plain read-modify-write races and
+            // increments the shared streak twice for one day.
+            let coupleRef = db.collection(FirestorePath.couples).document(coupleId)
             let yesterday = calendar.date(byAdding: .day, value: -1, to: todayStart)!
-            if let lastDate = streak.lastStreakDate,
-               calendar.isDate(lastDate, inSameDayAs: yesterday) {
-                // Continue streak
-                streak.currentStreak += 1
-            } else if streak.lastStreakDate == nil {
-                // First ever streak
-                streak.currentStreak = 1
-            } else {
-                // Gap — restart
-                streak.currentStreak = 1
+
+            let updated = try await db.runTransaction { transaction, errorPointer -> Any? in
+                do {
+                    let snap = try transaction.getDocument(coupleRef)
+                    let data = snap.data() ?? [:]
+
+                    let current = data["currentStreak"] as? Int ?? 0
+                    let longest = data["longestStreak"] as? Int ?? 0
+                    let lastDate = (data["lastStreakDate"] as? Timestamp)?.dateValue()
+
+                    // Someone else already counted today — adopt their value.
+                    if let lastDate, calendar.isDateInToday(lastDate) {
+                        return [current, longest]
+                    }
+
+                    let nextCurrent: Int
+                    if let lastDate, calendar.isDate(lastDate, inSameDayAs: yesterday) {
+                        nextCurrent = current + 1      // continues yesterday
+                    } else {
+                        nextCurrent = 1                // first ever, or after a gap
+                    }
+                    let nextLongest = max(longest, nextCurrent)
+
+                    transaction.setData([
+                        "currentStreak": nextCurrent,
+                        "longestStreak": nextLongest,
+                        "lastStreakDate": Timestamp(date: Date()),
+                    ], forDocument: coupleRef, merge: true)
+                    return [nextCurrent, nextLongest]
+                } catch let error as NSError {
+                    errorPointer?.pointee = error
+                    return nil
+                }
             }
 
-            streak.longestStreak = max(streak.longestStreak, streak.currentStreak)
-            streak.lastStreakDate = Date()
-
-            // Save to Firestore
-            try await db
-                .collection(FirestorePath.couples)
-                .document(coupleId)
-                .setData([
-                    "currentStreak": streak.currentStreak,
-                    "longestStreak": streak.longestStreak,
-                    "lastStreakDate": Timestamp(date: streak.lastStreakDate!),
-                ], merge: true)
+            if let pair = updated as? [Int], pair.count == 2 {
+                streak.currentStreak = pair[0]
+                streak.longestStreak = pair[1]
+                streak.lastStreakDate = Date()
+            }
         } else {
             // Check if streak needs reset (yesterday had no streak update)
             if let lastDate = streak.lastStreakDate {

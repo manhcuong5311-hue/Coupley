@@ -47,34 +47,11 @@ struct TimeTreeHeader: View {
         let stage = TreeGrowthStage.from(daysTogether: days)
         let season = TreeSeason.current(now: now)
 
-        return ZStack {
-            // Soft gradient base
-            RoundedRectangle(cornerRadius: 28, style: .continuous)
-                .fill(
-                    LinearGradient(
-                        colors: [
-                            Brand.accentStart.opacity(0.30),
-                            Brand.accentEnd.opacity(0.18)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 28, style: .continuous)
-                        .strokeBorder(.white.opacity(0.10), lineWidth: 0.8)
-                )
-
-            // Glassy highlight
-            RoundedRectangle(cornerRadius: 28, style: .continuous)
-                .fill(
-                    LinearGradient(
-                        colors: [.white.opacity(0.10), .clear],
-                        startPoint: .top,
-                        endPoint: .center
-                    )
-                )
-
+        // Was a hand-rolled hero: its own 28pt radius, its own diagonal
+        // accent gradient, a white glass highlight and a coloured shadow --
+        // none of it shared with the rest of the app, and `.white.opacity`
+        // overlays read as grey smears on the two Light palettes.
+        return BrandCard(tier: .hero) {
             VStack(alignment: .leading, spacing: 14) {
                 HStack {
                     Label {
@@ -101,30 +78,27 @@ struct TimeTreeHeader: View {
                     }
                     .padding(.horizontal, 10)
                     .padding(.vertical, 5)
-                    .background(Capsule().fill(.white.opacity(0.08)))
+                    .background(Capsule().fill(SurfaceTier.hero.innerFill.opacity(0.55)))
                 }
 
                 HStack(alignment: .lastTextBaseline, spacing: 10) {
                     Text("\(days)")
-                        .font(.system(size: 56, weight: .bold, design: .rounded))
+                        .font(BrandType.hero)
                         .foregroundStyle(Brand.textPrimary)
                         .contentTransition(.numericText())
                         .monospacedDigit()
                     Text(days == 1 ? "Day Together" : "Days Together")
-                        .font(.system(size: 17, weight: .medium, design: .rounded))
+                        .font(BrandType.label)
                         .foregroundStyle(Brand.textSecondary)
-                        .padding(.bottom, 6)
+                        .padding(.bottom, 2)
                 }
 
                 Text(stage.poeticCaption)
-                    .font(.system(size: 13, weight: .regular, design: .rounded))
+                    .font(BrandType.body)
                     .foregroundStyle(Brand.textSecondary)
                     .lineLimit(2)
             }
-            .padding(22)
         }
-        .frame(maxWidth: .infinity)
-        .shadow(color: Brand.accentStart.opacity(0.18), radius: 20, y: 8)
     }
 
     // MARK: - Next anniversary
@@ -164,15 +138,7 @@ struct TimeTreeHeader: View {
                 .foregroundStyle(Brand.textTertiary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .fill(Brand.surfaceLight)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 22, style: .continuous)
-                        .strokeBorder(Brand.divider, lineWidth: 1)
-                )
-        )
+        .modifier(TierContainer(tier: .card))
     }
 
     // MARK: - Next Milestone
@@ -193,7 +159,7 @@ struct TimeTreeHeader: View {
                 .foregroundStyle(Brand.textSecondary)
 
                 Text(milestone.displayTitle)
-                    .font(.system(size: 22, weight: .bold, design: .rounded))
+                    .font(BrandType.title)
                     .foregroundStyle(Brand.textPrimary)
 
                 Text("\(daysLeft) day\(daysLeft == 1 ? "" : "s") to go")
@@ -219,24 +185,7 @@ struct TimeTreeHeader: View {
                 .frame(height: 4)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(16)
-            .background(
-                RoundedRectangle(cornerRadius: 22, style: .continuous)
-                    .fill(Brand.surfaceLight)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 22, style: .continuous)
-                            .strokeBorder(
-                                LinearGradient(
-                                    colors: [
-                                        Color(red: 1.0, green: 0.85, blue: 0.45).opacity(0.50),
-                                        Color(red: 0.95, green: 0.55, blue: 0.30).opacity(0.30)
-                                    ],
-                                    startPoint: .topLeading, endPoint: .bottomTrailing
-                                ),
-                                lineWidth: 1
-                            )
-                    )
-            )
+            .modifier(TierContainer(tier: .card))
         } else {
             // The couple has cleared the entire ladder — celebrate that.
             VStack(alignment: .leading, spacing: 10) {
@@ -249,7 +198,7 @@ struct TimeTreeHeader: View {
                 .foregroundStyle(Brand.textSecondary)
 
                 Text("Legendary")
-                    .font(.system(size: 22, weight: .bold, design: .rounded))
+                    .font(BrandType.title)
                     .foregroundStyle(Brand.textPrimary)
 
                 Text("Every milestone — completed.")
@@ -257,15 +206,7 @@ struct TimeTreeHeader: View {
                     .foregroundStyle(Brand.textTertiary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(16)
-            .background(
-                RoundedRectangle(cornerRadius: 22, style: .continuous)
-                    .fill(Brand.surfaceLight)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 22, style: .continuous)
-                            .strokeBorder(Brand.divider, lineWidth: 1)
-                    )
-            )
+            .modifier(TierContainer(tier: .card))
         }
     }
 

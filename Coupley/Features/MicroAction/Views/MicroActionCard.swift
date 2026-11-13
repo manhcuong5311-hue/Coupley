@@ -10,6 +10,9 @@ import SwiftUI
 struct MicroActionCard: View {
 
     @ObservedObject var viewModel: MicroActionViewModel
+    var tier: SurfaceTier = .card
+
+    private var isHero: Bool { tier == .hero }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -32,16 +35,7 @@ struct MicroActionCard: View {
                 }
             }
         }
-        .padding(18)
-        .background(
-            RoundedRectangle(cornerRadius: 22)
-                .fill(Brand.surfaceLight)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 22)
-                        .strokeBorder(toneAccent.opacity(0.20), lineWidth: 1)
-                )
-                .shadow(color: .black.opacity(0.08), radius: 12, y: 3)
-        )
+        .modifier(TierContainer(tier: tier, accent: toneAccent))
         .animation(.spring(response: 0.4, dampingFraction: 0.85), value: viewModel.todaysActions)
     }
 
@@ -71,14 +65,14 @@ struct MicroActionCard: View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
                 Text("For you today")
-                    .font(.system(size: 13, weight: .semibold, design: .rounded))
+                    .font(BrandType.label)
                     .foregroundStyle(Brand.textSecondary)
-                    .textCase(.uppercase)
-                    .tracking(0.5)
 
-                Text(headerSubtitle)
-                    .font(.system(size: 13, weight: .regular, design: .rounded))
-                    .foregroundStyle(Brand.textTertiary)
+                if !isHero {
+                    Text(headerSubtitle)
+                        .font(BrandType.meta)
+                        .foregroundStyle(Brand.textTertiary)
+                }
             }
 
             Spacer()
@@ -139,7 +133,7 @@ struct MicroActionCard: View {
     private func focusView(_ action: MicroAction) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             Text(action.text)
-                .font(.system(size: 17, weight: .semibold, design: .rounded))
+                .font(isHero ? BrandType.hero : BrandType.title)
                 .foregroundStyle(Brand.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
                 .lineSpacing(2)
@@ -160,8 +154,11 @@ struct MicroActionCard: View {
             if action.status == .pending || action.status == .snoozed {
                 actionButtons(for: action)
                     .padding(.top, 2)
-            } else if action.status == .snoozed, let until = action.snoozedUntil {
-                snoozedNotice(until: until)
+                // Was an `else if` on the same condition, so it could never
+                // run and a snoozed action never said when it would return.
+                if action.status == .snoozed, let until = action.snoozedUntil {
+                    snoozedNotice(until: until)
+                }
             }
         }
     }
@@ -206,11 +203,22 @@ struct MicroActionCard: View {
                     Text("Done")
                         .font(.system(size: 13, weight: .semibold, design: .rounded))
                 }
-                .foregroundStyle(.white)
+                // Filled only at hero tier. A demoted card's Done button
+                // used to be the most saturated object in its viewport, which
+                // is how an accent ends up pointing at nothing.
+                .foregroundStyle(isHero ? .white : toneAccent)
                 .frame(maxWidth: .infinity)
-                .frame(height: 40)
+                .frame(height: isHero ? 48 : 40)
                 .background(
-                    Capsule().fill(toneAccent.opacity(0.92))
+                    Capsule()
+                        .fill(isHero ? AnyShapeStyle(toneAccent.opacity(0.92))
+                                     : AnyShapeStyle(Brand.surfaceLight))
+                        .overlay(
+                            Capsule().strokeBorder(
+                                isHero ? .clear : toneAccent.opacity(0.45),
+                                lineWidth: 1
+                            )
+                        )
                 )
             }
             .buttonStyle(BouncyButtonStyle())
@@ -230,7 +238,7 @@ struct MicroActionCard: View {
                 }
                 .foregroundStyle(Brand.textPrimary)
                 .frame(maxWidth: .infinity)
-                .frame(height: 40)
+                .frame(height: isHero ? 48 : 40)
                 .background(
                     Capsule()
                         .fill(Brand.backgroundTop)

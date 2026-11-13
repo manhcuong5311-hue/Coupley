@@ -45,8 +45,6 @@ final class CoupleViewModel: ObservableObject {
     @Published var suggestionContext: MoodContext?
 
     // Auto-fetched suggestions ready when partner logs a low mood.
-    @Published var prefetchedSuggestions: AISuggestionResult?
-    @Published var isPrefetchingSuggestions: Bool = false
 
     // Presence
     @Published var partnerLastSeen: Date?
@@ -193,25 +191,18 @@ final class CoupleViewModel: ObservableObject {
         guard lastHandledMoodId != entry.id else { return }
         lastHandledMoodId = entry.id
 
-        Task { [weak self] in
-            guard let self else { return }
-            self.isPrefetchingSuggestions = true
-            defer { self.isPrefetchingSuggestions = false }
+        // This used to call generateSuggestions here, with no entitlement
+        // check and no recordUsage. The server charges one of the 5/day units
+        // per call, so a user could reach a "Get Suggestions" button still
+        // reading "5 left" with three already spent -- and `prefetchedSuggestions`
+        // was read by nothing, so the spend bought nothing at all.
+        suggestionContext = entry.toMoodContext()
+    }
 
-            do {
-                let profile = (try? await self.profileService.loadProfile()) ?? .samplePartner
-                let context = entry.toMoodContext()
-                let result = try await self.suggestionService.generateSuggestions(
-                    context: context,
-                    profile: profile
-                )
-                self.prefetchedSuggestions = result
-                self.suggestionContext = context
-            } catch {
-                // Silent: user can still manually open suggestions
-                print("[CoupleViewModel] Prefetch failed: \(error.localizedDescription)")
-            }
-        }
+    /// The real saved partner profile, for the suggestion sheet. Falls back to
+    /// the sample only when the user has not filled anything in yet.
+    func loadPartnerProfile() async -> PartnerProfile {
+        (try? await profileService.loadProfile()) ?? .samplePartner
     }
 
     // MARK: - Private

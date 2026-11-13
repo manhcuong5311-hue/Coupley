@@ -75,13 +75,16 @@ struct MemoryCard: View {
 
             if let urlString = memory.photoURL, let url = URL(string: urlString) {
                 sidePhoto(url: url)
+            } else {
+                Image(systemName: "photo")
+                    .font(.system(size: 20, weight: .regular))
+                    .foregroundStyle(Brand.textTertiary.opacity(0.55))
+                    .frame(width: 84, height: 84)
+                    .wellBackground(in: .card, radius: 16)
             }
         }
-        .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
-        .shadow(color: .black.opacity(0.08), radius: 14, y: 4)
+        .modifier(TierContainer(tier: .card))
     }
 
     // MARK: - Side photo (right-hand thumbnail)
@@ -102,7 +105,7 @@ struct MemoryCard: View {
                     startPoint: .top, endPoint: .bottom
                 )
             }
-            .frame(width: 110, height: 130)
+            .frame(width: 84, height: 84)
             .clipped()
         }
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))

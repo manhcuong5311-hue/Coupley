@@ -30,7 +30,7 @@ final class TouchTogetherViewModel: ObservableObject {
 
     var bothTouching: Bool { iAmTouching && partnerIsTouching }
 
-    private let session: UserSession
+    private var session: UserSession
     private let liveRoom: LiveRoomServicing
     private var listener: ListenerRegistration?
     /// Keeps refreshing the timestamp while the finger stays down.
@@ -44,6 +44,22 @@ final class TouchTogetherViewModel: ObservableObject {
         self.liveRoom = liveRoom
     }
 
+    /// `UserSession.demo` reports `isPaired == true` behind a placeholder
+    /// couple id, and the dashboard holds it until a real session arrives.
+    private var hasRealSession: Bool {
+        session.isPaired && session.coupleId != UserSession.demo.coupleId
+    }
+
+    /// Point this at the live session. The owner holds the view model for the
+    /// whole screen's lifetime, so this replaces re-creating it — which is
+    /// what made the listener disappear roughly every 60 seconds.
+    func rebind(session: UserSession) {
+        guard session.coupleId != self.session.coupleId
+                || session.userId != self.session.userId else { return }
+        stop()
+        self.session = session
+    }
+
     deinit {
         listener?.remove()
         holdTask?.cancel()
@@ -54,7 +70,7 @@ final class TouchTogetherViewModel: ObservableObject {
     // MARK: Lifecycle
 
     func start() {
-        guard session.isPaired, listener == nil else { return }
+        guard hasRealSession, listener == nil else { return }
         listener = liveRoom.observe(coupleId: session.coupleId) { [weak self] state in
             Task { @MainActor in
                 guard let self else { return }
@@ -87,7 +103,7 @@ final class TouchTogetherViewModel: ObservableObject {
     // MARK: Touch
 
     func beginTouch() {
-        guard session.isPaired, !iAmTouching else { return }
+        guard hasRealSession, !iAmTouching else { return }
         iAmTouching = true
         updateBuzzing()
 
