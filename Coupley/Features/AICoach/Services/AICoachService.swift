@@ -57,11 +57,17 @@ enum AICoachServiceError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .invalidURL:         return "Coach is unavailable. Check your connection."
-        case .networkError(let e): return "Network error: \(e.localizedDescription)"
-        case .serverError(_, let m): return m
-        case .decodingError:      return "Couldn't read the coach's response."
-        case .rateLimited:        return "The coach has reached its limit for now. If you've used today's questions it resets tomorrow; otherwise try again in a moment."
+        case .invalidURL:
+            return String(localized: "Coach is unavailable. Check your connection.")
+        case .networkError(let e):
+            return String(localized: "Network error: \(e.localizedDescription)",
+                          comment: "AI coach error; the system's description of the network failure")
+        case .serverError(_, let m):
+            return m
+        case .decodingError:
+            return String(localized: "Couldn't read the coach's response.")
+        case .rateLimited:
+            return String(localized: "The coach has reached its limit for now. If you've used today's questions it resets tomorrow; otherwise try again in a moment.")
         }
     }
 
@@ -81,6 +87,11 @@ enum AICoachAPIConfig {
             ?? ""
     }
     static let timeoutInterval: TimeInterval = 30
+
+    /// The user's preferred language (BCP-47), sent with every request so the
+    /// backend can answer in it. Enum fields keep travelling as `rawValue`;
+    /// only the reply language follows the user.
+    static var replyLocale: String { Locale.preferredLanguages.first ?? "en" }
 }
 
 // MARK: - Remote Service
@@ -110,7 +121,8 @@ final class RemoteAICoachService: AICoachService {
         let body = ReplyRequestBody(
             userMessage: userMessage,
             transcript: transcript.map { MessagePayload(role: $0.role.rawValue, text: $0.text) },
-            context: ContextPayload(context)
+            context: ContextPayload(context),
+            locale: AICoachAPIConfig.replyLocale
         )
         let response: ReplyResponseBody = try await post(path: "reply", body: body)
         return response.text
@@ -124,7 +136,8 @@ final class RemoteAICoachService: AICoachService {
         let body = GuidedRequestBody(
             issue: issue.rawValue,
             input: userInput,
-            context: ContextPayload(context)
+            context: ContextPayload(context),
+            locale: AICoachAPIConfig.replyLocale
         )
         let r: GuidedResponseBody = try await post(path: "guided", body: body)
         return GuidedResponse(
@@ -142,7 +155,11 @@ final class RemoteAICoachService: AICoachService {
         message: String,
         context: CoachContext
     ) async throws -> [MessageRewrite] {
-        let body = RewriteRequestBody(message: message, context: ContextPayload(context))
+        let body = RewriteRequestBody(
+            message: message,
+            context: ContextPayload(context),
+            locale: AICoachAPIConfig.replyLocale
+        )
         let r: RewriteResponseBody = try await post(path: "rewrite", body: body)
         return [
             MessageRewrite(original: message, rewritten: r.soft, tone: .soft),
@@ -152,7 +169,10 @@ final class RemoteAICoachService: AICoachService {
     }
 
     func healthCheck(context: CoachContext) async throws -> RelationshipHealth {
-        let body = HealthRequestBody(context: ContextPayload(context))
+        let body = HealthRequestBody(
+            context: ContextPayload(context),
+            locale: AICoachAPIConfig.replyLocale
+        )
         let r: HealthResponseBody = try await post(path: "health", body: body)
         return RelationshipHealth(
             trust: r.trust,
@@ -174,7 +194,8 @@ final class RemoteAICoachService: AICoachService {
         let body = RecoveryRequestBody(
             length: length.rawValue,
             issue: issue?.rawValue,
-            context: ContextPayload(context)
+            context: ContextPayload(context),
+            locale: AICoachAPIConfig.replyLocale
         )
         let r: RecoveryResponseBody = try await post(path: "recovery", body: body)
         return RecoveryPlan(
@@ -218,7 +239,8 @@ final class RemoteAICoachService: AICoachService {
         }
         if httpResponse.statusCode == 429 { throw AICoachServiceError.rateLimited }
         guard httpResponse.statusCode == 200 else {
-            let message = String(data: data, encoding: .utf8) ?? "Unknown error"
+            let message = String(data: data, encoding: .utf8)
+                ?? String(localized: "Unknown error", comment: "Error message when the server gave no details")
             throw AICoachServiceError.serverError(httpResponse.statusCode, message)
         }
 
@@ -271,6 +293,7 @@ private struct ReplyRequestBody: Encodable {
     let userMessage: String
     let transcript: [MessagePayload]
     let context: ContextPayload
+    let locale: String
 }
 private struct ReplyResponseBody: Decodable {
     let text: String
@@ -280,6 +303,7 @@ private struct GuidedRequestBody: Encodable {
     let issue: String
     let input: String
     let context: ContextPayload
+    let locale: String
 }
 private struct GuidedResponseBody: Decodable {
     let situationAnalysis: String
@@ -293,6 +317,7 @@ private struct GuidedResponseBody: Decodable {
 private struct RewriteRequestBody: Encodable {
     let message: String
     let context: ContextPayload
+    let locale: String
 }
 private struct RewriteResponseBody: Decodable {
     let soft: String
@@ -302,6 +327,7 @@ private struct RewriteResponseBody: Decodable {
 
 private struct HealthRequestBody: Encodable {
     let context: ContextPayload
+    let locale: String
 }
 private struct HealthResponseBody: Decodable {
     let trust: Int
@@ -317,6 +343,7 @@ private struct RecoveryRequestBody: Encodable {
     let length: String
     let issue: String?
     let context: ContextPayload
+    let locale: String
 }
 private struct RecoveryResponseBody: Decodable {
     let title: String

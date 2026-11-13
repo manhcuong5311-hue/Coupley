@@ -39,20 +39,34 @@ enum MemoryKind: String, Codable, CaseIterable, Identifiable, Hashable {
 
     var id: String { rawValue }
 
-    /// User-facing name shown in the milestone picker and on memory cards.
+    /// User-facing name shown in the milestone picker and on memory cards, in
+    /// the user's language. Display only: Firestore stores `rawValue`. A new
+    /// memory's title starts as this name, and once saved it is the user's
+    /// own text, in whatever language it was written.
     var displayName: String {
         switch self {
-        case .firstDate:        return "First Date"
-        case .firstKiss:        return "First Kiss"
-        case .firstTrip:        return "First Trip"
-        case .firstGift:        return "First Gift"
-        case .firstAnniversary: return "First Anniversary"
-        case .firstFightSolved: return "First Fight Solved"
-        case .movingTogether:   return "Moving Together"
-        case .proposal:         return "Proposal"
-        case .wedding:          return "Wedding"
-        case .babyMilestone:    return "Baby Milestone"
-        case .custom:           return "Custom Moment"
+        case .firstDate:
+            return String(localized: "First Date", comment: "Memory kind: the couple's first romantic date")
+        case .firstKiss:
+            return String(localized: "First Kiss", comment: "Memory kind")
+        case .firstTrip:
+            return String(localized: "First Trip", comment: "Memory kind: the first trip together")
+        case .firstGift:
+            return String(localized: "First Gift", comment: "Memory kind")
+        case .firstAnniversary:
+            return String(localized: "First Anniversary", comment: "Memory kind")
+        case .firstFightSolved:
+            return String(localized: "First Fight Solved", comment: "Memory kind: the first argument the couple resolved")
+        case .movingTogether:
+            return String(localized: "Moving Together", comment: "Memory kind: moving in together")
+        case .proposal:
+            return String(localized: "Proposal", comment: "Memory kind: marriage proposal")
+        case .wedding:
+            return String(localized: "Wedding", comment: "Memory kind")
+        case .babyMilestone:
+            return String(localized: "Baby Milestone", comment: "Memory kind: a milestone with a baby")
+        case .custom:
+            return String(localized: "Custom Moment", comment: "Memory kind: any other moment the couple names themselves")
         }
     }
 
@@ -76,17 +90,39 @@ enum MemoryKind: String, Codable, CaseIterable, Identifiable, Hashable {
     /// Surfaced as a placeholder in the editor, not a hard requirement.
     var notePrompt: String {
         switch self {
-        case .firstDate:        return "What made it feel like the start of something?"
-        case .firstKiss:        return "Where were you, and how did it feel?"
-        case .firstTrip:        return "The place you'll always associate with each other."
-        case .firstGift:        return "The gift that meant more than its size."
-        case .firstAnniversary: return "How did you mark the year?"
-        case .firstFightSolved: return "What you both learned coming back together."
-        case .movingTogether:   return "The first place you called \"ours.\""
-        case .proposal:         return "The yes you'll never forget."
-        case .wedding:          return "The day you chose each other in front of the world."
-        case .babyMilestone:    return "The moment your family grew."
-        case .custom:           return "Tell the story of this moment."
+        case .firstDate:
+            return String(localized: "What made it feel like the start of something?",
+                          comment: "Placeholder for the note of a First Date memory")
+        case .firstKiss:
+            return String(localized: "Where were you, and how did it feel?",
+                          comment: "Placeholder for the note of a First Kiss memory")
+        case .firstTrip:
+            return String(localized: "The place you'll always associate with each other.",
+                          comment: "Placeholder for the note of a First Trip memory")
+        case .firstGift:
+            return String(localized: "The gift that meant more than its size.",
+                          comment: "Placeholder for the note of a First Gift memory")
+        case .firstAnniversary:
+            return String(localized: "How did you mark the year?",
+                          comment: "Placeholder for the note of a First Anniversary memory")
+        case .firstFightSolved:
+            return String(localized: "What you both learned coming back together.",
+                          comment: "Placeholder for the note of a First Fight Solved memory")
+        case .movingTogether:
+            return String(localized: "The first place you called \"ours.\"",
+                          comment: "Placeholder for the note of a Moving Together memory")
+        case .proposal:
+            return String(localized: "The yes you'll never forget.",
+                          comment: "Placeholder for the note of a Proposal memory")
+        case .wedding:
+            return String(localized: "The day you chose each other in front of the world.",
+                          comment: "Placeholder for the note of a Wedding memory")
+        case .babyMilestone:
+            return String(localized: "The moment your family grew.",
+                          comment: "Placeholder for the note of a Baby Milestone memory")
+        case .custom:
+            return String(localized: "Tell the story of this moment.",
+                          comment: "Placeholder for the note of a custom memory")
         }
     }
 
@@ -146,18 +182,20 @@ enum MemoryEmotion: String, Codable, CaseIterable, Identifiable, Hashable {
 
     var id: String { rawValue }
 
+    /// The feeling's name in the user's language. Display only: Firestore
+    /// stores `rawValue`.
     var displayName: String {
         switch self {
-        case .happy:        return "Happy"
-        case .nervous:      return "Nervous"
-        case .excited:      return "Excited"
-        case .loved:        return "Loved"
-        case .grateful:     return "Grateful"
-        case .hopeful:      return "Hopeful"
-        case .peaceful:     return "Peaceful"
-        case .joyful:       return "Joyful"
-        case .adventurous:  return "Adventurous"
-        case .tender:       return "Tender"
+        case .happy:        return String(localized: "Happy", comment: "Feeling tag on a memory")
+        case .nervous:      return String(localized: "Nervous", comment: "Feeling tag on a memory")
+        case .excited:      return String(localized: "Excited", comment: "Feeling tag on a memory")
+        case .loved:        return String(localized: "Loved", comment: "Feeling tag on a memory: feeling loved")
+        case .grateful:     return String(localized: "Grateful", comment: "Feeling tag on a memory")
+        case .hopeful:      return String(localized: "Hopeful", comment: "Feeling tag on a memory")
+        case .peaceful:     return String(localized: "Peaceful", comment: "Feeling tag on a memory")
+        case .joyful:       return String(localized: "Joyful", comment: "Feeling tag on a memory")
+        case .adventurous:  return String(localized: "Adventurous", comment: "Feeling tag on a memory")
+        case .tender:       return String(localized: "Tender", comment: "Feeling tag on a memory: gentle, affectionate")
         }
     }
 

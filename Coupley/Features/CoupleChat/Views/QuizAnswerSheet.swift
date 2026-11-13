@@ -125,7 +125,7 @@ struct QuizAnswerSheet: View {
                 .font(.system(size: 15, weight: .medium, design: .rounded))
                 .foregroundStyle(Brand.textSecondary)
             Spacer()
-            Text("Quiz")
+            Text("Quiz", comment: "Title of the sheet where you answer a quiz (noun)")
                 .font(.system(size: 15, weight: .semibold, design: .rounded))
                 .foregroundStyle(Brand.textPrimary)
             Spacer()
@@ -144,7 +144,7 @@ struct QuizAnswerSheet: View {
                 .font(.system(size: 12, weight: .semibold, design: .rounded))
                 .foregroundStyle(Brand.accentStart)
                 .textCase(.uppercase)
-                .kerning(0.5)
+                .scriptAwareKerning(0.5)
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 6)
@@ -312,7 +312,11 @@ struct QuizAnswerSheet: View {
         VStack(spacing: 0) {
             Rectangle().fill(Brand.divider).frame(height: 0.5)
 
-            PrimaryButton(title: primaryTitle,
+            // Literals rather than a computed `String`, so they reach the
+            // catalog whichever title type PrimaryButton takes.
+            PrimaryButton(title: submitting ? "Sending…"
+                                 : phase == .mine && supportsGuessing ? "Next — guess theirs"
+                                 : "Submit",
                           isLoading: submitting,
                           isEnabled: canAdvance) {
                 advance()
@@ -330,12 +334,6 @@ struct QuizAnswerSheet: View {
             Color.clear.frame(height: 14)
         }
         .background(Brand.backgroundTop.opacity(0.95))
-    }
-
-    private var primaryTitle: String {
-        if submitting { return "Sending…" }
-        if phase == .mine && supportsGuessing { return "Next — guess theirs" }
-        return "Submit"
     }
 
     /// Gate for the primary button in whichever phase is showing.

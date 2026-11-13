@@ -35,28 +35,46 @@ struct WidgetAnniversaryBlock: View {
     // MARK: - Pieces
 
     private var topline: some View {
-        Text(highlight.topline.uppercased())
+        // `.textCase` rather than `.uppercased()`: it capitalises by the
+        // reader's locale rules (Turkish dotted İ, German ß) at render time.
+        Text(highlight.topline)
+            .textCase(.uppercase)
             .font(WidgetType.micro(10))
-            .tracking(0.8)
+            .scriptAwareTracking(0.8)
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
             .foregroundStyle(highlight.isCelebratory
                              ? WidgetPalette.goldStart
                              : WidgetPalette.textSecondary)
     }
 
+    /// One Text, so the number and its unit stay on one baseline in
+    /// whichever order the language puts them.
     private var heroLine: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 4) {
-            Text("\(highlight.heroNumber)")
-                .font(WidgetType.hero(heroSize))
-                .foregroundStyle(heroForeground)
-                .contentTransition(.numericText(value: Double(highlight.heroNumber)))
-                .minimumScaleFactor(0.6)
-                .lineLimit(1)
+        Text(styledHeroPhrase)
+            .foregroundStyle(heroForeground)
+            .contentTransition(.numericText(value: Double(highlight.heroNumber)))
+            .minimumScaleFactor(0.6)
+            .lineLimit(1)
+    }
 
-            Text(highlight.heroUnit)
-                .font(WidgetType.title(heroSize * 0.34))
-                .foregroundStyle(WidgetPalette.textPrimary.opacity(0.85))
-                .padding(.bottom, heroSize * 0.10)
+    /// The localized hero phrase with the number drawn as the hero and the
+    /// rest (the unit, before or after it) drawn as the label. The unit's
+    /// own colour overrides `heroForeground`, which only the number shows.
+    private var styledHeroPhrase: AttributedString {
+        let phrase = highlight.heroPhrase
+        var styled = AttributedString()
+        for run in phrase.runs {
+            var part = AttributedString(phrase[run.range])
+            if run.replacementIndex != nil {
+                part.font = WidgetType.hero(heroSize)
+            } else {
+                part.font = WidgetType.title(heroSize * 0.34)
+                part.foregroundColor = WidgetPalette.textPrimary.opacity(0.85)
+            }
+            styled += part
         }
+        return styled
     }
 
     @ViewBuilder
@@ -70,12 +88,14 @@ struct WidgetAnniversaryBlock: View {
                     .font(WidgetType.body(12))
                     .foregroundStyle(WidgetPalette.textPrimary)
                     .lineLimit(1)
+                    .minimumScaleFactor(0.8)
             }
         } else {
             Text(highlight.subline)
                 .font(WidgetType.body(12))
                 .foregroundStyle(WidgetPalette.textSecondary)
                 .lineLimit(1)
+                .minimumScaleFactor(0.8)
         }
     }
 
@@ -87,13 +107,16 @@ struct WidgetAnniversaryBlock: View {
                 Image(systemName: "heart.fill")
                     .font(.system(size: 14, weight: .bold))
                     .foregroundStyle(WidgetPalette.gradientTop)
-                Text("Together")
+                Text("Together", comment: "Widget: heading shown before the couple has set the date they got together")
                     .font(WidgetType.title(15))
                     .foregroundStyle(WidgetPalette.textPrimary)
             }
-            Text("Start your love journey")
+            Text("Start your love journey",
+                 comment: "Widget: shown before the couple has set the date they got together")
                 .font(WidgetType.body(11))
                 .foregroundStyle(WidgetPalette.textSecondary)
+                .lineLimit(2)
+                .minimumScaleFactor(0.8)
         }
     }
 

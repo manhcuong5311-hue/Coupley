@@ -126,25 +126,27 @@ struct CrownCelebrationOverlay: View {
 
             VStack(spacing: 10) {
                 VStack(spacing: 10) {
-                    Text(milestone.displayTitle)
+                    Text(milestone.localizedTitle)
                         .font(JourneyFont.display)
                         .foregroundStyle(.white)
                         .multilineTextAlignment(.center)
                         .shadow(color: .black.opacity(0.30), radius: 12, y: 4)
 
-                    Text("together")
+                    Text("together", comment: "Crown celebration: shown in capitals under a crown title such as '1 Year', so the two lines read '1 Year together'")
                         .font(JourneyFont.label)
                         .foregroundStyle(Color(red: 1.0, green: 0.85, blue: 0.65))
+                        .multilineTextAlignment(.center)
                         .textCase(.uppercase)
-                        .tracking(2.0)
+                        .scriptAwareTracking(2.0)
                 }
                 .accessibilityElement(children: .ignore)
-                .accessibilityLabel("\(milestone.displayTitle) together")
+                .accessibilityLabel(Text("\(milestone.localizedTitle) together",
+                                         comment: "VoiceOver header of the crown celebration. %@ is a crown title such as '1 Year' or '100 Days'."))
                 .accessibilityAddTraits(.isHeader)
 
                 // Full white, like the title: a translucent white loses
                 // contrast on the dim, and the smaller size keeps the order.
-                Text(milestone.celebrationSubtitle)
+                Text(milestone.localizedCelebrationSubtitle)
                     .font(JourneyFont.body)
                     .foregroundStyle(.white)
                     .multilineTextAlignment(.center)

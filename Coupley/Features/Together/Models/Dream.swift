@@ -28,15 +28,22 @@ enum DreamCategory: String, Codable, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
-    var label: String {
+    /// Display name only. Storage and comparisons use `rawValue`.
+    var label: LocalizedStringResource {
         switch self {
-        case .travel:    return "Travel"
-        case .home:      return "Home"
-        case .family:    return "Family"
-        case .career:    return "Career"
-        case .lifestyle: return "Lifestyle"
-        case .pet:       return "Pet"
-        case .other:     return "Other"
+        case .travel:    return LocalizedStringResource("Travel", comment: "Together tab: category of a shared goal, challenge or dream")
+        case .home:
+            // Own key: a plain "Home" key is the Home tab.
+            return LocalizedStringResource(
+                "together.category.home",
+                defaultValue: "Home",
+                comment: "Together tab: category of a shared goal or dream about a home or house (not the Home tab)"
+            )
+        case .family:    return LocalizedStringResource("Family", comment: "Together tab: category of a shared goal, challenge or dream")
+        case .career:    return LocalizedStringResource("Career", comment: "Together tab: category of a shared goal, challenge or dream")
+        case .lifestyle: return LocalizedStringResource("Lifestyle", comment: "Together tab: category of a shared goal, challenge or dream")
+        case .pet:       return LocalizedStringResource("Pet", comment: "Together tab: category of a shared goal, challenge or dream")
+        case .other:     return LocalizedStringResource("Other", comment: "Together tab: category of a shared goal, challenge or dream")
         }
     }
 
@@ -77,21 +84,22 @@ enum DreamHorizon: String, Codable, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
-    var label: String {
+    var label: LocalizedStringResource {
         switch self {
-        case .thisYear:   return "This Year"
-        case .nextYear:   return "Next Year"
-        case .fiveYears:  return "Within 5 Years"
-        case .someday:    return "Someday"
+        case .thisYear:   return LocalizedStringResource("This Year", comment: "Dream timeframe option")
+        case .nextYear:   return LocalizedStringResource("Next Year", comment: "Dream timeframe option")
+        case .fiveYears:  return LocalizedStringResource("Within 5 Years", comment: "Dream timeframe option")
+        case .someday:    return LocalizedStringResource("Someday", comment: "Dream timeframe: some day, no fixed date")
         }
     }
 
-    var shortLabel: String {
+    /// Compact form for the chip on dream cards.
+    var shortLabel: LocalizedStringResource {
         switch self {
-        case .thisYear:   return "This year"
-        case .nextYear:   return "Next year"
-        case .fiveYears:  return "5y"
-        case .someday:    return "Someday"
+        case .thisYear:   return LocalizedStringResource("This year", comment: "Dream timeframe chip on a dream card")
+        case .nextYear:   return LocalizedStringResource("Next year", comment: "Dream timeframe chip on a dream card")
+        case .fiveYears:  return LocalizedStringResource("5y", comment: "Dream timeframe chip: short for 'within 5 years'")
+        case .someday:    return LocalizedStringResource("Someday", comment: "Dream timeframe: some day, no fixed date")
         }
     }
 }
@@ -133,6 +141,9 @@ struct Dream: Identifiable, Codable, Equatable {
 
 // MARK: - Dream Suggestions
 
+/// Content bank. `title` and `inspiration` are base (English) text: the UI
+/// shows them through `ContentL10n.text`, and picked text is saved in the
+/// user's language as their own content.
 struct DreamSuggestion: Identifiable {
     let id = UUID()
     let title: String
@@ -198,3 +209,12 @@ struct DreamSuggestion: Identifiable {
         )
     ]
 }
+
+#if DEBUG
+extension DreamSuggestion {
+    /// Every base string the UI shows through ContentL10n (to build the Content catalog).
+    static var l10nContentStrings: [String] {
+        library.flatMap { [$0.title, $0.inspiration] }
+    }
+}
+#endif

@@ -58,7 +58,8 @@ struct DreamDetailSheet: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
                         Button { showEditor = true } label: {
-                            Label("Edit", systemImage: "pencil")
+                            Label(LocalizedStringResource("Edit", comment: "Menu action (verb): edit this item"),
+                                  systemImage: "pencil")
                         }
                         Button(role: .destructive) {
                             Task {
@@ -66,7 +67,8 @@ struct DreamDetailSheet: View {
                                 dismiss()
                             }
                         } label: {
-                            Label("Delete", systemImage: "trash")
+                            Label(LocalizedStringResource("Delete", comment: "Menu action (verb): delete this item"),
+                                  systemImage: "trash")
                         }
                     } label: {
                         Image(systemName: "ellipsis.circle")
@@ -106,7 +108,7 @@ struct DreamDetailSheet: View {
                 HStack {
                     Text(live.horizon.label)
                         .font(.system(size: 11, weight: .bold, design: .rounded))
-                        .kerning(0.4)
+                        .scriptAwareKerning(0.4)
                         .textCase(.uppercase)
                         .foregroundStyle(.white)
                         .padding(.horizontal, 10)
@@ -122,7 +124,7 @@ struct DreamDetailSheet: View {
                         .font(.system(size: 12, weight: .semibold))
                     Text(live.category.label)
                         .font(.system(size: 12, weight: .semibold, design: .rounded))
-                        .kerning(0.4)
+                        .scriptAwareKerning(0.4)
                         .textCase(.uppercase)
                 }
                 .foregroundStyle(.white.opacity(0.85))
@@ -165,7 +167,7 @@ struct DreamDetailSheet: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text("Description")
                     .font(.system(size: 12, weight: .semibold, design: .rounded))
-                    .kerning(0.4)
+                    .scriptAwareKerning(0.4)
                     .textCase(.uppercase)
                     .foregroundStyle(Brand.textSecondary)
                 Text(text)
@@ -185,7 +187,7 @@ struct DreamDetailSheet: View {
                         .font(.system(size: 11, weight: .semibold))
                     Text("First step")
                         .font(.system(size: 12, weight: .semibold, design: .rounded))
-                        .kerning(0.4)
+                        .scriptAwareKerning(0.4)
                         .textCase(.uppercase)
                 }
                 .foregroundStyle(colorway.deep)

@@ -72,8 +72,10 @@ enum CoupleError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .coupleNotFound: return "Couple not found"
-        case .partnerNotFound: return "Partner not found"
+        case .coupleNotFound:
+            return String(localized: "Couple not found", comment: "Error: the couple's shared record does not exist")
+        case .partnerNotFound:
+            return String(localized: "Partner not found", comment: "Error: no partner is linked to this account")
         }
     }
 }

@@ -326,7 +326,7 @@ struct TimeTreeView: View {
     private var journeyMasthead: some View {
         HStack(alignment: .top, spacing: 12) {
             VStack(alignment: .leading, spacing: 6) {
-                Text("Journey")
+                Text("Journey", comment: "Journey tab masthead title")
                     .font(JourneyFont.display)
                     .foregroundStyle(Brand.textPrimary)
                     .accessibilityAddTraits(.isHeader)
@@ -351,22 +351,41 @@ struct TimeTreeView: View {
     /// The only place on Journey that counts anything. Nil while the first
     /// load is in flight, when there is nothing true to say yet.
     private var mastheadSubtitle: String? {
-        guard session.isPaired else { return "Pair up to start your tree" }
+        guard session.isPaired else {
+            return String(localized: "Pair up to start your tree", comment: "Journey masthead subtitle before pairing")
+        }
         if isFirstLoad { return nil }
-        if viewModel.anchor == nil && viewModel.hasResolvedAnchor { return "Set the day it started" }
+        if viewModel.anchor == nil && viewModel.hasResolvedAnchor {
+            return String(localized: "Set the day it started", comment: "Journey masthead subtitle: no relationship start date yet")
+        }
 
         let memories = viewModel.visibleMemories.count
         let letterCount = letters.isAvailable ? letters.letters.count : 0
         let capsules = viewModel.lockedCapsules.count
 
+        // A tally: each count is its own whole phrase, separated by " · ".
         var parts: [String] = []
-        if memories > 0 { parts.append(memories == 1 ? "1 memory" : "\(memories) memories") }
-        if letterCount > 0 { parts.append(letterCount == 1 ? "1 letter" : "\(letterCount) letters") }
-        if capsules > 0 { parts.append(capsules == 1 ? "1 sealed capsule" : "\(capsules) sealed capsules") }
+        if memories > 0 {
+            parts.append(memories == 1
+                         ? String(localized: "1 memory", comment: "Journey masthead tally")
+                         : String(localized: "\(memories) memories", comment: "Journey masthead tally"))
+        }
+        if letterCount > 0 {
+            parts.append(letterCount == 1
+                         ? String(localized: "1 letter", comment: "Journey masthead tally: future letters")
+                         : String(localized: "\(letterCount) letters", comment: "Journey masthead tally: future letters"))
+        }
+        if capsules > 0 {
+            parts.append(capsules == 1
+                         ? String(localized: "1 sealed capsule", comment: "Journey masthead tally: memory capsules not opened yet")
+                         : String(localized: "\(capsules) sealed capsules", comment: "Journey masthead tally: memory capsules not opened yet"))
+        }
         // Letters not loaded yet may be all there is: say nothing rather
         // than "Add your first memory" for a moment.
         if parts.isEmpty && letters.isAvailable && !letters.hasLoaded { return nil }
-        return parts.isEmpty ? "Add your first memory" : parts.joined(separator: " · ")
+        return parts.isEmpty
+            ? String(localized: "Add your first memory", comment: "Journey masthead subtitle: nothing added yet")
+            : parts.joined(separator: " · ")
     }
 
     /// Opens the picker, which also offers a letter when letters are
@@ -423,11 +442,17 @@ struct TimeTreeView: View {
                             viewModel.dismissError()
                         }
                     } label: {
-                        Text(viewModel.errorIsRetryable ? "Try again" : "OK")
-                            .font(JourneyFont.label)
-                            .foregroundStyle(Brand.accentStart)
-                            .padding(.vertical, 4)
-                            .contentShape(Rectangle())
+                        Group {
+                            if viewModel.errorIsRetryable {
+                                Text("Try again", comment: "Journey error strip: retry loading")
+                            } else {
+                                Text("OK", comment: "Journey error strip: dismiss the message")
+                            }
+                        }
+                        .font(JourneyFont.label)
+                        .foregroundStyle(Brand.accentStart)
+                        .padding(.vertical, 4)
+                        .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                 }

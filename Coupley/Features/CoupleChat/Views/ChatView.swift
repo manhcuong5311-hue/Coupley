@@ -47,7 +47,7 @@ struct ChatView: View {
                     NotPairedView()
                 }
             }
-            .navigationTitle("Chat")
+            .navigationTitle(Text("Chat", comment: "Title of the Chat tab (noun)"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(Brand.backgroundTop.opacity(0.96), for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
@@ -65,8 +65,10 @@ struct ChatView: View {
                                 HStack(spacing: 4) {
                                     Image(systemName: "sparkles")
                                         .font(.system(size: 11, weight: .semibold))
-                                    Text("Quiz")
+                                    Text("Quiz", comment: "Chat toolbar button that opens the Quiz Hub (noun)")
                                         .font(.system(size: 13, weight: .bold, design: .rounded))
+                                        .lineLimit(1)
+                                        .minimumScaleFactor(0.8)
                                 }
                                 .foregroundStyle(Brand.accentStart)
                                 .padding(.horizontal, 10)
@@ -90,6 +92,7 @@ struct ChatView: View {
                                 Image(systemName: "sparkles.rectangle.stack")
                                     .foregroundStyle(Brand.accentStart)
                             }
+                            .accessibilityLabel("Couple Profile")
                         }
                     }
                 }
@@ -364,7 +367,8 @@ struct ChatView: View {
             photoButton
                 .accessibilityLabel("Send a photo")
 
-            TextField("Message", text: $viewModel.draftText, axis: .vertical)
+            TextField(String(localized: "Message", comment: "Placeholder in the chat composer (noun)"),
+                      text: $viewModel.draftText, axis: .vertical)
                 .lineLimit(1...5)
                 .font(.system(size: 16, design: .rounded))
                 .foregroundStyle(Brand.textPrimary)
@@ -382,9 +386,13 @@ struct ChatView: View {
                 .toolbar {
                     ToolbarItemGroup(placement: .keyboard) {
                         Spacer()
-                        Button("Done") { isComposerFocused = false }
-                            .font(.system(size: 15, weight: .semibold, design: .rounded))
-                            .foregroundStyle(Brand.accentStart)
+                        Button {
+                            isComposerFocused = false
+                        } label: {
+                            Text("Done", comment: "Keyboard toolbar button: hide the keyboard")
+                        }
+                        .font(.system(size: 15, weight: .semibold, design: .rounded))
+                        .foregroundStyle(Brand.accentStart)
                     }
                 }
 
@@ -402,6 +410,7 @@ struct ChatView: View {
             }
             .buttonStyle(BouncyButtonStyle())
             .disabled(!canSend)
+            .accessibilityLabel(Text("Send", comment: "Button that sends the typed chat message (verb)"))
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 10)

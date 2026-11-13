@@ -33,6 +33,8 @@ enum TogetherColorway: String, Codable, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
+    /// Not localized: no screen shows it (the pickers draw swatches). Make it a
+    /// `LocalizedStringResource` before using it as visible or VoiceOver text.
     var label: String {
         switch self {
         case .blossom:  return "Blossom"

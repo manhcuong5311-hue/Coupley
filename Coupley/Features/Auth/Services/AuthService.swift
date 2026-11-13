@@ -38,16 +38,60 @@ enum AuthError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .missingPresentationAnchor:
-            return "Couldn't open the sign-in window. Try again."
+            return String(localized: "Couldn't open the sign-in window. Try again.")
         case .missingIdentityToken:
-            return "Sign in was incomplete. Please try again."
+            return String(localized: "Sign in was incomplete. Please try again.")
         case .missingNonce:
-            return "Sign in was incomplete. Please try again."
+            return String(localized: "Sign in was incomplete. Please try again.")
         case .providerCancelled:
             return ""  // silent — user backed out on purpose
         case .providerFailed(let message):
             return message
         }
+    }
+
+    /// Friendly, localized copy for the Firebase Auth failures a person can
+    /// cause or fix. Firebase's own `localizedDescription` is English-only
+    /// and technical, so callers fall back to it only for codes not listed
+    /// here. `isEmailSignIn` keeps "incorrect email or password" off the
+    /// Apple and Google flows, where an invalid credential means a broken
+    /// token rather than a typo.
+    nonisolated static func friendlyMessage(for error: Error, isEmailSignIn: Bool = false) -> String? {
+        let nsError = error as NSError
+        guard nsError.domain == AuthErrors.domain,
+              let code = AuthErrorCode(rawValue: nsError.code) else { return nil }
+        switch code {
+        case .wrongPassword, .userNotFound:
+            return isEmailSignIn ? String(localized: "Incorrect email or password.") : nil
+        case .invalidCredential:
+            return isEmailSignIn
+                ? String(localized: "Incorrect email or password.")
+                : String(localized: "Sign in was incomplete. Please try again.")
+        case .invalidEmail:
+            return String(localized: "That email address doesn't look right.")
+        case .emailAlreadyInUse:
+            return String(localized: "An account with this email already exists. Try signing in instead.")
+        case .weakPassword:
+            let minimumLength = 6
+            return String(localized: "Your password needs at least \(minimumLength) characters.")
+        case .networkError:
+            return String(localized: "You appear to be offline. Connect to the internet and try again.")
+        case .tooManyRequests:
+            return String(localized: "Too many attempts. Wait a moment and try again.")
+        case .userDisabled:
+            return String(localized: "This account has been disabled. Please contact support.")
+        default:
+            return nil
+        }
+    }
+
+    /// The Google web sheet reports a deliberate dismiss as an error. It is
+    /// the same "user backed out" case as Apple's `.canceled`, so it stays
+    /// silent instead of showing Firebase's English sentence.
+    nonisolated static func isWebSignInCancel(_ error: Error) -> Bool {
+        let nsError = error as NSError
+        return nsError.domain == AuthErrors.domain
+            && nsError.code == AuthErrorCode.webContextCancelled.rawValue
     }
 }
 
@@ -166,11 +210,19 @@ final class FirebaseAuthService: NSObject, AuthServiceProtocol {
         let credential: AuthCredential = try await withCheckedThrowingContinuation { cont in
             provider.getCredentialWith(nil) { credential, error in
                 if let error {
-                    cont.resume(throwing: AuthError.providerFailed(error.localizedDescription))
+                    if AuthError.isWebSignInCancel(error) {
+                        cont.resume(throwing: AuthError.providerCancelled)
+                    } else {
+                        cont.resume(throwing: AuthError.providerFailed(
+                            AuthError.friendlyMessage(for: error) ?? error.localizedDescription
+                        ))
+                    }
                     return
                 }
                 guard let credential else {
-                    cont.resume(throwing: AuthError.providerFailed("No credential returned."))
+                    cont.resume(throwing: AuthError.providerFailed(
+                        String(localized: "Sign in was incomplete. Please try again.")
+                    ))
                     return
                 }
                 cont.resume(returning: credential)

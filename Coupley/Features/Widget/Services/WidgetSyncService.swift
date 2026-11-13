@@ -292,13 +292,17 @@ final class WidgetSyncService {
         var upcoming: [UpcomingAnniversary] = []
 
         // Future-dated memories or capsules whose unlock date is still ahead.
+        // Titles are display text for the widget on this same phone, so they
+        // are written in this phone's language.
         for memory in pendingMemories {
             let surfaceDate = memory.unlockDate ?? memory.date
             guard calendar.startOfDay(for: surfaceDate) >= today else { continue }
             let title: String = {
                 if memory.kind == .custom {
                     let trimmed = memory.title.trimmingCharacters(in: .whitespacesAndNewlines)
-                    return trimmed.isEmpty ? "Memory" : trimmed
+                    return trimmed.isEmpty
+                        ? String(localized: "Memory", comment: "Widget: name of an upcoming memory that has no title")
+                        : trimmed
                 }
                 return memory.kind.displayName
             }()
@@ -318,7 +322,8 @@ final class WidgetSyncService {
             let yearsAhead = anchor.yearsCompleted(now: now, calendar: calendar) + 1
             upcoming.append(UpcomingAnniversary(
                 id: "anniversary-year-\(yearsAhead)",
-                title: "Anniversary",
+                title: String(localized: "Anniversary",
+                              comment: "Widget: the couple's next yearly anniversary, shown with a countdown"),
                 date: nextAnniversary
             ))
         }
@@ -399,19 +404,27 @@ final class WidgetSyncService {
     /// Maps a nudge document to widget-friendly emoji + message. The main
     /// app's own `NudgeKind` / `ReactionKind` enums live in the domain
     /// layer; we duplicate the mapping here to keep this file free of
-    /// cross-feature imports.
+    /// cross-feature imports. The message is display text for this phone's
+    /// widget, so it is written in this phone's language.
     private static func presentation(
         forKind kind: String,
         reaction: String?
     ) -> (emoji: String, message: String) {
         switch (kind, reaction) {
-        case ("ping", _):              return ("💌", "Thinking of you")
-        case ("reaction", "heart"):    return ("❤️", "Sent you love")
-        case ("reaction", "hug"):      return ("🤗", "Sent you a hug")
-        case ("reaction", "callMe"):   return ("📞", "Wants to call")
-        case ("reaction", "coffee"):   return ("☕", "Coffee together?")
-        case ("reaction", _):          return ("✨", "Sent a reaction")
-        default:                       return ("💭", "From your partner")
+        case ("ping", _):
+            return ("💌", String(localized: "Thinking of you", comment: "Widget: the partner sent a 'thinking of you' nudge"))
+        case ("reaction", "heart"):
+            return ("❤️", String(localized: "Sent you love", comment: "Widget: the partner reacted with a heart"))
+        case ("reaction", "hug"):
+            return ("🤗", String(localized: "Sent you a hug", comment: "Widget: the partner reacted with a hug"))
+        case ("reaction", "callMe"):
+            return ("📞", String(localized: "Wants to call", comment: "Widget: the partner asks for a phone call"))
+        case ("reaction", "coffee"):
+            return ("☕", String(localized: "Coffee together?", comment: "Widget: the partner suggests getting coffee together"))
+        case ("reaction", _):
+            return ("✨", String(localized: "Sent a reaction", comment: "Widget: the partner sent some other reaction"))
+        default:
+            return ("💭", String(localized: "From your partner", comment: "Widget: a nudge of an unknown kind from the partner"))
         }
     }
 
@@ -524,7 +537,8 @@ final class WidgetSyncService {
             generatedAt: Date(),
             isPaired: true,
             partner: PartnerSnapshot(
-                displayName: partnerDisplayName ?? "Partner",
+                displayName: partnerDisplayName
+                    ?? String(localized: "Partner", comment: "Widget: stands in for the partner's name when it is unknown"),
                 avatarFilename: nil
             ),
             mood: pendingMood,

@@ -71,9 +71,9 @@ struct WidgetMediumView: View {
                 Image(systemName: "sparkles")
                     .font(.system(size: 9, weight: .bold))
                     .foregroundStyle(WidgetPalette.goldStart)
-                Text("Milestone")
+                Text("Milestone", comment: "Widget badge: a relationship milestone is today or a few days away")
                     .font(WidgetType.micro(10))
-                    .tracking(0.6)
+                    .scriptAwareTracking(0.6)
                     .foregroundStyle(WidgetPalette.textPrimary)
             }
         }
@@ -142,10 +142,15 @@ struct WidgetMediumView: View {
         if let name = entry.snapshot.partner?.displayName, !name.isEmpty {
             return name
         }
-        return "Partner"
+        return String(localized: "Partner", comment: "Widget: stands in for the partner's name when it is unknown")
     }
 
     private var signature: String {
-        "you & " + (entry.snapshot.partner?.displayName ?? "partner")
+        if let name = entry.snapshot.partner?.displayName {
+            return String(localized: "you & \(name)",
+                          comment: "Widget sign-off line, lowercase on purpose: the user and their partner's name, e.g. 'you & Lena'")
+        }
+        return String(localized: "you & partner",
+                      comment: "Widget sign-off line, lowercase on purpose, when the partner's name is unknown")
     }
 }

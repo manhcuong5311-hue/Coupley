@@ -41,9 +41,9 @@ enum ConnectionError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .notConnected:        return "You're not connected to a partner."
-        case .alreadyDisconnected: return "This connection has already been disconnected."
-        case .connectionNotFound:  return "We couldn't find that shared data."
+        case .notConnected:        return String(localized: "You're not connected to a partner.")
+        case .alreadyDisconnected: return String(localized: "This connection has already been disconnected.")
+        case .connectionNotFound:  return String(localized: "We couldn't find that shared data.")
         }
     }
 }

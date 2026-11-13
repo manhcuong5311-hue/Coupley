@@ -44,9 +44,9 @@ struct TogetherTodayHero: View {
                 // Top row — "Today Together" eyebrow + couple avatar
                 HStack(alignment: .center) {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Today Together")
+                        Text("Today Together", comment: "Eyebrow above the greeting on the Together tab hero")
                             .font(.system(size: 12, weight: .semibold, design: .rounded))
-                            .kerning(1.4)
+                            .scriptAwareKerning(1.4)
                             .textCase(.uppercase)
                             .foregroundStyle(.white.opacity(0.78))
 
@@ -70,6 +70,7 @@ struct TogetherTodayHero: View {
                     }) {
                         HStack(spacing: 12) {
                             Image(systemName: headline.tone.icon)
+                                .flipsForRightToLeftLayoutDirection(true)
                                 .font(.system(size: 15, weight: .semibold))
                                 .foregroundStyle(.white)
                                 .frame(width: 26, height: 26)
@@ -115,7 +116,8 @@ struct TogetherTodayHero: View {
                                 statTile(
                                     icon: leadingGoal.category.icon,
                                     title: leadingGoal.title,
-                                    value: "\(Int(leadingGoal.progress * 100))%",
+                                    value: String(localized: "\(Int(leadingGoal.progress * 100))%",
+                                                  comment: "The leading goal's progress as a percentage on the Together hero, e.g. 32%"),
                                     accent: .white
                                 )
                             }
@@ -136,8 +138,12 @@ struct TogetherTodayHero: View {
                             }) {
                                 statTile(
                                     icon: "flame.fill",
-                                    title: "\(challenge.title) streak",
-                                    value: "\(challenge.streak.current)d",
+                                    title: LocalizedStringResource(
+                                        "\(challenge.title) streak",
+                                        comment: "Hero tile label for a challenge's streak. %@ is the challenge title"
+                                    ),
+                                    value: String(localized: "\(challenge.streak.current)d",
+                                                  comment: "Streak length in days, abbreviated (e.g. '12d')"),
                                     accent: .white
                                 )
                             }
@@ -203,18 +209,39 @@ struct TogetherTodayHero: View {
                 Text("\(Int(ringProgress * 100))%")
                     .font(.system(size: 24, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
-                Text("together")
+                // Its own key: "together" alone is also the crown overlay's
+                // "1 Year / together", and several languages word the two apart.
+                Text(LocalizedStringResource(
+                    "together.ring.caption",
+                    defaultValue: "together",
+                    comment: "Together tab: tiny caption under the big percentage in the progress ring; the percentage is the combined progress of the couple's goals and challenges. Shown in capitals; must fit inside a small ring (one short word)."))
                     .font(.system(size: 10, weight: .semibold, design: .rounded))
-                    .kerning(0.6)
+                    .scriptAwareKerning(0.6)
                     .textCase(.uppercase)
                     .foregroundStyle(.white.opacity(0.7))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
             }
+            // Inside the 10 pt track: "TILLSAMMANS" otherwise touches it.
+            .padding(.horizontal, 14)
         }
     }
 
     // MARK: - Stat Tile
 
+    /// App copy: literal titles land in the string catalog.
+    private func statTile(icon: String, title: LocalizedStringResource, value: String, accent: Color) -> some View {
+        statTile(icon: icon, titleText: Text(title), value: value, accent: accent)
+    }
+
+    /// User content (a goal title): shown verbatim.
+    @_disfavoredOverload
     private func statTile(icon: String, title: String, value: String, accent: Color) -> some View {
+        statTile(icon: icon, titleText: Text(verbatim: title), value: value, accent: accent)
+    }
+
+    /// `value` is a number or an already-localized string, shown as given.
+    private func statTile(icon: String, titleText: Text, value: String, accent: Color) -> some View {
         TogetherGlassTile {
             HStack(spacing: 10) {
                 ZStack {
@@ -226,10 +253,13 @@ struct TogetherTodayHero: View {
                         .foregroundStyle(.white)
                 }
                 VStack(alignment: .leading, spacing: 1) {
-                    Text(title)
+                    // Often holds a user-typed title ("%@ streak"): wrap
+                    // to a second line before shrinking or cutting it.
+                    titleText
                         .font(.system(size: 12, weight: .semibold, design: .rounded))
                         .foregroundStyle(.white.opacity(0.78))
-                        .lineLimit(1)
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.85)
                     Text(value)
                         .font(.system(size: 16, weight: .bold, design: .rounded))
                         .foregroundStyle(accent)
@@ -241,7 +271,7 @@ struct TogetherTodayHero: View {
 
     // MARK: - Greeting Copy
 
-    private var greeting: String {
+    private var greeting: LocalizedStringResource {
         let hour = Calendar.current.component(.hour, from: Date())
         switch hour {
         case 5..<12:  return "Good morning."
@@ -263,16 +293,19 @@ struct TogetherEmptyHero: View {
             TogetherHeroBackground(colorway: .blossom)
 
             VStack(alignment: .leading, spacing: 14) {
-                Text("Together")
+                Text("Together", comment: "Name of the Together tab; also a label for what both partners did jointly")
                     .font(.system(size: 12, weight: .semibold, design: .rounded))
-                    .kerning(1.4)
+                    .scriptAwareKerning(1.4)
                     .textCase(.uppercase)
                     .foregroundStyle(.white.opacity(0.78))
 
-                Text("What are you\nbuilding together?")
+                // No hard line break in the key (it would freeze the English
+                // break into every translation); the title wraps on its own.
+                Text("What are you building together?")
                     .font(.system(size: 28, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
                     .lineSpacing(2)
+                    .fixedSize(horizontal: false, vertical: true)
 
                 Text("Start with one thing — a dream you share, or a goal you both want.")
                     .font(.system(size: 14, weight: .regular, design: .rounded))
@@ -283,6 +316,8 @@ struct TogetherEmptyHero: View {
                     Button(action: onAddGoal) {
                         Label("Add a goal", systemImage: "target")
                             .font(.system(size: 14, weight: .semibold, design: .rounded))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
                             .foregroundStyle(.white)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 10)
@@ -296,6 +331,8 @@ struct TogetherEmptyHero: View {
                     Button(action: onAddDream) {
                         Label("Add a dream", systemImage: "sparkles")
                             .font(.system(size: 14, weight: .semibold, design: .rounded))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
                             .foregroundStyle(.white)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 10)

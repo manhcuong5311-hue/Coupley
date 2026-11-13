@@ -29,15 +29,31 @@ enum NudgeType: String, Codable, CaseIterable {
         }
     }
 
-    var label: String {
+    /// In-app label for the notification list. Display only: the type travels
+    /// and is stored as `rawValue`.
+    var label: LocalizedStringResource {
         switch self {
-        case .lowMood:    return "Partner Alert"
-        case .dailySync:  return "Daily Sync"
-        case .inactivity: return "Check-in Reminder"
-        case .ping:       return "Thinking of You"
-        case .reaction:   return "Reaction"
-        case .questionOfTheDay: return "Question of the Day"
-        case .futureLetter: return "Future Letter"
+        case .lowMood:
+            return LocalizedStringResource("Partner Alert",
+                                           comment: "Notification type: your partner logged a low mood")
+        case .dailySync:
+            return LocalizedStringResource("Daily Sync",
+                                           comment: "Notification type: your partner checked in, your turn")
+        case .inactivity:
+            return LocalizedStringResource("Check-in Reminder",
+                                           comment: "Notification type: you haven't checked in for a while")
+        case .ping:
+            return LocalizedStringResource("Thinking of You",
+                                           comment: "Notification type: your partner sent a 'thinking of you' ping")
+        case .reaction:
+            return LocalizedStringResource("Reaction",
+                                           comment: "Notification type: your partner reacted to your mood")
+        case .questionOfTheDay:
+            return LocalizedStringResource("Question of the Day",
+                                           comment: "Notification type: the daily question")
+        case .futureLetter:
+            return LocalizedStringResource("Future Letter",
+                                           comment: "Notification type: a letter written for the future is ready")
         }
     }
 }
@@ -72,7 +88,7 @@ struct NudgeRecord: Identifiable, Codable {
 
     var relativeTime: String {
         let formatter = RelativeDateTimeFormatter()
-        formatter.unitsStyle = .abbreviated
+        formatter.unitsStyle = RelativeDateTimeFormatter.compactUnitsStyle
         return formatter.localizedString(for: timestamp, relativeTo: Date())
     }
 }

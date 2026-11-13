@@ -84,7 +84,7 @@ struct DailyPhotoCard: View {
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(accent)
             }
-            if !isHero {
+            if !isHero, let subtitle {
                 Text(subtitle)
                     .font(BrandType.meta)
                     .foregroundStyle(Brand.textTertiary)
@@ -118,12 +118,14 @@ struct DailyPhotoCard: View {
         .modifier(TierContainer(tier: tier, accent: accent))
     }
 
-    private var subtitle: String {
+    /// nil for the two states that never draw this container (they show the
+    /// loading row or nothing), rather than a " " key in the catalog.
+    private var subtitle: LocalizedStringResource? {
         switch viewModel.state {
         case .awaitingMe:      return "Send yours to unlock theirs"
         case .awaitingPartner: return "\(partnerName) hasn't sent one yet"
         case .revealed:        return "Both of you, same moment"
-        case .loading, .hidden: return " "
+        case .loading, .hidden: return nil
         }
     }
 
@@ -177,7 +179,7 @@ struct DailyPhotoCard: View {
                 .fixedSize(horizontal: false, vertical: true)
 
             HStack(spacing: 12) {
-                thumbnail(photo.photoURL(for: viewModel.myUserId), label: "You")
+                thumbnail(photo.photoURL(for: viewModel.myUserId), label: youLabel)
                 lockedThumbnail
             }
 
@@ -195,15 +197,22 @@ struct DailyPhotoCard: View {
                 .fixedSize(horizontal: false, vertical: true)
 
             HStack(spacing: 12) {
-                thumbnail(photo.photoURL(for: viewModel.myUserId), label: "You")
-                thumbnail(photo.photoURL(for: viewModel.partnerUserId), label: partnerName)
+                thumbnail(photo.photoURL(for: viewModel.myUserId), label: youLabel)
+                thumbnail(photo.photoURL(for: viewModel.partnerUserId), label: Text(partnerName))
             }
         }
     }
 
     // MARK: - Pieces
 
-    private func thumbnail(_ urlString: String?, label: String) -> some View {
+    /// The caption under your own photo. The thumbnail takes a `Text` because
+    /// its other caller passes the partner's name, which must stay verbatim;
+    /// a `String` parameter drew this "You" verbatim too, in English.
+    private var youLabel: Text {
+        Text("You", comment: "Daily photo: caption under your own photo")
+    }
+
+    private func thumbnail(_ urlString: String?, label: Text) -> some View {
         VStack(spacing: 5) {
             ZStack {
                 if let urlString, let url = URL(string: urlString) {
@@ -224,7 +233,7 @@ struct DailyPhotoCard: View {
             .clipShape(RoundedRectangle(cornerRadius: 14, style: Brand.cornerStyle))
             .wellBackground(in: tier, radius: 14)
 
-            Text(label)
+            label
                 .font(.system(size: 11, weight: .semibold, design: .rounded))
                 .foregroundStyle(Brand.textTertiary)
         }

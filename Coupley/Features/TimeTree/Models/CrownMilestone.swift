@@ -43,8 +43,9 @@ nonisolated struct CrownMilestone: Identifiable, Hashable, Equatable {
         }
     }
 
-    /// Title displayed in pills, banners, and the unlock overlay.
-    /// e.g. "100 Days", "1 Year", "5 Years".
+    /// ENGLISH title for the crown reminders, which stay English like every
+    /// notification: "100 Days", "1 Year", "5 Years". The app's UI shows
+    /// `localizedTitle` instead.
     var displayTitle: String {
         switch kind {
         case .days(let d):
@@ -54,7 +55,49 @@ nonisolated struct CrownMilestone: Identifiable, Hashable, Equatable {
         }
     }
 
-    /// Short, warm subtitle used on the celebration overlay.
+    /// The title in the user's language, for the UI (countdown rows and the
+    /// celebration overlay): "100 Days", "1 Year", "5 Years".
+    var localizedTitle: String {
+        switch kind {
+        case .days(let d):
+            return String(localized: "\(d) Days", comment: "Crown milestone title, e.g. '100 Days' (days together)")
+        case .years(let y):
+            return y == 1
+                ? String(localized: "1 Year", comment: "Crown milestone title: one year together")
+                : String(localized: "\(y) Years", comment: "Crown milestone title, e.g. '5 Years' (years together)")
+        }
+    }
+
+    /// The subtitle in the user's language, for the celebration overlay.
+    var localizedCelebrationSubtitle: String {
+        switch kind {
+        case .days(100):
+            return String(localized: "A hundred small days. One growing love.", comment: "Crown celebration subtitle: 100 days together")
+        case .days(500):
+            return String(localized: "Five hundred days of choosing each other.", comment: "Crown celebration subtitle: 500 days together")
+        case .days(1000):
+            return String(localized: "A thousand days. A library of memories.", comment: "Crown celebration subtitle: 1000 days together")
+        case .days(let d):
+            return String(localized: "\(d) days of building this together.", comment: "Crown celebration subtitle for any other day count")
+        case .years(1):
+            return String(localized: "Your first ring on the tree.", comment: "Crown celebration subtitle: 1 year together (a tree ring)")
+        case .years(2):
+            return String(localized: "Two years deep. Roots holding firm.", comment: "Crown celebration subtitle: 2 years together")
+        case .years(3):
+            return String(localized: "Three years. The branches stretch wider.", comment: "Crown celebration subtitle: 3 years together")
+        case .years(5):
+            return String(localized: "Five years. The tree has stories of its own.", comment: "Crown celebration subtitle: 5 years together")
+        case .years(7):
+            return String(localized: "Seven years. Rare, and still growing.", comment: "Crown celebration subtitle: 7 years together")
+        case .years(10):
+            return String(localized: "A decade. An ancient, golden tree.", comment: "Crown celebration subtitle: 10 years together")
+        case .years(let y):
+            return String(localized: "\(y) years, and still writing new chapters.", comment: "Crown celebration subtitle for any other year count")
+        }
+    }
+
+    /// ENGLISH subtitle, the body of a crown reminder (notifications stay
+    /// English). The celebration overlay shows `localizedCelebrationSubtitle`.
     var celebrationSubtitle: String {
         switch kind {
         case .days(100):  return "A hundred small days. One growing love."

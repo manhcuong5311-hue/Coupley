@@ -28,8 +28,13 @@ enum MessageTone: String, Codable {
     case playful
     case supportive
 
-    var label: String {
-        rawValue.capitalized
+    /// Display only: the tone travels as `rawValue`.
+    var label: LocalizedStringResource {
+        switch self {
+        case .warm:       return LocalizedStringResource("Warm", comment: "Tone of a suggested message")
+        case .playful:    return LocalizedStringResource("Playful", comment: "Tone of a suggested message")
+        case .supportive: return LocalizedStringResource("Supportive", comment: "Tone of a suggested message")
+        }
     }
 
     var icon: String {

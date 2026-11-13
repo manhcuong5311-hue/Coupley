@@ -75,7 +75,7 @@ final class PartnerProfileDetailViewModel: ObservableObject {
 
         // Edge case: partner profile requested but no partner connected.
         if mode == .partner && !hasPartner {
-            errorMessage = "No partner connected yet."
+            errorMessage = String(localized: "No partner connected yet.")
             return
         }
 
@@ -203,7 +203,7 @@ final class PartnerProfileDetailViewModel: ObservableObject {
                 try await service.updateProfile(snapshot)
             } catch {
                 await MainActor.run {
-                    self.errorMessage = "Couldn't sync changes. We'll retry when you're back online."
+                    self.errorMessage = String(localized: "Couldn't sync changes. We'll retry when you're back online.")
                 }
             }
         }

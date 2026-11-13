@@ -97,7 +97,7 @@ struct MemoryTimelineSection: View {
         let remembered = rememberedItems
 
         VStack(alignment: .leading, spacing: 14) {
-            Text("Timeline")
+            Text("Timeline", comment: "Journey section title: every memory and letter in date order")
                 .font(JourneyFont.title)
                 .foregroundStyle(Brand.textPrimary)
                 .accessibilityAddTraits(.isHeader)
@@ -197,7 +197,8 @@ struct MemoryTimelineSection: View {
         // view model, whose clock moves only at boundaries.
         return TimelineView(.everyMinute) { context in
             VStack(alignment: .leading, spacing: 10) {
-                groupLabel("Sealed for later")
+                groupLabel(LocalizedStringResource("Sealed for later",
+                                                   comment: "Journey timeline group label: letters and capsules not opened yet"))
 
                 ForEach(shown) { item in
                     row(item, now: context.date)
@@ -214,7 +215,7 @@ struct MemoryTimelineSection: View {
         VStack(alignment: .leading, spacing: 10) {
             // Only worth a label when "Sealed for later" sits above it.
             if isLabelled {
-                groupLabel("Memories")
+                groupLabel(LocalizedStringResource("Memories", comment: "Journey timeline group label: memories already opened"))
             }
 
             VStack(alignment: .leading, spacing: 14) {
@@ -226,7 +227,7 @@ struct MemoryTimelineSection: View {
     }
 
     /// Not an Eyebrow and not uppercase, like the letters hub's own labels.
-    private func groupLabel(_ title: LocalizedStringKey) -> some View {
+    private func groupLabel(_ title: LocalizedStringResource) -> some View {
         Text(title)
             .font(JourneyFont.label)
             .foregroundStyle(Brand.textTertiary)

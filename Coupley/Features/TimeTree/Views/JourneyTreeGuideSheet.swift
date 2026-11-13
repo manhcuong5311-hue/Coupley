@@ -49,8 +49,12 @@ struct JourneyTreeGuideSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") { dismiss() }
-                        .foregroundStyle(Brand.accentStart)
+                    Button {
+                        dismiss()
+                    } label: {
+                        Text("Done", comment: "Toolbar button: close the tree guide")
+                    }
+                    .foregroundStyle(Brand.accentStart)
                 }
             }
         }
@@ -60,15 +64,21 @@ struct JourneyTreeGuideSheet: View {
 
     private var stagesSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            sectionTitle("Stages")
+            sectionTitle(LocalizedStringResource("Stages", comment: "Tree guide section title: the tree's growth stages"))
 
-            Text(daysTogether > 0
-                 ? "It grows from the day your story began. Today is day \(daysTogether)."
-                 : "It grows from the day your story began, starting today.")
-                .font(JourneyFont.body)
-                .foregroundStyle(Brand.textSecondary)
-                .fixedSize(horizontal: false, vertical: true)
-                .padding(.horizontal, 4)
+            Group {
+                if daysTogether > 0 {
+                    Text("It grows from the day your story began. Today is day \(daysTogether).",
+                         comment: "Tree guide. The number is how many days the couple has been together.")
+                } else {
+                    Text("It grows from the day your story began, starting today.",
+                         comment: "Tree guide, on the day the relationship started")
+                }
+            }
+            .font(JourneyFont.body)
+            .foregroundStyle(Brand.textSecondary)
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(.horizontal, 4)
 
             BrandCard(tier: .card) {
                 VStack(spacing: 0) {
@@ -87,8 +97,11 @@ struct JourneyTreeGuideSheet: View {
         let isCurrent = item == stage
         let isEarlier = item < stage
         let marker = isCurrent ? "circle.inset.filled" : (isEarlier ? "checkmark.circle.fill" : "circle")
-        let spokenLabel = "\(item.displayName), \(detail(for: item))"
-        let spokenValue: String = isCurrent ? "You're here" : (isEarlier ? "Reached" : "")
+        let spokenLabel = String(localized: "\(item.displayName), \(detail(for: item))",
+                                 comment: "VoiceOver: a tree growth stage. First %@ is its name such as 'Blooming', second when it starts such as 'from day 180'.")
+        let spokenValue: String = isCurrent
+            ? String(localized: "You're here", comment: "Tree guide: the couple's current growth stage")
+            : (isEarlier ? String(localized: "Reached", comment: "VoiceOver value: a growth stage the tree has already passed") : "")
 
         return HStack(spacing: 12) {
             Image(systemName: marker)
@@ -108,7 +121,7 @@ struct JourneyTreeGuideSheet: View {
             Spacer(minLength: 8)
 
             if isCurrent {
-                Text("You're here")
+                Text("You're here", comment: "Tree guide: the couple's current growth stage")
                     .font(JourneyFont.caption)
                     .foregroundStyle(Brand.textPrimary)
                     .padding(.horizontal, 9)
@@ -124,19 +137,29 @@ struct JourneyTreeGuideSheet: View {
     }
 
     /// "from the start", "from day 180", and for the next stage
-    /// "from day 365 · in 74 days".
+    /// "from day 365 · in 74 days". Each is one whole phrase: the next stage
+    /// is never the first, so it always starts on a day number.
     private func detail(for item: TreeGrowthStage) -> String {
-        let from = item.startDay == 0 ? "from the start" : "from day \(item.startDay)"
-        guard item == nextStage else { return from }
+        guard item.startDay > 0 else {
+            return String(localized: "from the start", comment: "Tree guide: the first growth stage starts on day 0")
+        }
+        guard item == nextStage else {
+            return String(localized: "from day \(item.startDay)",
+                          comment: "Tree guide: the day number a growth stage starts on")
+        }
         let left = max(1, item.startDay - daysTogether)
-        return "\(from) · in \(left) \(left == 1 ? "day" : "days")"
+        return left == 1
+            ? String(localized: "from day \(item.startDay) · in 1 day",
+                     comment: "Tree guide, the next growth stage: the day number it starts on; it is tomorrow")
+            : String(localized: "from day \(item.startDay) · in \(left) days",
+                     comment: "Tree guide, the next growth stage: the day number it starts on, then the days left until then")
     }
 
     // MARK: - What grows on it
 
     private var growsSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            sectionTitle("What grows on it")
+            sectionTitle(LocalizedStringResource("What grows on it", comment: "Tree guide section title: what the tree shows"))
 
             BrandCard(tier: .card) {
                 VStack(alignment: .leading, spacing: 0) {
@@ -146,7 +169,8 @@ struct JourneyTreeGuideSheet: View {
                     rule
                     growsRow(symbol: "envelope.fill",
                              tint: FutureLetterStyle.accent,
-                             text: "Sealed letters hang from the branches: \(partnerName)'s on the left, yours on the right. Tap one to open it.")
+                             text: LocalizedStringResource("Sealed letters hang from the branches: \(partnerName)'s on the left, yours on the right. Tap one to open it.",
+                                                           comment: "Tree guide. %@ is the partner's name; their letters hang on the left of the tree, the user's on the right."))
                     rule
                     growsRow(symbol: "camera.macro",
                              tint: FutureLetterStyle.gold,
@@ -164,7 +188,7 @@ struct JourneyTreeGuideSheet: View {
         }
     }
 
-    private func growsRow(symbol: String, tint: Color, text: String) -> some View {
+    private func growsRow(symbol: String, tint: Color, text: LocalizedStringResource) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: 12) {
             Image(systemName: symbol)
                 .font(JourneyFont.label)
@@ -182,7 +206,7 @@ struct JourneyTreeGuideSheet: View {
 
     // MARK: - Pieces
 
-    private func sectionTitle(_ text: String) -> some View {
+    private func sectionTitle(_ text: LocalizedStringResource) -> some View {
         Text(text)
             .font(JourneyFont.title)
             .foregroundStyle(Brand.textPrimary)

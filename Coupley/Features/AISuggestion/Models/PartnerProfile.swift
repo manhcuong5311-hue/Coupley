@@ -16,8 +16,24 @@ enum CommunicationStyle: String, CaseIterable, Identifiable, Codable {
 
     var id: String { rawValue }
 
+    /// English name. The partner quiz stores options built from it and
+    /// `LocalProfileService` matches answers against it, so it must not
+    /// follow the user's language. The UI uses `displayLabel`.
     var label: String {
-        rawValue.capitalized
+        switch self {
+        case .introvert:  return "Introvert"
+        case .expressive: return "Expressive"
+        case .avoidant:   return "Avoidant"
+        }
+    }
+
+    /// The name shown in the UI, in the user's language.
+    var displayLabel: String {
+        switch self {
+        case .introvert:  return String(localized: "Introvert", comment: "Communication style")
+        case .expressive: return String(localized: "Expressive", comment: "Communication style")
+        case .avoidant:   return String(localized: "Avoidant", comment: "Communication style")
+        }
     }
 
     var emoji: String {
@@ -28,11 +44,12 @@ enum CommunicationStyle: String, CaseIterable, Identifiable, Codable {
         }
     }
 
-    var description: String {
+    /// Display only.
+    var description: LocalizedStringResource {
         switch self {
-        case .introvert: return "Prefers quiet, thoughtful exchanges"
-        case .expressive: return "Values open, enthusiastic communication"
-        case .avoidant: return "Needs space and gentle approaches"
+        case .introvert: return LocalizedStringResource("Prefers quiet, thoughtful exchanges", comment: "Description of the 'Introvert' communication style")
+        case .expressive: return LocalizedStringResource("Values open, enthusiastic communication", comment: "Description of the 'Expressive' communication style")
+        case .avoidant: return LocalizedStringResource("Needs space and gentle approaches", comment: "Description of the 'Avoidant' communication style")
         }
     }
 }
@@ -47,12 +64,25 @@ enum StressResponse: String, CaseIterable, Identifiable, Codable {
 
     var id: String { rawValue }
 
+    /// English name. The partner quiz stores options built from it and
+    /// `LocalProfileService` matches answers against it, so it must not
+    /// follow the user's language. The UI uses `displayLabel`.
     var label: String {
         switch self {
         case .talksItOut: return "Talks it out"
         case .needsSpace: return "Needs space"
         case .wantsDistraction: return "Wants distraction"
         case .seeksComfort: return "Seeks comfort"
+        }
+    }
+
+    /// The name shown in the UI, in the user's language.
+    var displayLabel: String {
+        switch self {
+        case .talksItOut:       return String(localized: "Talks it out", comment: "How a partner responds to stress")
+        case .needsSpace:       return String(localized: "Needs space", comment: "How a partner responds to stress")
+        case .wantsDistraction: return String(localized: "Wants distraction", comment: "How a partner responds to stress")
+        case .seeksComfort:     return String(localized: "Seeks comfort", comment: "How a partner responds to stress")
         }
     }
 
@@ -77,6 +107,10 @@ enum LoveLanguage: String, CaseIterable, Identifiable, Codable {
 
     var id: String { rawValue }
 
+    /// English name. The partner quiz stores options built from it,
+    /// `LocalProfileService` matches answers against it, and the English-only
+    /// MockAICoachService splices it into its sentences, so it must not follow
+    /// the user's language. The UI uses `displayLabel`.
     var label: String {
         switch self {
         case .wordsOfAffirmation: return "Words of Affirmation"
@@ -84,6 +118,17 @@ enum LoveLanguage: String, CaseIterable, Identifiable, Codable {
         case .receivingGifts: return "Receiving Gifts"
         case .qualityTime: return "Quality Time"
         case .physicalTouch: return "Physical Touch"
+        }
+    }
+
+    /// The name shown in the UI, in the user's language.
+    var displayLabel: String {
+        switch self {
+        case .wordsOfAffirmation: return String(localized: "Words of Affirmation", comment: "Love language")
+        case .actsOfService:      return String(localized: "Acts of Service", comment: "Love language")
+        case .receivingGifts:     return String(localized: "Receiving Gifts", comment: "Love language")
+        case .qualityTime:        return String(localized: "Quality Time", comment: "Love language")
+        case .physicalTouch:      return String(localized: "Physical Touch", comment: "Love language")
         }
     }
 
@@ -206,6 +251,8 @@ struct PartnerProfile: Identifiable, Codable, Equatable {
 
 extension PartnerProfile {
 
+    /// Fallback profile for the suggestion sheet. Its likes and dislikes are
+    /// sent to the AI as data, so they stay English.
     static let samplePartner = PartnerProfile(
         name: "Alex",
         preferences: PartnerPreferences(

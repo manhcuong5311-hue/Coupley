@@ -43,7 +43,8 @@ struct TogetherNowCard: View {
                 HStack(spacing: 7) {
                     Image(systemName: "hand.tap.fill")
                         .font(.system(size: 13, weight: .semibold))
-                    Text("Touch together")
+                    Text("Touch together",
+                         comment: "Button: open the screen where both partners hold a circle at once")
                         .font(.system(size: 14, weight: .semibold, design: .rounded))
                 }
                 .foregroundStyle(.white)
@@ -89,8 +90,8 @@ struct TogetherNowCard: View {
                 Text("\(partnerName) has Coupley open right now")
                     .font(.system(size: 12, design: .rounded))
                     .foregroundStyle(Brand.textSecondary)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.85)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.8)
             }
 
             Spacer(minLength: 0)
@@ -111,6 +112,10 @@ struct TogetherNowCard: View {
                         Text(kind.shortLabel)
                             .font(.system(size: 9, weight: .semibold, design: .rounded))
                             .foregroundStyle(Brand.textTertiary)
+                            // A quarter of the card; "Anrufen" or "Обнять"
+                            // must shrink rather than truncate.
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 9)
@@ -149,14 +154,18 @@ struct TogetherNowCard: View {
 // MARK: - Short labels
 
 extension ReactionKind {
-    /// Two-word-max caption under the emoji. The existing `label` is written
-    /// for notification copy and is too long for a four-across row.
-    var shortLabel: String {
+    /// Two-word-max caption under the emoji. The existing `label` ("Call me")
+    /// is too long for a four-across row.
+    var shortLabel: LocalizedStringResource {
         switch self {
-        case .heart:  return "Love"
-        case .hug:    return "Hug"
-        case .callMe: return "Call"
-        case .coffee: return "Coffee"
+        case .heart:
+            return LocalizedStringResource("Love", comment: "Reaction button caption (noun): send your partner love")
+        case .hug:
+            return LocalizedStringResource("Hug", comment: "Reaction button caption (noun): send your partner a hug")
+        case .callMe:
+            return LocalizedStringResource("Call", comment: "Short reaction caption: ask your partner to call you")
+        case .coffee:
+            return LocalizedStringResource("Coffee", comment: "Reaction button caption: invite your partner for coffee")
         }
     }
 }

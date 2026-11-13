@@ -176,7 +176,9 @@ struct QuizView: View {
                     .foregroundStyle(Brand.textSecondary)
                 Spacer()
                 if let question = viewModel.currentQuestion {
-                    Text("\(question.category.emoji) \(question.category.label)")
+                    // Verbatim: the label is already localized, and a literal
+                    // here would extract the meaningless key "%@ %@".
+                    Text(verbatim: "\(question.category.emoji) \(question.category.label)")
                         .font(.caption)
                         .fontWeight(.medium)
                         .foregroundStyle(Brand.textSecondary)
@@ -263,7 +265,7 @@ struct QuizView: View {
         }
     }
 
-    private func multipleChoiceInput(options: [String], allowsMultiple: Bool) -> some View {
+    private func multipleChoiceInput(options: [QuizOption], allowsMultiple: Bool) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             if allowsMultiple {
                 Text("Pick all that apply")
@@ -271,14 +273,16 @@ struct QuizView: View {
                     .foregroundStyle(Brand.textTertiary)
             }
 
+            // The chip shows `label`; the answer stores and compares the
+            // English `value`.
             FlowLayout(spacing: 10) {
-                ForEach(options, id: \.self) { option in
+                ForEach(options, id: \.value) { option in
                     ChoiceChip(
-                        label: option,
-                        isSelected: viewModel.currentAnswer.selectedOptions.contains(option)
+                        label: option.label,
+                        isSelected: viewModel.currentAnswer.selectedOptions.contains(option.value)
                     ) {
                         withAnimation(.spring(response: 0.25, dampingFraction: 0.8)) {
-                            viewModel.toggleOption(option)
+                            viewModel.toggleOption(option.value)
                         }
                     }
                 }
@@ -361,18 +365,29 @@ struct QuizView: View {
 
             let profile = viewModel.profile
 
-            SummaryRow(emoji: "🍜", label: "Food", values: profile.preferences.favoriteFood)
-            SummaryRow(emoji: "🧋", label: "Drinks", values: profile.preferences.favoriteDrink)
-            SummaryRow(emoji: "🎵", label: "Music", values: profile.preferences.favoriteMusic)
-            SummaryRow(emoji: "🎯", label: "Activities", values: profile.preferences.favoriteActivities)
+            // Food and drinks are typed by the user. Music, activities and
+            // color hold the options' English base text, shown through
+            // ContentL10n; the enum answers use their display labels.
+            SummaryRow(emoji: "🍜", label: LocalizedStringResource("Food", comment: "Partner quiz summary row"),
+                       values: profile.preferences.favoriteFood)
+            SummaryRow(emoji: "🧋", label: LocalizedStringResource("Drinks", comment: "Partner quiz summary row"),
+                       values: profile.preferences.favoriteDrink)
+            SummaryRow(emoji: "🎵", label: LocalizedStringResource("Music", comment: "Partner quiz summary row"),
+                       values: profile.preferences.favoriteMusic.map(ContentL10n.text))
+            SummaryRow(emoji: "🎯", label: LocalizedStringResource("Activities", comment: "Partner quiz summary row"),
+                       values: profile.preferences.favoriteActivities.map(ContentL10n.text))
 
             if !profile.preferences.favoriteColor.isEmpty {
-                SummaryRow(emoji: "🎨", label: "Color", values: [profile.preferences.favoriteColor])
+                SummaryRow(emoji: "🎨", label: LocalizedStringResource("Color", comment: "Partner quiz summary row: favorite color"),
+                           values: [ContentL10n.text(profile.preferences.favoriteColor)])
             }
 
-            SummaryRow(emoji: "💕", label: "Love Language", values: [profile.personality.loveLanguage.label])
-            SummaryRow(emoji: "😮‍💨", label: "Under Stress", values: [profile.personality.stressResponse.label])
-            SummaryRow(emoji: "💬", label: "Communication", values: [profile.personality.communicationStyle.label])
+            SummaryRow(emoji: "💕", label: LocalizedStringResource("Love Language", comment: "Partner quiz summary row"),
+                       values: [profile.personality.loveLanguage.displayLabel])
+            SummaryRow(emoji: "😮‍💨", label: LocalizedStringResource("Under Stress", comment: "Partner quiz summary row: how the partner responds to stress"),
+                       values: [profile.personality.stressResponse.displayLabel])
+            SummaryRow(emoji: "💬", label: LocalizedStringResource("Communication", comment: "Partner quiz summary row: communication style"),
+                       values: [profile.personality.communicationStyle.displayLabel])
         }
         .padding(20)
         .background(
@@ -390,7 +405,7 @@ struct QuizView: View {
 
 private struct SummaryRow: View {
     let emoji: String
-    let label: String
+    let label: LocalizedStringResource
     let values: [String]
 
     var body: some View {

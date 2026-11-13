@@ -64,16 +64,20 @@ final class AuthViewModel: ObservableObject {
         }
     }
 
-    var submitTitle: String {
-        mode == .login ? "Sign In" : "Create Account"
+    var submitTitle: LocalizedStringResource {
+        mode == .login
+            ? LocalizedStringResource("Sign In", comment: "Email sign-in screen: title and submit button")
+            : LocalizedStringResource("Create Account", comment: "Email sign-up screen: title and submit button")
     }
 
-    var togglePrompt: String {
+    var togglePrompt: LocalizedStringResource {
         mode == .login ? "New to Coupley?" : "Already have an account?"
     }
 
-    var toggleAction: String {
-        mode == .login ? "Sign up" : "Sign in"
+    var toggleAction: LocalizedStringResource {
+        mode == .login
+            ? LocalizedStringResource("Sign up", comment: "Link after 'New to Coupley?': switch the form to creating an account")
+            : LocalizedStringResource("Sign in", comment: "Link after 'Already have an account?': switch the form to signing in")
     }
 
     private var trimmedEmail: String {
@@ -86,7 +90,7 @@ final class AuthViewModel: ObservableObject {
         errorMessage = nil
 
         if mode == .signUp && password != confirmPassword {
-            errorMessage = "Passwords do not match."
+            errorMessage = String(localized: "Passwords do not match.")
             return
         }
 
@@ -148,7 +152,10 @@ final class AuthViewModel: ObservableObject {
                     errorMessage = error.localizedDescription
                 }
             } catch {
-                errorMessage = error.localizedDescription
+                // Firebase's own messages are English-only; the common,
+                // fixable failures (wrong password, email in use…) get ours.
+                errorMessage = AuthError.friendlyMessage(for: error, isEmailSignIn: provider == .email)
+                    ?? error.localizedDescription
             }
             isLoading = false
             loadingProvider = nil

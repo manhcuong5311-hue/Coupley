@@ -178,11 +178,12 @@ enum MoodWriteError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .notPaired:
-            return "Connect a partner before saving moods."
+            return String(localized: "Connect a partner before saving moods.")
         case .rejected:
-            return "Couldn't save your mood. Please try again."
+            return String(localized: "Couldn't save your mood. Please try again.")
         case .queuedForRetry:
-            return "Saved locally — will sync when online."
+            return String(localized: "Saved locally — will sync when online.",
+                          comment: "Mood check-in saved offline; it uploads when the connection returns")
         }
     }
 

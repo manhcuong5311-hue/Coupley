@@ -58,23 +58,29 @@ enum CountdownState: Equatable {
     case today
     case past(days: Int)
 
-    /// "D-30" / "D-DAY" / "D+5" style marker.
-    var marker: String {
+    /// "D-30" / "D-DAY" / "D+5" style marker. Display only (AnniversaryCard).
+    var marker: LocalizedStringResource {
         switch self {
-        case .future(let d): return "D-\(d)"
-        case .today:         return "D-DAY"
-        case .past(let d):   return "D+\(d)"
+        case .future(let d):
+            return LocalizedStringResource("D-\(d)",
+                                           comment: "Big countdown badge: days left until the event, in the Korean 'D-day' style. Keep it very short; the badge is one line")
+        case .today:
+            return LocalizedStringResource("D-DAY",
+                                           comment: "Big countdown badge on the day of the event. Keep it very short; the badge is one line")
+        case .past(let d):
+            return LocalizedStringResource("D+\(d)",
+                                           comment: "Big countdown badge: days since the event, in the Korean 'D-day' style. Keep it very short; the badge is one line")
         }
     }
 
-    /// Human-facing sentence.
-    var caption: String {
+    /// Human-facing sentence. Display only (AnniversaryCard).
+    var caption: LocalizedStringResource {
         switch self {
         case .future(let d):
             if d == 1 { return "1 day to go" }
             return "\(d) days to go"
         case .today:
-            return "It's today"
+            return LocalizedStringResource("It's today", comment: "Countdown caption on the day of the event")
         case .past(let d):
             if d == 1 { return "1 day ago" }
             return "\(d) days ago"

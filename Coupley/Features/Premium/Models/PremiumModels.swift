@@ -32,8 +32,11 @@ enum PremiumPlan: String, CaseIterable, Identifiable, Codable {
         }
     }
 
-    /// Shown only until StoreKit reports the localized price.
-    static let removeAdsFallbackPrice = "$9.99"
+    /// Shown only until StoreKit reports the localized price: the US price,
+    /// written the way the user's locale writes US dollars.
+    static var removeAdsFallbackPrice: String {
+        (Decimal(999) / 100).formatted(.currency(code: "USD"))
+    }
 }
 
 // MARK: - Premium Source

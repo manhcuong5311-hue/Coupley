@@ -31,7 +31,10 @@ struct FutureLetterComposeView: View {
     /// rather than read live, so the range does not move on every render.
     @State private var rangeAnchor = Date()
 
-    private static let placeholder = "Write what you want them to read that day…"
+    private static var placeholder: String {
+        String(localized: "Write what you want them to read that day…",
+               comment: "Placeholder in the empty letter editor.")
+    }
     /// The counter turns amber from here, a thousand characters before the cap.
     private static let counterWarning = 9_000
 
@@ -122,7 +125,7 @@ struct FutureLetterComposeView: View {
                         .scrollContentBackground(.hidden)
                         .frame(minHeight: 220)
                         .focused($editorFocused)
-                        .accessibilityLabel("Letter")
+                        .accessibilityLabel(Text("Letter", comment: "VoiceOver label of the editor holding the letter's text."))
                         .accessibilityHint(draft.text.isEmpty ? Self.placeholder : "")
                 }
 
@@ -134,11 +137,13 @@ struct FutureLetterComposeView: View {
     private var counter: some View {
         let count = draft.text.count
         let limit = FutureLetterSchedule.maxCharacters
-        return Text("\(count.formatted()) / \(limit.formatted())")
+        // Numbers only, so nothing to translate; VoiceOver gets a sentence.
+        return Text(verbatim: "\(count.formatted()) / \(limit.formatted())")
             .font(BrandType.meta)
             .monospacedDigit()
             .foregroundStyle(counterColor(count))
-            .accessibilityLabel("\(count.formatted()) of \(limit.formatted()) characters")
+            .accessibilityLabel(Text("\(count) of \(limit) characters",
+                                     comment: "VoiceOver: characters typed of the letter's limit."))
     }
 
     // MARK: - The moment
@@ -178,7 +183,8 @@ struct FutureLetterComposeView: View {
         let caption: String
         if isMomentValid(now: now) {
             let when = FutureLetterClock.moment(chosenMoment, now: now)
-            caption = "Opens \(when) your time. \(partnerName) sees it in their own time zone."
+            caption = String(localized: "Opens \(when) your time. \(partnerName) sees it in their own time zone.",
+                             comment: "Under the date picker. The first %@ is a moment, such as 'tomorrow at 9:00 AM'; the second is the partner's name.")
         } else {
             caption = tooSoonCopy
         }
@@ -198,7 +204,7 @@ struct FutureLetterComposeView: View {
                     .foregroundStyle(Brand.textPrimary)
                     .tint(FutureLetterStyle.accent)
 
-                Text("Posts \u{201C}\(FutureLetterViewModel.chatNote)\u{201D} in your chat.")
+                Text("Posts \u{201C}\(ChatSystemLine.futureLetterNoteDisplay)\u{201D} in your chat.")
                     .font(BrandType.body)
                     .foregroundStyle(Brand.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -289,9 +295,13 @@ struct FutureLetterComposeView: View {
 
     /// Why Seal is disabled, shown under it. Nil while it can be pressed.
     private func disabledHint(now: Date) -> String? {
-        if trimmedText.isEmpty { return "Write something first." }
+        if trimmedText.isEmpty {
+            return String(localized: "Write something first.", comment: "Why Seal letter is disabled: the letter is empty.")
+        }
         if trimmedText.count > FutureLetterSchedule.maxCharacters {
-            return "Make it \(FutureLetterSchedule.maxCharacters.formatted()) characters or fewer to seal it."
+            let limit = FutureLetterSchedule.maxCharacters.formatted()
+            return String(localized: "Make it \(limit) characters or fewer to seal it.",
+                          comment: "Why Seal letter is disabled. %@ is the character limit, 10,000.")
         }
         if !isMomentValid(now: now) { return tooSoonCopy }
         return nil
@@ -305,7 +315,9 @@ struct FutureLetterComposeView: View {
     }
 
     private var tooSoonCopy: String {
-        "Pick a time at least \(FutureLetterSchedule.minimumLeadDescription) from now."
+        let lead = FutureLetterSchedule.minimumLeadDescription
+        return String(localized: "Pick a time at least \(lead) from now.",
+                      comment: "The chosen moment is too soon. %@ is a duration, such as '1 hour'.")
     }
 }
 

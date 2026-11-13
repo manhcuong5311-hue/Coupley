@@ -103,7 +103,13 @@ final class FutureLetterViewModel: ObservableObject {
         }
     }
 
-    static let chatNote = "💌 I sealed a letter for you. It's pinned on Home until it opens."
+    /// Posted to the chat as the sender's own message. Stored in ENGLISH
+    /// (`ChatSystemLine.futureLetterNote`): the server pushes a chat message's
+    /// text to the partner as the notification body, notifications stay
+    /// English, and the partner's phone may run another language. Chat
+    /// bubbles redraw it in the reader's language; the compose view shows
+    /// `ChatSystemLine.futureLetterNoteDisplay`.
+    static var chatNote: String { ChatSystemLine.futureLetterNote }
 
     /// Sorted by `opensAt`, earliest first.
     @Published private(set) var letters: [FutureLetter] = []

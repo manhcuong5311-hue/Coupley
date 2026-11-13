@@ -55,7 +55,8 @@ struct GoalDetailSheet: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
                         Button { showEditor = true } label: {
-                            Label("Edit", systemImage: "pencil")
+                            Label(LocalizedStringResource("Edit", comment: "Menu action (verb): edit this item"),
+                                  systemImage: "pencil")
                         }
                         Button(role: .destructive) {
                             Task {
@@ -63,7 +64,8 @@ struct GoalDetailSheet: View {
                                 dismiss()
                             }
                         } label: {
-                            Label("Delete", systemImage: "trash")
+                            Label(LocalizedStringResource("Delete", comment: "Menu action (verb): delete this item"),
+                                  systemImage: "trash")
                         }
                     } label: {
                         Image(systemName: "ellipsis.circle")
@@ -91,7 +93,7 @@ struct GoalDetailSheet: View {
                         .font(.system(size: 12, weight: .semibold))
                     Text(live.category.label)
                         .font(.system(size: 12, weight: .semibold, design: .rounded))
-                        .kerning(0.4)
+                        .scriptAwareKerning(0.4)
                         .textCase(.uppercase)
                 }
                 .foregroundStyle(.white.opacity(0.85))
@@ -157,7 +159,7 @@ struct GoalDetailSheet: View {
 
                 HStack {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("You")
+                        Text("You", comment: "Label above the amount you contributed to a shared goal")
                             .font(.system(size: 11, weight: .semibold, design: .rounded))
                             .foregroundStyle(Brand.textSecondary)
                         Text(live.formatAmount(myAmount))
@@ -166,7 +168,7 @@ struct GoalDetailSheet: View {
                     }
                     Spacer()
                     VStack(alignment: .trailing, spacing: 2) {
-                        Text("Partner")
+                        Text("Partner", comment: "Label above the amount your partner contributed to a shared goal")
                             .font(.system(size: 11, weight: .semibold, design: .rounded))
                             .foregroundStyle(Brand.textSecondary)
                         Text(live.formatAmount(partnerAmount))
@@ -214,8 +216,10 @@ struct GoalDetailSheet: View {
                             if isContributing {
                                 ProgressView().tint(.white)
                             } else {
-                                Text("Add")
+                                Text("Add", comment: "Button (verb): add the typed amount to the goal")
                                     .font(.system(size: 14, weight: .bold, design: .rounded))
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.8)
                             }
                         }
                         .foregroundStyle(.white)
@@ -248,7 +252,7 @@ struct GoalDetailSheet: View {
                     }
                 } else {
                     HStack(spacing: 8) {
-                        quickChip(label: "+1 step") {
+                        quickChip(label: LocalizedStringResource("+1 step", comment: "Quick-add chip: add one step to a count goal")) {
                             contributionText = "1"
                             handleContribute(live)
                         }
@@ -258,12 +262,23 @@ struct GoalDetailSheet: View {
         }
     }
 
+    /// App copy: literal labels land in the string catalog.
+    private func quickChip(label: LocalizedStringResource, onTap: @escaping () -> Void) -> some View {
+        quickChip(labelText: Text(label), onTap: onTap)
+    }
+
+    /// A formatted amount: shown verbatim.
+    @_disfavoredOverload
     private func quickChip(label: String, onTap: @escaping () -> Void) -> some View {
+        quickChip(labelText: Text(verbatim: label), onTap: onTap)
+    }
+
+    private func quickChip(labelText: Text, onTap: @escaping () -> Void) -> some View {
         Button(action: {
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
             onTap()
         }) {
-            Text(label)
+            labelText
                 .font(.system(size: 12, weight: .semibold, design: .rounded))
                 .foregroundStyle(Brand.textPrimary)
                 .padding(.horizontal, 12)
@@ -287,7 +302,7 @@ struct GoalDetailSheet: View {
                         .foregroundStyle(colorway.deep)
                     Text("Why this matters")
                         .font(.system(size: 12, weight: .semibold, design: .rounded))
-                        .kerning(0.4)
+                        .scriptAwareKerning(0.4)
                         .textCase(.uppercase)
                         .foregroundStyle(colorway.deep)
                 }
@@ -321,7 +336,10 @@ struct GoalDetailSheet: View {
                 historyRow(
                     icon: "arrow.up.right",
                     title: "Progress so far",
-                    detail: "\(live.formatAmount(live.contribution.total)) of \(live.formatAmount(live.target))",
+                    detail: String(
+                        localized: "\(live.isolatedAmount(live.contribution.total)) of \(live.isolatedAmount(live.target))",
+                        comment: "Goal progress: amount reached of the target amount, e.g. '$3,600 of $5,000'"
+                    ),
                     accent: Brand.accentStart
                 )
 
@@ -339,7 +357,7 @@ struct GoalDetailSheet: View {
                     Divider().opacity(0.4)
                     historyRow(
                         icon: "checkmark.seal.fill",
-                        title: "Completed",
+                        title: LocalizedStringResource("Completed", comment: "History row label: the date it was completed"),
                         detail: completed.formatted(date: .long, time: .omitted),
                         accent: Color(red: 0.30, green: 0.78, blue: 0.50)
                     )
@@ -348,7 +366,8 @@ struct GoalDetailSheet: View {
         }
     }
 
-    private func historyRow(icon: String, title: String, detail: String, accent: Color) -> some View {
+    /// `detail` is a date or an already-localized phrase, shown as given.
+    private func historyRow(icon: String, title: LocalizedStringResource, detail: String, accent: Color) -> some View {
         HStack(spacing: 12) {
             ZStack {
                 Circle()

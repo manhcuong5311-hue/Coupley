@@ -195,7 +195,9 @@ struct AICoachHomeView: View {
                     Text("Continue where you left off")
                         .font(.system(size: 14, weight: .semibold, design: .rounded))
                         .foregroundStyle(Brand.textPrimary)
-                    Text("\(viewModel.messages.count) message\(viewModel.messages.count == 1 ? "" : "s") saved")
+                    Text(viewModel.messages.count == 1
+                         ? "1 message saved"
+                         : "\(viewModel.messages.count) messages saved")
                         .font(.system(size: 12, weight: .regular, design: .rounded))
                         .foregroundStyle(Brand.textSecondary)
                 }
@@ -251,17 +253,19 @@ struct AICoachHomeView: View {
                 }
 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(issue.title)
+                    Text(issue.displayTitle)
                         .font(.system(size: 14, weight: .semibold, design: .rounded))
                         .foregroundStyle(Brand.textPrimary)
                         .multilineTextAlignment(.leading)
                         .lineLimit(2)
+                        .minimumScaleFactor(0.8)
                         .fixedSize(horizontal: false, vertical: true)
                     Text(issue.subtitle)
                         .font(.system(size: 11, weight: .regular, design: .rounded))
                         .foregroundStyle(Brand.textSecondary)
                         .multilineTextAlignment(.leading)
                         .lineLimit(2)
+                        .minimumScaleFactor(0.8)
                         .fixedSize(horizontal: false, vertical: true)
                 }
 
@@ -299,7 +303,7 @@ struct AICoachHomeView: View {
                         .foregroundStyle(Brand.accentStart)
                 }
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(CoachIssueType.custom.title)
+                    Text(CoachIssueType.custom.displayTitle)
                         .font(.system(size: 14, weight: .semibold, design: .rounded))
                         .foregroundStyle(Brand.textPrimary)
                     Text(CoachIssueType.custom.subtitle)
@@ -357,8 +361,8 @@ struct AICoachHomeView: View {
     private func toolRow(
         icon: String,
         tint: Color,
-        title: String,
-        subtitle: String,
+        title: LocalizedStringResource,
+        subtitle: LocalizedStringResource,
         action: @escaping () -> Void
     ) -> some View {
         Button {
@@ -381,7 +385,8 @@ struct AICoachHomeView: View {
                     Text(subtitle)
                         .font(.system(size: 11, weight: .regular, design: .rounded))
                         .foregroundStyle(Brand.textSecondary)
-                        .lineLimit(1)
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.8)
                 }
                 Spacer(minLength: 0)
                 Image(systemName: "arrow.right")

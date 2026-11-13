@@ -19,7 +19,8 @@ enum AuthTokenError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .notSignedIn: return "You need to be signed in to use this."
+        case .notSignedIn: return String(localized: "You need to be signed in to use this.",
+                                         comment: "Error: an action needs a signed-in account")
         }
     }
 }

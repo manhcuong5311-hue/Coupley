@@ -5,6 +5,7 @@
 
 import Foundation
 import Combine
+import FirebaseFirestore
 
 // MARK: - Pairing Step
 
@@ -65,7 +66,7 @@ final class PairingViewModel: ObservableObject {
                 )
                 step = .showCode(code)
             } catch {
-                errorMessage = error.localizedDescription
+                errorMessage = Self.message(for: error)
             }
             isLoading = false
         }
@@ -84,7 +85,7 @@ final class PairingViewModel: ObservableObject {
                 // SessionStore snapshot listener fires → appState becomes .ready automatically
                 RatingManager.shared.recordFirstPartnerConnection()
             } catch {
-                errorMessage = error.localizedDescription
+                errorMessage = Self.message(for: error)
             }
             isLoading = false
         }
@@ -139,10 +140,22 @@ final class PairingViewModel: ObservableObject {
             } catch {
                 if Task.isCancelled { return }
                 await MainActor.run {
-                    self?.lookupState = .failed(error.localizedDescription)
+                    self?.lookupState = .failed(PairingViewModel.message(for: error))
                 }
             }
         }
+    }
+
+    /// Pairing errors carry their own localized copy. Firestore's text is
+    /// English-only; the failure a person can act on, being offline, gets
+    /// the app's own message instead.
+    private static func message(for error: Error) -> String {
+        let nsError = error as NSError
+        if nsError.domain == FirestoreErrorDomain,
+           nsError.code == FirestoreErrorCode.unavailable.rawValue {
+            return String(localized: "You appear to be offline. Connect to the internet and try again.")
+        }
+        return error.localizedDescription
     }
 
     // MARK: - Computed

@@ -123,7 +123,7 @@ final class CoupleStatsViewModel: ObservableObject {
 
                 loadState = .loaded
             } catch {
-                loadState = .error("Couldn't load stats. Pull to refresh.")
+                loadState = .error(String(localized: "Couldn't load your stats. Please try again.", comment: "Error on the couple stats screen; a Try Again button sits below it"))
             }
         }
     }

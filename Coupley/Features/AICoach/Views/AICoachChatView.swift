@@ -29,7 +29,7 @@ struct AICoachChatView: View {
 
             inputBar
         }
-        .navigationTitle("Coach")
+        .navigationTitle(Text("Coach", comment: "Navigation title of the AI coach chat (noun)"))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
@@ -156,7 +156,7 @@ struct AICoachChatView: View {
                             .font(.system(size: 15, weight: .semibold))
                             .foregroundStyle(issue.tint.primary)
                     }
-                    Text(issue.title)
+                    Text(issue.displayTitle)
                         .font(.system(size: 16, weight: .semibold, design: .rounded))
                         .foregroundStyle(Brand.textPrimary)
                     Spacer(minLength: 0)
@@ -168,13 +168,15 @@ struct AICoachChatView: View {
                     .lineSpacing(3)
 
                 VStack(alignment: .leading, spacing: 8) {
-                    ForEach(issue.contextQuestions, id: \.self) { q in
+                    // Indexed: LocalizedStringResource is not Hashable.
+                    let questions = issue.contextQuestions
+                    ForEach(questions.indices, id: \.self) { index in
                         HStack(alignment: .top, spacing: 8) {
                             Circle()
                                 .fill(issue.tint.primary.opacity(0.5))
                                 .frame(width: 4, height: 4)
                                 .padding(.top, 7)
-                            Text(q)
+                            Text(questions[index])
                                 .font(.system(size: 13, design: .rounded))
                                 .foregroundStyle(Brand.textPrimary)
                         }
@@ -237,11 +239,11 @@ struct AICoachChatView: View {
         case .systemPrompt:
             HStack {
                 Spacer()
-                Text(message.text)
+                systemPromptText(message.text)
                     .font(.system(size: 11, weight: .semibold, design: .rounded))
                     .foregroundStyle(Brand.textTertiary)
                     .textCase(.uppercase)
-                    .tracking(0.6)
+                    .scriptAwareTracking(0.6)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 6)
                     .background(
@@ -255,6 +257,16 @@ struct AICoachChatView: View {
         }
     }
 
+    /// A `.systemPrompt` message stores the issue's English title (it is
+    /// persisted and sent to the backend). Show that issue's title in the
+    /// user's language; anything unrecognised is shown as stored.
+    private func systemPromptText(_ stored: String) -> Text {
+        if let issue = CoachIssueType.matching(storedTitle: stored) {
+            return Text(issue.displayTitle)
+        }
+        return Text(verbatim: stored)
+    }
+
     // MARK: - Guided response card
 
     private func guidedResponseCard(_ guided: GuidedResponse) -> some View {
@@ -263,12 +275,12 @@ struct AICoachChatView: View {
                 HStack(spacing: 10) {
                     CoachAvatar(size: 28)
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("Coach reading")
+                        Text("Coach reading", comment: "Header of the coach's structured analysis card: the coach's reading (interpretation) of the situation")
                             .font(.system(size: 12, weight: .semibold, design: .rounded))
                             .foregroundStyle(Brand.textSecondary)
                             .textCase(.uppercase)
-                            .tracking(0.5)
-                        Text(guided.issue.title)
+                            .scriptAwareTracking(0.5)
+                        Text(guided.issue.displayTitle)
                             .font(.system(size: 15, weight: .semibold, design: .rounded))
                             .foregroundStyle(Brand.textPrimary)
                     }
@@ -278,7 +290,7 @@ struct AICoachChatView: View {
                 guidedSection(
                     icon: "eye.fill",
                     tint: guided.issue.tint.primary,
-                    title: "Situation",
+                    title: LocalizedStringResource("Situation", comment: "Section of the coach's analysis: what is going on"),
                     body: guided.situationAnalysis
                 )
 
@@ -316,7 +328,7 @@ struct AICoachChatView: View {
         }
     }
 
-    private func guidedSection(icon: String, tint: Color, title: String, body: String) -> some View {
+    private func guidedSection(icon: String, tint: Color, title: LocalizedStringResource, body: String) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 8) {
                 Image(systemName: icon)
@@ -326,7 +338,7 @@ struct AICoachChatView: View {
                     .font(.system(size: 12, weight: .semibold, design: .rounded))
                     .foregroundStyle(Brand.textSecondary)
                     .textCase(.uppercase)
-                    .tracking(0.5)
+                    .scriptAwareTracking(0.5)
             }
             Text(body)
                 .font(.system(size: 14, design: .rounded))
@@ -346,7 +358,7 @@ struct AICoachChatView: View {
                     .font(.system(size: 12, weight: .semibold, design: .rounded))
                     .foregroundStyle(Brand.textSecondary)
                     .textCase(.uppercase)
-                    .tracking(0.5)
+                    .scriptAwareTracking(0.5)
                 Spacer()
                 Button {
                     copy(message)
@@ -354,7 +366,7 @@ struct AICoachChatView: View {
                     HStack(spacing: 4) {
                         Image(systemName: "doc.on.doc")
                             .font(.system(size: 11, weight: .semibold))
-                        Text("Copy")
+                        Text("Copy", comment: "Button (verb): copy the suggested message")
                             .font(.system(size: 11, weight: .semibold, design: .rounded))
                     }
                     .foregroundStyle(Brand.accentStart)
@@ -458,7 +470,7 @@ struct AICoachChatView: View {
         }
     }
 
-    private var placeholder: String {
+    private var placeholder: LocalizedStringResource {
         if let issue = pendingIssue, !hasActiveMessagesFor(issue) {
             return "Describe what happened in your own words…"
         }
@@ -505,7 +517,7 @@ struct AICoachChatView: View {
         HStack(spacing: 8) {
             Image(systemName: "checkmark.circle.fill")
                 .foregroundStyle(.white)
-            Text("Copied")
+            Text("Copied", comment: "Confirmation shown after copying a message")
                 .font(.system(size: 13, weight: .semibold, design: .rounded))
                 .foregroundStyle(.white)
         }

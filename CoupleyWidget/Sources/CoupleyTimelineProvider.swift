@@ -86,6 +86,8 @@ extension WidgetSnapshot {
     /// Used in the widget gallery and SwiftUI previews. Crafted to look
     /// realistic — a partner with a recent loving mood, a sweet nudge,
     /// and a 7-day countdown to a 1 Year Anniversary milestone.
+    /// The copy the gallery shows is localized; the name and the mood note
+    /// (which the widget never draws) are not.
     static var samplePaired: WidgetSnapshot {
         let now = Date()
         let oneYearAgoMinusSevenDays = Calendar.current.date(
@@ -107,7 +109,8 @@ extension WidgetSnapshot {
             ),
             nudge: NudgeSnapshot(
                 emoji: "💌",
-                message: "Don't forget to smile today",
+                message: String(localized: "Don't forget to smile today",
+                                comment: "Widget gallery preview: a sample nudge from the partner"),
                 receivedAt: now.addingTimeInterval(-45 * 60)
             ),
             anniversary: AnniversarySnapshot(
@@ -115,7 +118,8 @@ extension WidgetSnapshot {
                 upcoming: [
                     UpcomingAnniversary(
                         id: "first-trip",
-                        title: "Our First Trip",
+                        title: String(localized: "Our First Trip",
+                                      comment: "Widget gallery preview: a sample upcoming memory"),
                         date: now.addingTimeInterval(28 * 24 * 3600)
                     )
                 ]

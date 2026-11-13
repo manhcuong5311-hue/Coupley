@@ -21,7 +21,12 @@ struct WidgetNudgeBubble: View {
                 Text(nudge?.emoji ?? "💌")
                     .font(.system(size: 16))
 
-                Text(nudge?.message ?? "No new nudge today")
+                // The message was localized by the app when it wrote the
+                // snapshot; the fallback is resolved here. (A `String`
+                // expression is shown verbatim, so the literal alone would
+                // never be translated.)
+                Text(nudge?.message ?? String(localized: "No new nudge today",
+                                              comment: "Widget: no 'thinking of you' nudge from the partner in the last day"))
                     .font(WidgetType.body(12))
                     .foregroundStyle(
                         nudge == nil ? WidgetPalette.textSecondary : WidgetPalette.textPrimary

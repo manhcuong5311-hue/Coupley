@@ -71,7 +71,34 @@ struct ContentView: View {
         _profileViewModel = StateObject(wrappedValue: CouplePersonProfileViewModel(session: session))
         _microActionViewModel = StateObject(wrappedValue: MicroActionViewModel(session: session))
         _lettersViewModel = StateObject(wrappedValue: FutureLetterViewModel(session: session))
+
+        #if DEBUG
+        // Only the first value is used: @State keeps its storage for the
+        // life of this view, so later inits don't move the user's tab.
+        if let tab = Self.launchArgumentTab {
+            _selectedTab = State(initialValue: tab)
+        }
+        #endif
     }
+
+    #if DEBUG
+    /// DEBUG only, for automated screenshots: the tab named by the
+    /// `-coupleyStartTab home|mood|together|journey|chat` launch argument.
+    /// Read once per process.
+    private static let launchArgumentTab: AppTab? = {
+        let arguments = ProcessInfo.processInfo.arguments
+        guard let flag = arguments.firstIndex(of: "-coupleyStartTab"),
+              arguments.indices.contains(flag + 1) else { return nil }
+        switch arguments[flag + 1] {
+        case "home":     return .home
+        case "mood":     return .mood
+        case "together": return .together
+        case "journey":  return .anniversary
+        case "chat":     return .chat
+        default:         return nil
+        }
+    }()
+    #endif
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -87,18 +114,36 @@ struct ContentView: View {
                     selectedTab: $selectedTab
                 )
                 .adBannerInset()
-                .tabItem { Label("Home", systemImage: "house.fill") }
+                .tabItem {
+                    Label {
+                        Text("Home", comment: "Tab bar title: the main dashboard. Keep it short.")
+                    } icon: {
+                        Image(systemName: "house.fill")
+                    }
+                }
                 .tag(AppTab.home)
                 .badge(lettersViewModel.readyForMeCount)
 
                 MoodCheckinView(viewModel: moodViewModel)
                     .adBannerInset()
-                    .tabItem { Label("Mood", systemImage: "heart.fill") }
+                    .tabItem {
+                        Label {
+                            Text("Mood", comment: "Tab bar title: daily mood check-in. Keep it short.")
+                        } icon: {
+                            Image(systemName: "heart.fill")
+                        }
+                    }
                     .tag(AppTab.mood)
 
                 TogetherView(session: session)
                     .adBannerInset()
-                    .tabItem { Label("Together", systemImage: "infinity") }
+                    .tabItem {
+                        Label {
+                            Text("Together", comment: "Tab bar title: shared goals, dreams and challenges. Keep it short.")
+                        } icon: {
+                            Image(systemName: "infinity")
+                        }
+                    }
                     .tag(AppTab.together)
 
                 // Journey never observes the letters view model: it gets this
@@ -114,7 +159,13 @@ struct ContentView: View {
                     onWriteLetter: { writeLetter(seed: $0, opensAt: $1) }
                 )
                     .adBannerInset()
-                    .tabItem { Label("Journey", systemImage: "leaf.fill") }
+                    .tabItem {
+                        Label {
+                            Text("Journey", comment: "Tab bar title: the couple's timeline of memories. Keep it short.")
+                        } icon: {
+                            Image(systemName: "leaf.fill")
+                        }
+                    }
                     .tag(AppTab.anniversary)
 
                 // Chat used to be excluded because the banner would sit
@@ -128,7 +179,13 @@ struct ContentView: View {
                 ChatView(session: session,
                          profileViewModel: profileViewModel,
                          onWriteLetter: { writeLetter(seed: $0) })
-                    .tabItem { Label("Chat", systemImage: "bubble.left.and.bubble.right.fill") }
+                    .tabItem {
+                        Label {
+                            Text("Chat", comment: "Tab bar title: messages with the partner. Keep it short.")
+                        } icon: {
+                            Image(systemName: "bubble.left.and.bubble.right.fill")
+                        }
+                    }
                     .tag(AppTab.chat)
                     .badge(chatUnreadCounter.unreadCount)
             }
@@ -166,6 +223,9 @@ struct ContentView: View {
         }
         .animation(.spring(response: 0.45, dampingFraction: 0.78), value: nudgeViewModel.incomingNudge?.id)
             .sheet(isPresented: $showPairingSheet) {
+                // "You" stays English: PairingViewModel writes this name to
+                // the invite document as `creatorName`, which is data. (Only
+                // reached when paired: an unpaired session passes "" here.)
                 PairingSheetView(
                     userId: session.userId,
                     displayName: displayName ?? "You"
@@ -179,8 +239,12 @@ struct ContentView: View {
                     CoupleStatsView(viewModel: statsViewModel)
                         .toolbar {
                             ToolbarItem(placement: .topBarTrailing) {
-                                Button("Done") { showStatsSheet = false }
-                                    .foregroundStyle(Brand.accentStart)
+                                Button {
+                                    showStatsSheet = false
+                                } label: {
+                                    Text("Done", comment: "Button: close the stats sheet")
+                                }
+                                .foregroundStyle(Brand.accentStart)
                             }
                         }
                 }
@@ -436,15 +500,21 @@ struct PairingSheetView: View {
                         .padding(.bottom, 8)
 
                     HStack {
-                        Button("Close") { dismiss() }
-                            .font(.system(size: 15, weight: .medium, design: .rounded))
-                            .foregroundStyle(Brand.textSecondary)
+                        Button {
+                            dismiss()
+                        } label: {
+                            Text("Close", comment: "Button: close the connect-your-partner sheet")
+                        }
+                        .font(.system(size: 15, weight: .medium, design: .rounded))
+                        .foregroundStyle(Brand.textSecondary)
 
                         Spacer()
 
-                        Button("Sign Out") {
+                        Button {
                             sessionStore.signOut()
                             dismiss()
+                        } label: {
+                            Text("Sign Out", comment: "Button: sign out of the account")
                         }
                         .font(.system(size: 15, weight: .medium, design: .rounded))
                         .foregroundStyle(Color(red: 1.0, green: 0.40, blue: 0.40))

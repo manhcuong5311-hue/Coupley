@@ -157,13 +157,19 @@ struct AnchorSetupSheet: View {
     // MARK: - Attribution footnote
 
     private func attributionFootnote(_ anchor: RelationshipAnchor) -> some View {
-        let who = anchor.setBy == viewModel.currentUserId ? "you" : partnerName
+        let day = anchor.setAt.formatted(date: .abbreviated, time: .omitted)
+        // Two whole sentences: "you" is never spliced into the partner's.
+        let line = anchor.setBy == viewModel.currentUserId
+            ? String(localized: "Set by you on \(day)",
+                     comment: "Start date sheet footnote: the user set the start date. %@ is a date such as 'Jan 26, 2026'.")
+            : String(localized: "Set by \(partnerName) on \(day)",
+                     comment: "Start date sheet footnote. First %@ is the partner's name, second a date such as 'Jan 26, 2026'.")
         return HStack(spacing: 8) {
             Image(systemName: "person.2.fill")
                 .font(JourneyFont.meta)
                 .foregroundStyle(Brand.textTertiary)
                 .accessibilityHidden(true)
-            Text("Set by \(who) on \(anchor.setAt.formatted(date: .abbreviated, time: .omitted))")
+            Text(line)
                 .font(JourneyFont.meta)
                 .foregroundStyle(Brand.textSecondary)
                 .multilineTextAlignment(.center)

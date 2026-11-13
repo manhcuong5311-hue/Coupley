@@ -37,14 +37,14 @@ struct PartnerAndMeProfileView: View {
                             profile: profileViewModel.myProfile,
                             userId: session.userId,
                             mode: .mine,
-                            subtitle: "You"
+                            subtitle: LocalizedStringResource("You", comment: "Small caps label under the viewer's own avatar.")
                         )
 
                         avatarLink(
                             profile: profileViewModel.partnerProfile,
                             userId: session.partnerId,
                             mode: .partner,
-                            subtitle: "Partner"
+                            subtitle: LocalizedStringResource("Partner", comment: "Small caps label under the partner's avatar.")
                         )
                         .opacity(session.isPaired ? 1 : 0.45)
                         .disabled(!session.isPaired)
@@ -67,8 +67,12 @@ struct PartnerAndMeProfileView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") { dismiss() }
-                        .foregroundStyle(Brand.accentStart)
+                    Button {
+                        dismiss()
+                    } label: {
+                        Text("Done", comment: "Toolbar button that closes the profiles screen.")
+                    }
+                    .foregroundStyle(Brand.accentStart)
                 }
             }
         }
@@ -80,7 +84,7 @@ struct PartnerAndMeProfileView: View {
         profile: CouplePersonProfile,
         userId: String,
         mode: PartnerProfileDetailViewModel.Mode,
-        subtitle: String
+        subtitle: LocalizedStringResource
     ) -> some View {
         NavigationLink {
             PartnerProfileDetailView(
@@ -112,10 +116,11 @@ struct PartnerAndMeProfileView: View {
                     .foregroundStyle(Brand.textPrimary)
                     .lineLimit(1)
 
-                Text(subtitle.uppercased())
+                Text(subtitle)
+                    .textCase(.uppercase)
                     .font(.system(size: 10, weight: .semibold, design: .rounded))
                     .foregroundStyle(Brand.textTertiary)
-                    .tracking(0.6)
+                    .scriptAwareTracking(0.6)
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 20)

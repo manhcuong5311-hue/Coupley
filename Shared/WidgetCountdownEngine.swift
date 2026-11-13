@@ -38,26 +38,60 @@ enum WidgetAnniversaryHighlight: Equatable {
 /// A specific landmark on the relationship timeline. We highlight it when
 /// the actual *day count* matches one of these values (within the
 /// imminence window, both sides).
+///
+/// The title is a resource, resolved in the reader's language when the
+/// widget draws it (`String(localized: milestone.title)`). Each title is its
+/// own whole phrase, so a translator can word every landmark freely.
 struct Milestone: Equatable, Hashable {
     let dayCount: Int
-    let title: String
+    let title: LocalizedStringResource
     let isMajor: Bool
+
+    /// `dayCount` identifies a milestone (the resource is not Hashable).
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(dayCount)
+        hasher.combine(isMajor)
+    }
 
     /// All recognised milestones. Ordered ascending so the engine can
     /// binary-search for the next-up landmark.
     static let all: [Milestone] = [
-        Milestone(dayCount: 30,    title: "1 Month Together",   isMajor: false),
-        Milestone(dayCount: 100,   title: "100 Days Together",  isMajor: true),
-        Milestone(dayCount: 200,   title: "200 Days Together",  isMajor: false),
-        Milestone(dayCount: 365,   title: "1 Year Anniversary", isMajor: true),
-        Milestone(dayCount: 500,   title: "500 Days of Love",   isMajor: true),
-        Milestone(dayCount: 730,   title: "2 Year Anniversary", isMajor: true),
-        Milestone(dayCount: 1000,  title: "1000 Days of Love",  isMajor: true),
-        Milestone(dayCount: 1095,  title: "3 Year Anniversary", isMajor: true),
-        Milestone(dayCount: 1460,  title: "4 Year Anniversary", isMajor: true),
-        Milestone(dayCount: 1825,  title: "5 Year Anniversary", isMajor: true),
-        Milestone(dayCount: 2555,  title: "7 Year Anniversary", isMajor: true),
-        Milestone(dayCount: 3650,  title: "10 Years of Love",   isMajor: true),
+        Milestone(dayCount: 30,
+                  title: LocalizedStringResource("1 Month Together", comment: "Widget milestone: 30 days as a couple"),
+                  isMajor: false),
+        Milestone(dayCount: 100,
+                  title: LocalizedStringResource("100 Days Together", comment: "Widget milestone: 100 days as a couple"),
+                  isMajor: true),
+        Milestone(dayCount: 200,
+                  title: LocalizedStringResource("200 Days Together", comment: "Widget milestone: 200 days as a couple"),
+                  isMajor: false),
+        Milestone(dayCount: 365,
+                  title: LocalizedStringResource("1 Year Anniversary", comment: "Widget milestone: first anniversary"),
+                  isMajor: true),
+        Milestone(dayCount: 500,
+                  title: LocalizedStringResource("500 Days of Love", comment: "Widget milestone: 500 days as a couple"),
+                  isMajor: true),
+        Milestone(dayCount: 730,
+                  title: LocalizedStringResource("2 Year Anniversary", comment: "Widget milestone: second anniversary"),
+                  isMajor: true),
+        Milestone(dayCount: 1000,
+                  title: LocalizedStringResource("1000 Days of Love", comment: "Widget milestone: 1000 days as a couple"),
+                  isMajor: true),
+        Milestone(dayCount: 1095,
+                  title: LocalizedStringResource("3 Year Anniversary", comment: "Widget milestone: third anniversary"),
+                  isMajor: true),
+        Milestone(dayCount: 1460,
+                  title: LocalizedStringResource("4 Year Anniversary", comment: "Widget milestone: fourth anniversary"),
+                  isMajor: true),
+        Milestone(dayCount: 1825,
+                  title: LocalizedStringResource("5 Year Anniversary", comment: "Widget milestone: fifth anniversary"),
+                  isMajor: true),
+        Milestone(dayCount: 2555,
+                  title: LocalizedStringResource("7 Year Anniversary", comment: "Widget milestone: seventh anniversary"),
+                  isMajor: true),
+        Milestone(dayCount: 3650,
+                  title: LocalizedStringResource("10 Years of Love", comment: "Widget milestone: tenth anniversary"),
+                  isMajor: true),
     ]
 }
 
@@ -196,29 +230,48 @@ enum WidgetCountdownEngine {
 }
 
 // MARK: - Display Helpers
+//
+// Every string here is resolved with String(localized:) in whichever process
+// draws it (the widget extension, normally); both targets carry the same
+// catalog. Anniversary titles arrive already in the user's language: the app
+// localizes them when it writes the snapshot, or the user typed them.
 
 extension WidgetAnniversaryHighlight {
 
-    /// Compact one-line caption used in the small-family widget.
+    /// Compact one-line caption for a small widget surface.
     var compactCaption: String {
         switch self {
         case .empty:
-            return "Start your love journey"
+            return String(localized: "Start your love journey",
+                          comment: "Widget: shown before the couple has set the date they got together")
         case .milestone(let m, let daysAway, _):
-            if daysAway == 0 { return m.title }
-            if daysAway > 0  { return "\(daysAway)d to \(m.title)" }
-            return "\(m.title) · \(-daysAway)d ago"
+            let title = String(localized: m.title)
+            if daysAway == 0 { return title }
+            if daysAway > 0 {
+                return String(localized: "\(daysAway)d to \(title)",
+                              comment: "Compact widget caption: days left until a milestone, e.g. '5d to 100 Days Together'. 'd' abbreviates days.")
+            }
+            return String(localized: "\(title) · \(-daysAway)d ago",
+                          comment: "Compact widget caption: a milestone a few days ago, e.g. '100 Days Together · 2d ago'. 'd' abbreviates days.")
         case .upcomingAnniversary(let title, let daysAway, _):
-            if daysAway == 0 { return "\(title) — today" }
-            if daysAway == 1 { return "\(title) tomorrow" }
-            return "\(title) in \(daysAway)d"
+            if daysAway == 0 {
+                return String(localized: "\(title) — today",
+                              comment: "Compact widget caption: an anniversary (its title) is today")
+            }
+            if daysAway == 1 {
+                return String(localized: "\(title) tomorrow",
+                              comment: "Compact widget caption: an anniversary (its title) is tomorrow")
+            }
+            return String(localized: "\(title) in \(daysAway)d",
+                          comment: "Compact widget caption: an anniversary (its title) in N days. 'd' abbreviates days.")
         case .daysTogether(let days):
-            return "Together \(days) Days"
+            return String(localized: "Together \(days) Days",
+                          comment: "Compact widget caption: how many days the couple has been together")
         }
     }
 
-    /// Hero number used in the medium-family widget. Returns the number
-    /// itself — the surrounding view chooses the suffix word.
+    /// Hero number used in the widget. Returns the number itself; it is
+    /// drawn as part of `heroPhrase`.
     var heroNumber: Int {
         switch self {
         case .empty:                                return 0
@@ -228,30 +281,40 @@ extension WidgetAnniversaryHighlight {
         }
     }
 
-    /// Word that follows the hero number ("Days", "Day", etc).
-    var heroUnit: String {
-        switch self {
-        case .empty:
-            return ""
-        case .milestone(_, let daysAway, _):
-            return abs(daysAway) == 1 ? "Day" : "Days"
-        case .upcomingAnniversary(_, let daysAway, _):
-            return daysAway == 1 ? "Day" : "Days"
-        case .daysTogether(let days):
-            return days == 1 ? "Day" : "Days"
-        }
+    /// The hero line as ONE localized phrase ("12 Days", "12 天", "12 дней"),
+    /// so the unit agrees with the number in every language and the
+    /// translator decides the word order. The number's run carries a
+    /// `replacementIndex` attribute; the view draws that run large and the
+    /// rest as the unit. Empty for `.empty`, which shows no hero line.
+    var heroPhrase: AttributedString {
+        if case .empty = self { return AttributedString() }
+        var options = AttributedString.LocalizationOptions()
+        options.applyReplacementIndexAttribute = true
+        let n = heroNumber
+        return n == 1
+            ? AttributedString(localized: "\(n) Day", options: options,
+                               comment: "Widget hero line: one day (a countdown or days together). The number is drawn large, the word small.")
+            : AttributedString(localized: "\(n) Days", options: options,
+                               comment: "Widget hero line: a number of days (a countdown or days together). The number is drawn large, the word small.")
     }
 
-    /// The line above the hero number.
+    /// The line above the hero number (the view shows it in capitals).
     var topline: String {
         switch self {
-        case .empty:                              return "Together"
+        case .empty:
+            return String(localized: "Together", comment: "Widget: label above the day count before a start date is set")
         case .milestone(_, let daysAway, _):
-            if daysAway == 0  { return "Today" }
-            if daysAway > 0   { return "Coming up" }
-            return "Just celebrated"
-        case .upcomingAnniversary:                return "Next Anniversary"
-        case .daysTogether:                       return "Together For"
+            if daysAway == 0 {
+                return String(localized: "Today", comment: "Widget: label above the day count, a milestone is today")
+            }
+            if daysAway > 0 {
+                return String(localized: "Coming up", comment: "Widget: label above a countdown to a milestone")
+            }
+            return String(localized: "Just celebrated", comment: "Widget: label above the days since a milestone that just passed")
+        case .upcomingAnniversary:
+            return String(localized: "Next Anniversary", comment: "Widget: label above a countdown to the next anniversary")
+        case .daysTogether:
+            return String(localized: "Together For", comment: "Widget: label above the number of days together, e.g. TOGETHER FOR / 358 Days / of love")
         }
     }
 
@@ -259,15 +322,20 @@ extension WidgetAnniversaryHighlight {
     var subline: String {
         switch self {
         case .empty:
-            return "Set your start date ❤️"
+            return String(localized: "Set your start date ❤️",
+                          comment: "Widget: asks the couple to set the date they got together, in the app")
         case .milestone(let m, let daysAway, _):
-            if daysAway == 0  { return m.title + " 🎉" }
-            if daysAway > 0   { return m.title }
-            return m.title
+            let title = String(localized: m.title)
+            if daysAway == 0 {
+                return String(localized: "\(title) 🎉",
+                              comment: "Widget: a milestone's title on the day itself, with a party emoji")
+            }
+            return title
         case .upcomingAnniversary(let title, _, _):
             return title
         case .daysTogether:
-            return "of love"
+            return String(localized: "of love",
+                          comment: "Widget: words under the days-together count, e.g. TOGETHER FOR / 358 Days / of love")
         }
     }
 

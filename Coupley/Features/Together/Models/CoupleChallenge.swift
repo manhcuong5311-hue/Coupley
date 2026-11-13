@@ -28,15 +28,22 @@ enum ChallengeCategory: String, Codable, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
-    var label: String {
+    /// Display name only. Storage and comparisons use `rawValue`.
+    var label: LocalizedStringResource {
         switch self {
-        case .gratitude:  return "Gratitude"
-        case .fitness:    return "Fitness"
-        case .romance:    return "Romance"
-        case .savings:    return "Savings"
-        case .mindful:    return "Mindfulness"
-        case .connection: return "Connection"
-        case .other:      return "Other"
+        case .gratitude:  return LocalizedStringResource("Gratitude", comment: "Together tab: category of a shared goal, challenge or dream")
+        case .fitness:    return LocalizedStringResource("Fitness", comment: "Together tab: category of a shared goal, challenge or dream")
+        case .romance:    return LocalizedStringResource("Romance", comment: "Together tab: category of a shared goal, challenge or dream")
+        case .savings:    return LocalizedStringResource("Savings", comment: "Together tab: category of a shared goal, challenge or dream")
+        case .mindful:    return LocalizedStringResource("Mindfulness", comment: "Together tab: category of a shared goal, challenge or dream")
+        case .connection:
+            // Own key: a plain "Connection" key is the pairing section in Settings.
+            return LocalizedStringResource(
+                "together.category.connection",
+                defaultValue: "Connection",
+                comment: "Challenge category: emotional closeness between partners (not a network or pairing connection)"
+            )
+        case .other:      return LocalizedStringResource("Other", comment: "Together tab: category of a shared goal, challenge or dream")
         }
     }
 
@@ -74,10 +81,10 @@ enum ChallengeCadence: String, Codable, CaseIterable {
     case daily
     case weekly
 
-    var label: String {
+    var label: LocalizedStringResource {
         switch self {
-        case .daily:  return "Daily"
-        case .weekly: return "Weekly"
+        case .daily:  return LocalizedStringResource("Daily", comment: "Challenge cadence: one check-in per day")
+        case .weekly: return LocalizedStringResource("Weekly", comment: "Challenge cadence: one check-in per week")
         }
     }
 
@@ -212,22 +219,40 @@ struct CoupleChallenge: Identifiable, Codable, Equatable {
         (checkInsByUser[userId] ?? []).count
     }
 
-    var statusLine: String {
-        if isComplete { return "Completed 🎉" }
+    /// One-line status under the title. Display only.
+    var statusLine: LocalizedStringResource {
+        if isComplete {
+            return LocalizedStringResource("Completed 🎉", comment: "Challenge status: the challenge is finished")
+        }
         if !hasStarted {
             let formatter = RelativeDateTimeFormatter()
-            formatter.unitsStyle = .abbreviated
-            return "Starts \(formatter.localizedString(for: startDate, relativeTo: Date()))"
+            formatter.unitsStyle = RelativeDateTimeFormatter.compactUnitsStyle
+            let relative = formatter.localizedString(for: startDate, relativeTo: Date())
+            return LocalizedStringResource(
+                "Starts \(relative)",
+                comment: "Challenge that has not begun yet. %@ is a relative time ('in 3 days') or a date ('Nov 20')"
+            )
         }
         switch cadence {
-        case .daily:  return "Day \(totalCheckIns) of \(targetCount)"
-        case .weekly: return "Week \(totalCheckIns) of \(targetCount)"
+        case .daily:
+            return LocalizedStringResource(
+                "Day \(totalCheckIns) of \(targetCount)",
+                comment: "Daily challenge progress, e.g. 'Day 3 of 30'"
+            )
+        case .weekly:
+            return LocalizedStringResource(
+                "Week \(totalCheckIns) of \(targetCount)",
+                comment: "Weekly challenge progress, e.g. 'Week 2 of 8'"
+            )
         }
     }
 }
 
 // MARK: - Challenge Suggestions
 
+/// Content bank. `title` and `blurb` are base (English) text: the UI shows
+/// them through `ContentL10n.text`, and a picked title is saved in the
+/// user's language as their own content.
 struct ChallengeSuggestion: Identifiable {
     let id = UUID()
     let title: String
@@ -280,3 +305,12 @@ struct ChallengeSuggestion: Identifiable {
         )
     ]
 }
+
+#if DEBUG
+extension ChallengeSuggestion {
+    /// Every base string the UI shows through ContentL10n (to build the Content catalog).
+    static var l10nContentStrings: [String] {
+        library.flatMap { [$0.title, $0.blurb] }
+    }
+}
+#endif

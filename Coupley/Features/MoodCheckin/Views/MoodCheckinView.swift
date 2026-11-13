@@ -14,10 +14,15 @@ struct MoodCheckinView: View {
     private var greeting: String {
         let hour = Calendar.current.component(.hour, from: Date())
         switch hour {
-        case 5..<12:  return "Good morning"
-        case 12..<17: return "Good afternoon"
-        case 17..<21: return "Good evening"
-        default:      return "Good night"
+        case 5..<12:
+            return String(localized: "Good morning", comment: "Greeting, 5 AM to noon")
+        case 12..<17:
+            return String(localized: "Good afternoon", comment: "Greeting, noon to 5 PM")
+        case 17..<21:
+            return String(localized: "Good evening", comment: "Greeting, 5 PM to 9 PM")
+        default:
+            return String(localized: "Good night",
+                          comment: "Greeting (not a farewell), 9 PM to 5 AM")
         }
     }
 
@@ -117,10 +122,14 @@ struct MoodCheckinView: View {
                 // textSecondary measures 3.1-3.8:1 in all four resolutions.
                 Eyebrow(greeting)
 
-                Text("How are you\nfeeling today?")
+                // No hard line break in the key: each language wraps on its
+                // own, capped at two lines like Home's masthead.
+                Text("How are you feeling today?")
                     .font(BrandType.display)
                     .foregroundStyle(Brand.textPrimary)
                     .lineSpacing(2)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.72)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -250,6 +259,10 @@ private struct MoodCard: View {
                 Text(mood.label)
                     .font(.system(size: 11, weight: isSelected ? .semibold : .regular))
                     .foregroundStyle(isSelected ? mood.color : Brand.textSecondary)
+                    // A quarter-width card: a longer translation shrinks a
+                    // little instead of wrapping one card taller than the rest.
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
                     .animation(.easeInOut(duration: 0.2), value: isSelected)
             }
             .frame(maxWidth: .infinity)
@@ -281,7 +294,8 @@ private struct MoodCard: View {
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) { isPressed = false }
                 }
         )
-        .accessibilityLabel("\(mood.label) mood")
+        .accessibilityLabel(Text("\(mood.label) mood",
+                                 comment: "VoiceOver: a mood option; %@ is the mood name, e.g. Happy"))
         .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 }
@@ -294,7 +308,8 @@ struct EnergySelectorView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            SectionLabel("Energy")
+            SectionLabel(LocalizedStringResource("Energy",
+                                                 comment: "Section label above the energy level picker"))
 
             HStack(spacing: 0) {
                 ForEach(EnergyLevel.allCases) { level in
@@ -337,6 +352,8 @@ private struct EnergyCapsule: View {
                 Text(level.label)
                     .font(.system(size: 14, weight: isSelected ? .semibold : .regular))
                     .foregroundStyle(isSelected ? Brand.textPrimary : Brand.textSecondary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 11)
@@ -351,7 +368,8 @@ private struct EnergyCapsule: View {
             )
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("\(level.label) energy")
+        .accessibilityLabel(Text("\(level.label) energy",
+                                 comment: "Energy level; %@ is the level name, e.g. Low"))
         .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 }
@@ -365,7 +383,8 @@ struct NoteInputView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            SectionLabel("Note")
+            SectionLabel(LocalizedStringResource("Note",
+                                                 comment: "Section label (noun) above the optional note field"))
 
             ZStack(alignment: .topLeading) {
                 // The focus ring was the accent at 1.5pt -- a hero signature
@@ -457,7 +476,7 @@ struct SubmitButtonView: View {
                         HStack(spacing: 8) {
                             Image(systemName: "checkmark.circle.fill")
                                 .font(.system(size: 18, weight: .semibold))
-                            Text("Saved")
+                            Text("Saved", comment: "Save button, after the mood check-in was saved")
                                 .font(.system(size: 17, weight: .semibold))
                         }
                         .foregroundStyle(.white)
@@ -466,7 +485,8 @@ struct SubmitButtonView: View {
                         HStack(spacing: 8) {
                             Image(systemName: "arrow.triangle.2.circlepath.icloud")
                                 .font(.system(size: 18, weight: .semibold))
-                            Text("Saved — will sync")
+                            Text("Saved — will sync",
+                                 comment: "Save button, after saving offline; syncs when back online")
                                 .font(.system(size: 17, weight: .semibold))
                         }
                         .foregroundStyle(.white)
@@ -494,8 +514,8 @@ struct SubmitButtonView: View {
 // MARK: - Section Label
 
 struct SectionLabel: View {
-    let title: String
-    init(_ title: String) { self.title = title }
+    let title: LocalizedStringResource
+    init(_ title: LocalizedStringResource) { self.title = title }
 
     var body: some View {
         // Was a 13pt uppercase tracked label, identical to the two others on

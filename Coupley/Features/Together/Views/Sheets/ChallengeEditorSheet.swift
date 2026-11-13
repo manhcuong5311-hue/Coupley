@@ -74,7 +74,7 @@ struct ChallengeEditorSheet: View {
             }
             .alert("Free plan includes 1 active challenge",
                    isPresented: $showLimitAlert) {
-                Button("Upgrade", role: .none) {
+                Button(LocalizedStringResource("Upgrade", comment: "Alert button: opens the Premium plans"), role: .none) {
                     dismiss()
                     NotificationCenter.default.post(name: .togetherShowPaywall, object: nil)
                 }
@@ -90,9 +90,9 @@ struct ChallengeEditorSheet: View {
 
     private var suggestionTray: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Quick Start")
+            Text("Quick Start", comment: "Section header above tappable ready-made suggestions")
                 .font(.system(size: 12, weight: .semibold, design: .rounded))
-                .kerning(0.6)
+                .scriptAwareKerning(0.6)
                 .textCase(.uppercase)
                 .foregroundStyle(Brand.textSecondary)
 
@@ -103,11 +103,11 @@ struct ChallengeEditorSheet: View {
                             VStack(alignment: .leading, spacing: 6) {
                                 HStack(spacing: 6) {
                                     Text(suggestion.emoji)
-                                    Text(suggestion.title)
+                                    Text(ContentL10n.text(suggestion.title))
                                         .font(.system(size: 13, weight: .bold, design: .rounded))
                                         .foregroundStyle(Brand.textPrimary)
                                 }
-                                Text(suggestion.blurb)
+                                Text(ContentL10n.text(suggestion.blurb))
                                     .font(.system(size: 11, design: .rounded))
                                     .foregroundStyle(Brand.textSecondary)
                                     .lineLimit(2)
@@ -135,7 +135,7 @@ struct ChallengeEditorSheet: View {
 
     private var titleField: some View {
         VStack(alignment: .leading, spacing: 8) {
-            sectionLabel("Title")
+            sectionLabel(LocalizedStringResource("Title", comment: "Form section label: the name of the item"))
             TextField("e.g. 14 Days of Gratitude", text: $title)
                 .focused($titleFocused)
                 .font(.system(size: 16, weight: .medium, design: .rounded))
@@ -156,7 +156,7 @@ struct ChallengeEditorSheet: View {
 
     private var categoryPicker: some View {
         VStack(alignment: .leading, spacing: 10) {
-            sectionLabel("Category")
+            sectionLabel(LocalizedStringResource("Category", comment: "Form section label"))
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
                     ForEach(ChallengeCategory.allCases) { cat in
@@ -173,7 +173,7 @@ struct ChallengeEditorSheet: View {
 
     private var colorwayPicker: some View {
         VStack(alignment: .leading, spacing: 10) {
-            sectionLabel("Colorway")
+            sectionLabel(LocalizedStringResource("Colorway", comment: "Form section label: pick the card's color theme"))
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 10) {
                     ForEach(TogetherColorway.allCases) { c in
@@ -201,7 +201,7 @@ struct ChallengeEditorSheet: View {
 
     private var cadencePicker: some View {
         VStack(alignment: .leading, spacing: 10) {
-            sectionLabel("Cadence")
+            sectionLabel(LocalizedStringResource("Cadence", comment: "Form section label: how often partners check in (daily or weekly)"))
             HStack(spacing: 0) {
                 ForEach(ChallengeCadence.allCases, id: \.self) { c in
                     Button(action: { cadence = c }) {
@@ -272,7 +272,7 @@ struct ChallengeEditorSheet: View {
 
     private var startDateField: some View {
         VStack(alignment: .leading, spacing: 8) {
-            sectionLabel("Start")
+            sectionLabel(LocalizedStringResource("Start", comment: "Form section label (noun): when the challenge starts"))
             VStack(spacing: 0) {
                 Toggle(isOn: $startNow) {
                     Text("Start today")
@@ -286,7 +286,7 @@ struct ChallengeEditorSheet: View {
                 if !startNow {
                     Divider().opacity(0.4)
                     DatePicker(
-                        "On",
+                        LocalizedStringResource("On", comment: "Date picker label: the day the challenge starts ('On <date>')"),
                         selection: $startDate,
                         in: Date()...,
                         displayedComponents: .date
@@ -307,15 +307,15 @@ struct ChallengeEditorSheet: View {
         }
     }
 
-    private func sectionLabel(_ text: String) -> some View {
+    private func sectionLabel(_ text: LocalizedStringResource) -> some View {
         Text(text)
             .font(.system(size: 12, weight: .semibold, design: .rounded))
-            .kerning(0.6)
+            .scriptAwareKerning(0.6)
             .textCase(.uppercase)
             .foregroundStyle(Brand.textSecondary)
     }
 
-    private func chip(label: String, icon: String, selected: Bool, onTap: @escaping () -> Void) -> some View {
+    private func chip(label: LocalizedStringResource, icon: String, selected: Bool, onTap: @escaping () -> Void) -> some View {
         Button(action: {
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
             onTap()
@@ -348,7 +348,8 @@ struct ChallengeEditorSheet: View {
     // MARK: - Helpers
 
     private func applySuggestion(_ suggestion: ChallengeSuggestion) {
-        title = suggestion.title
+        // Saved as the couple's own title, so it goes in the user's language.
+        title = ContentL10n.text(suggestion.title)
         category = suggestion.category
         colorway = TogetherColorway.suggested(for: suggestion.category)
         cadence = suggestion.cadence

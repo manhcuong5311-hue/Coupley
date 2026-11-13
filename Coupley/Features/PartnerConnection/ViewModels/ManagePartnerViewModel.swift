@@ -8,6 +8,7 @@
 
 import Foundation
 import Combine
+import FirebaseFirestore
 
 @MainActor
 final class ManagePartnerViewModel: ObservableObject {
@@ -50,7 +51,7 @@ final class ManagePartnerViewModel: ObservableObject {
                 // Edge: offline. Firestore queues the write; UI will still
                 // feel disconnected locally because appState flips on next
                 // snapshot. We surface a soft note instead of a hard error.
-                errorMessage = "We saved your disconnect request. Sync will finish when you're back online."
+                errorMessage = String(localized: "We saved your disconnect request. Sync will finish when you're back online.")
                 didDisconnect = true
             }
         }
@@ -63,7 +64,7 @@ final class ManagePartnerViewModel: ObservableObject {
             do {
                 archivedConnection = try await service.loadConnection(connectionId: connectionId)
             } catch {
-                errorMessage = error.localizedDescription
+                errorMessage = Self.message(for: error)
             }
         }
     }
@@ -85,9 +86,22 @@ final class ManagePartnerViewModel: ObservableObject {
                 )
                 didDeleteSharedData = true
             } catch {
-                errorMessage = "Couldn't delete shared data: \(error.localizedDescription)"
+                errorMessage = String(localized: "Couldn't delete shared data: \(Self.message(for: error))",
+                                      comment: "The placeholder is the reason, an error message")
             }
         }
+    }
+
+    /// Connection errors carry their own localized copy. Firestore's text is
+    /// English-only; the failure a person can act on, being offline, gets
+    /// the app's own message instead.
+    private static func message(for error: Error) -> String {
+        let nsError = error as NSError
+        if nsError.domain == FirestoreErrorDomain,
+           nsError.code == FirestoreErrorCode.unavailable.rawValue {
+            return String(localized: "You appear to be offline. Connect to the internet and try again.")
+        }
+        return error.localizedDescription
     }
 
     /// Dismisses the "your partner disconnected" banner.

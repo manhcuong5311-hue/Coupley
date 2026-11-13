@@ -59,28 +59,31 @@ struct ManageSharedDataView: View {
 
     @ViewBuilder
     private var summarySection: some View {
-        Section("Connection") {
+        Section {
             row(
                 icon: "clock.arrow.circlepath",
                 tint: Brand.textSecondary,
-                title: "Previous partner",
-                subtitle: partnerDisplayName?.isEmpty == false ? partnerDisplayName! : "Former partner"
+                title: Text("Previous partner"),
+                subtitle: partnerDisplayName.flatMap { $0.isEmpty ? nil : Text(verbatim: $0) }
+                    ?? Text("Former partner", comment: "Stands in for the name of a past partner that wasn't saved")
             )
             row(
                 icon: "link",
                 tint: Brand.textSecondary,
-                title: "Connection ID",
-                subtitle: connectionId,
+                title: Text("Connection ID"),
+                subtitle: Text(verbatim: connectionId),
                 monospaced: true
             )
             if let disconnectedAt = viewModel.archivedConnection?.disconnectedAt {
                 row(
                     icon: "calendar",
                     tint: Brand.textSecondary,
-                    title: "Disconnected",
-                    subtitle: Self.dateFormatter.string(from: disconnectedAt)
+                    title: Text("Disconnected", comment: "Row title above the date the connection ended"),
+                    subtitle: Text(verbatim: Self.dateFormatter.string(from: disconnectedAt))
                 )
             }
+        } header: {
+            Text("Connection", comment: "Section header: details of a partner connection")
         }
         .listRowBackground(surfaceRowBackground)
     }
@@ -123,11 +126,13 @@ struct ManageSharedDataView: View {
 
     // MARK: - Helpers
 
+    /// `Text` parameters: callers pass a literal (app copy, extracted for
+    /// translation) or `Text(verbatim:)` for a name, an id or a date.
     private func row(
         icon: String,
         tint: Color,
-        title: String,
-        subtitle: String,
+        title: Text,
+        subtitle: Text,
         monospaced: Bool = false
     ) -> some View {
         HStack(spacing: 14) {
@@ -140,16 +145,18 @@ struct ManageSharedDataView: View {
                     .foregroundStyle(tint)
             }
             VStack(alignment: .leading, spacing: 2) {
-                Text(title)
+                title
                     .font(.system(size: 15, weight: .medium, design: .rounded))
                     .foregroundStyle(Brand.textPrimary)
-                Text(subtitle)
+                // An id keeps its one line, cut in the middle; prose gets a
+                // second line, since translations run longer than English.
+                subtitle
                     .font(monospaced
                           ? .system(size: 11, design: .monospaced)
                           : .system(size: 12, design: .rounded))
                     .foregroundStyle(Brand.textSecondary)
-                    .lineLimit(1)
-                    .truncationMode(.middle)
+                    .lineLimit(monospaced ? 1 : 2)
+                    .truncationMode(monospaced ? .middle : .tail)
             }
             Spacer()
         }

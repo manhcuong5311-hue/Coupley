@@ -67,8 +67,12 @@ struct RemoveAdsSheet: View {
         .toolbar {
             if showsCloseButton {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Close") { dismiss() }
-                        .foregroundStyle(Brand.accentStart)
+                    Button {
+                        dismiss()
+                    } label: {
+                        Text("Close", comment: "Toolbar button (verb): closes the Remove Ads sheet.")
+                    }
+                    .foregroundStyle(Brand.accentStart)
                 }
             }
         }
@@ -146,7 +150,7 @@ struct RemoveAdsSheet: View {
         )
     }
 
-    private func benefitRow(icon: String, text: String) -> some View {
+    private func benefitRow(icon: String, text: LocalizedStringResource) -> some View {
         HStack(spacing: 14) {
             ZStack {
                 RoundedRectangle(cornerRadius: 10)
@@ -234,7 +238,7 @@ struct RemoveAdsSheet: View {
                 if let url = URL(string: "https://manhcuong5311-hue.github.io/Coupley/") {
                     Link("Privacy Policy", destination: url)
                 }
-                Text("·").foregroundStyle(Brand.textTertiary)
+                Text(verbatim: "·").foregroundStyle(Brand.textTertiary)
                 if let url = URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/") {
                     Link("Terms of Use (EULA)", destination: url)
                 }
@@ -273,7 +277,7 @@ struct RemoveAdsRow: View {
         }
     }
 
-    private var subtitle: String {
+    private var subtitle: LocalizedStringResource {
         guard premiumStore.isAdFree else {
             return "One-time purchase · \(premiumStore.removeAdsDisplayPrice) · for both of you"
         }

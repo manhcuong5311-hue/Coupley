@@ -74,8 +74,8 @@ enum AnniversaryStorageError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .encodingFailed:  return "Could not encode the image."
-        case .noDownloadURL:   return "Upload succeeded but no download URL was returned."
+        case .encodingFailed:  return String(localized: "Could not encode the image.")
+        case .noDownloadURL:   return String(localized: "Upload succeeded but no download URL was returned.")
         }
     }
 }

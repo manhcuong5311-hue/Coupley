@@ -85,12 +85,20 @@ struct MicroActionCard: View {
         }
     }
 
-    private var headerSubtitle: String {
+    private var headerSubtitle: LocalizedStringResource {
         switch focusAction?.tone {
-        case .support: return "Soft and steady"
-        case .bonding: return "Ride the moment"
-        case .light:   return "Low-key care"
-        case .none:    return "A gentle idea"
+        case .support:
+            return LocalizedStringResource("Soft and steady",
+                                           comment: "Subtitle of the daily idea card when the partner needs support")
+        case .bonding:
+            return LocalizedStringResource("Ride the moment",
+                                           comment: "Subtitle of the daily idea card when the partner is in a good mood")
+        case .light:
+            return LocalizedStringResource("Low-key care",
+                                           comment: "Subtitle of the daily idea card for a neutral mood")
+        case .none:
+            return LocalizedStringResource("A gentle idea",
+                                           comment: "Subtitle of the daily idea card")
         }
     }
 
@@ -99,7 +107,7 @@ struct MicroActionCard: View {
             Circle()
                 .fill(toneAccent)
                 .frame(width: 6, height: 6)
-            Text("Private")
+            Text("Private", comment: "Badge: this idea is visible only to you")
                 .font(.system(size: 10, weight: .semibold, design: .rounded))
                 .foregroundStyle(Brand.textTertiary)
         }
@@ -116,7 +124,7 @@ struct MicroActionCard: View {
         HStack(spacing: 5) {
             Image(systemName: "checkmark.circle.fill")
                 .font(.system(size: 11, weight: .semibold))
-            Text("Done")
+            Text("Done", comment: "Badge: today's idea has been done")
                 .font(.system(size: 10, weight: .semibold, design: .rounded))
         }
         .foregroundStyle(Color(red: 0.25, green: 0.75, blue: 0.50))
@@ -130,9 +138,12 @@ struct MicroActionCard: View {
 
     // MARK: - Focus
 
+    // `text` and `rationale` are stored as English base strings (the
+    // generator dedupes on `text`); only what is shown goes through the
+    // Content catalog.
     private func focusView(_ action: MicroAction) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text(action.text)
+            Text(ContentL10n.text(action.text))
                 .font(isHero ? BrandType.hero : BrandType.title)
                 .foregroundStyle(Brand.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -144,7 +155,7 @@ struct MicroActionCard: View {
                     .font(.system(size: 10, weight: .semibold))
                     .foregroundStyle(toneAccent.opacity(0.8))
                     .padding(.top, 2)
-                Text(action.rationale)
+                Text(ContentL10n.text(action.rationale))
                     .font(.system(size: 12, weight: .regular, design: .rounded))
                     .foregroundStyle(Brand.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -180,7 +191,7 @@ struct MicroActionCard: View {
                     }
                 }
 
-            Text(action.text)
+            Text(ContentL10n.text(action.text))
                 .font(.system(size: 14, weight: .regular, design: .rounded))
                 .foregroundStyle(action.status == .done ? Brand.textTertiary : Brand.textSecondary)
                 .strikethrough(action.status == .done, color: Brand.textTertiary)
@@ -200,8 +211,10 @@ struct MicroActionCard: View {
                 HStack(spacing: 6) {
                     Image(systemName: "checkmark")
                         .font(.system(size: 12, weight: .bold))
-                    Text("Done")
+                    Text("Done", comment: "Button: mark today's idea as done")
                         .font(.system(size: 13, weight: .semibold, design: .rounded))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
                 }
                 // Filled only at hero tier. A demoted card's Done button
                 // used to be the most saturated object in its viewport, which
@@ -226,15 +239,21 @@ struct MicroActionCard: View {
             Menu {
                 Button("In 30 minutes")  { viewModel.snooze(action, minutes: 30) }
                 Button("In 2 hours")     { viewModel.snooze(action, minutes: 120) }
-                Button("Tonight")        { viewModel.snooze(action, minutes: minutesUntilTonight()) }
+                Button { viewModel.snooze(action, minutes: minutesUntilTonight()) } label: {
+                    Text("Tonight", comment: "Remind-me menu option: remind me tonight")
+                }
                 Divider()
-                Button("Skip", role: .destructive) { viewModel.skip(action) }
+                Button(role: .destructive) { viewModel.skip(action) } label: {
+                    Text("Skip", comment: "Remind-me menu option: skip today's idea")
+                }
             } label: {
                 HStack(spacing: 6) {
                     Image(systemName: "bell.badge")
                         .font(.system(size: 12, weight: .semibold))
-                    Text("Remind me")
+                    Text("Remind me", comment: "Menu button: remind me about today's idea later")
                         .font(.system(size: 13, weight: .semibold, design: .rounded))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
                 }
                 .foregroundStyle(Brand.textPrimary)
                 .frame(maxWidth: .infinity)

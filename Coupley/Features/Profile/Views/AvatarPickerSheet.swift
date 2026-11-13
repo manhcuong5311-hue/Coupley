@@ -47,8 +47,12 @@ struct AvatarPickerSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") { dismiss() }
-                        .foregroundStyle(Brand.accentStart)
+                    Button {
+                        dismiss()
+                    } label: {
+                        Text("Done", comment: "Toolbar button that closes the avatar picker.")
+                    }
+                    .foregroundStyle(Brand.accentStart)
                 }
             }
             .onChange(of: photoItem) { _, newItem in

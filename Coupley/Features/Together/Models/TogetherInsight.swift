@@ -65,9 +65,12 @@ struct TogetherInsight: Identifiable, Equatable {
     let category: InsightCategory
 
     /// One line — the quote-worthy headline. Should read aloud nicely.
+    /// Display text, already localized by whoever builds the insight
+    /// (`TogetherCoachEngine`); never stored or compared.
     let title: String
 
     /// Optional second line for context. Always one or two sentences.
+    /// Already localized, like `title`.
     let detail: String?
 
     /// Optional CTA the card can render as a button. Tapping deeplinks into
@@ -89,15 +92,15 @@ enum InsightAction: Equatable {
     case createDream(suggestion: String)
     case openPaywall
 
-    var label: String {
+    var label: LocalizedStringResource {
         switch self {
-        case .openGoal:                 return "Open goal"
-        case .openChallenge:            return "Open challenge"
-        case .openDream:                return "Open dream"
-        case .createGoal:               return "Start this goal"
-        case .createChallenge:          return "Start this challenge"
-        case .createDream:              return "Add this dream"
-        case .openPaywall:              return "Unlock Coach"
+        case .openGoal:        return LocalizedStringResource("Open goal", comment: "Coach insight button")
+        case .openChallenge:   return LocalizedStringResource("Open challenge", comment: "Coach insight button")
+        case .openDream:       return LocalizedStringResource("Open dream", comment: "Coach insight button")
+        case .createGoal:      return LocalizedStringResource("Start this goal", comment: "Coach insight button")
+        case .createChallenge: return LocalizedStringResource("Start this challenge", comment: "Coach insight button")
+        case .createDream:     return LocalizedStringResource("Add this dream", comment: "Coach insight button")
+        case .openPaywall:     return LocalizedStringResource("Unlock Coach", comment: "Coach insight button: opens the Premium paywall")
         }
     }
 }

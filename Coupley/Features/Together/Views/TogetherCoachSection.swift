@@ -57,15 +57,21 @@ struct CoupleCoachSection: View {
 
     // MARK: - Header subtitle
 
-    private var headerSubtitle: String {
+    private var headerSubtitle: LocalizedStringResource {
         if !isPremium {
             return "Private insights that read your patterns and recommend the right next move."
         }
         if let leading = stats.leadingGoalTitle, let progress = stats.leadingGoalProgress {
-            return "\(leading) — \(Int(progress * 100))% of the way. Here's what the patterns say."
+            return LocalizedStringResource(
+                "\(leading) — \(Int(progress * 100))% of the way. Here's what the patterns say.",
+                comment: "Coach header. Placeholders: the leading goal's title, its percent complete"
+            )
         }
         if stats.longestActiveStreak > 0 {
-            return "On a \(stats.longestActiveStreak)-day streak. Here's what to watch."
+            return LocalizedStringResource(
+                "On a \(stats.longestActiveStreak)-day streak. Here's what to watch.",
+                comment: "Coach header. %lld is the longest current streak in days"
+            )
         }
         return "Private insights tuned to the rhythms of you two."
     }
@@ -122,7 +128,7 @@ struct CoupleCoachSection: View {
                         .font(.system(size: 22, weight: .bold, design: .rounded))
                         .foregroundStyle(coachAccent)
                         .monospacedDigit()
-                    Text("overall")
+                    Text("overall", comment: "Caption under the overall progress percentage")
                         .font(.system(size: 10, weight: .semibold, design: .rounded))
                         .foregroundStyle(Brand.textTertiary)
                 }
@@ -130,7 +136,7 @@ struct CoupleCoachSection: View {
         }
     }
 
-    private var coachStatusLine: String {
+    private var coachStatusLine: LocalizedStringResource {
         if stats.activeGoalCount == 0 && stats.activeChallengeCount == 0 {
             return "No signals yet — start a goal or a challenge for tailored insights."
         }
@@ -233,14 +239,17 @@ struct CoupleCoachSection: View {
         }
     }
 
+    /// Sample cards blurred behind the lock for free users.
     private func previewInsight(_ index: Int) -> TogetherInsight {
         if index == 0 {
+            let samplePercent = 72
             return TogetherInsight(
                 id: "preview-1",
                 tone: .celebrate,
                 category: .progress,
-                title: "Your Japan Trip is 72% complete ✈️",
-                detail: "You're so close. One more push from both of you.",
+                title: String(localized: "Your Japan Trip is \(samplePercent)% complete ✈️",
+                              comment: "Sample coach insight shown blurred behind the Premium lock"),
+                detail: String(localized: "You're so close. One more push from both of you."),
                 action: nil,
                 weight: 0
             )
@@ -249,8 +258,9 @@ struct CoupleCoachSection: View {
                 id: "preview-2",
                 tone: .encourage,
                 category: .consistency,
-                title: "12-day gratitude streak together 🌿",
-                detail: "Consistency is the rarest thing. You're doing the rare thing together.",
+                title: String(localized: "12-day gratitude streak together 🌿",
+                              comment: "Sample coach insight shown blurred behind the Premium lock"),
+                detail: String(localized: "Consistency is the rarest thing. You're doing the rare thing together."),
                 action: nil,
                 weight: 0
             )
@@ -294,6 +304,7 @@ struct InsightCard: View {
                         .shadow(color: insight.tone.color.primary.opacity(0.35),
                                 radius: 6, y: 2)
                     Image(systemName: insight.tone.icon)
+                        .flipsForRightToLeftLayoutDirection(true)
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundStyle(.white)
                 }

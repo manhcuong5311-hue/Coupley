@@ -39,7 +39,7 @@ struct EmailAuthView: View {
         .navigationBarBackButtonHidden(false)
         .toolbar {
             ToolbarItem(placement: .principal) {
-                Text(viewModel.mode == .login ? "Sign In" : "Create Account")
+                Text(viewModel.submitTitle)
                     .font(.system(size: 16, weight: .semibold, design: .rounded))
                     .foregroundStyle(Brand.textPrimary)
             }
@@ -161,7 +161,9 @@ struct EmailAuthView: View {
 
 struct BrandField: View {
     let icon: String
-    let placeholder: String
+    /// App copy: every caller passes a literal, which is extracted for
+    /// translation.
+    let placeholder: LocalizedStringResource
     @Binding var text: String
     var keyboardType: UIKeyboardType = .default
     var textContentType: UITextContentType? = nil
@@ -184,7 +186,10 @@ struct BrandField: View {
                     .foregroundStyle(Brand.textPrimary)
                     .tint(Brand.accentStart)
             } else {
-                TextField(placeholder, text: $text)
+                // The `prompt:` form is the LocalizedStringResource initializer
+                // available before iOS 26; a nil prompt shows the label as the
+                // placeholder, exactly like the plain initializer.
+                TextField(placeholder, text: $text, prompt: nil)
                     .keyboardType(keyboardType)
                     .textContentType(textContentType)
                     .autocorrectionDisabled()

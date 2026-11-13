@@ -20,11 +20,12 @@ enum AppTheme: String, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
-    var label: String {
+    /// Display name only (the stored value is `rawValue`).
+    var label: LocalizedStringResource {
         switch self {
-        case .system: return "System"
-        case .light:  return "Light"
-        case .dark:   return "Dark"
+        case .system: return LocalizedStringResource("System", comment: "Appearance option: follow the device's light/dark setting")
+        case .light:  return LocalizedStringResource("Light", comment: "Appearance option: always light mode")
+        case .dark:   return LocalizedStringResource("Dark", comment: "Appearance option: always dark mode")
         }
     }
 

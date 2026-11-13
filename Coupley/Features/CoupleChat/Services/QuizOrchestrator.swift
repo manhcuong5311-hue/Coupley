@@ -160,11 +160,11 @@ final class DefaultInsightGenerator: InsightGenerating {
         // builds that have no idea which language wrote it.
         let sharedLabel = sharedId.map { quiz.baseLabel(forOptionId: $0) }
 
-        let summary = QuizResultCopy.sentence(
+        let summary = QuizResultCopy.baseSentence(
             kind: kind,
             optionLabel: sharedLabel,
             emoji: quiz.topic.emoji,
-            topicLabel: quiz.topic.label
+            topicLabel: quiz.topic.baseLabel
         )
 
         // Write-only field, kept so existing documents keep their shape and

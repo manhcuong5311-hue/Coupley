@@ -24,14 +24,18 @@ struct MessageRow: View {
         switch message.kind {
         case .text:
             VStack(alignment: isMine ? .trailing : .leading, spacing: 2) {
-                TextBubble(text: message.text ?? "", isMine: isMine)
+                // What people typed is drawn as stored; the one line the app
+                // posts for them (the future-letter note) in the reader's language.
+                TextBubble(text: ChatSystemLine.displayText(message.text ?? ""), isMine: isMine)
                 if isMine, let status = outgoingStatus {
                     OutgoingStatusLabel(status: status)
                         .padding(.trailing, 8)
                 }
             }
         case .system:
-            SystemLine(text: message.text ?? "")
+            // Stored English prose; the shapes this app writes are redrawn
+            // in the reader's language, anything else is shown as stored.
+            SystemLine(text: ChatSystemLine.display(message.text ?? ""))
         case .quiz:
             QuizCardBubble(quiz: quiz, viewerId: viewerId, partnerId: partnerId,
                            onAnswerTapped: onAnswerTapped)
@@ -69,11 +73,11 @@ struct OutgoingStatusLabel: View {
         }
     }
 
-    private var label: String {
+    private var label: LocalizedStringResource {
         switch status {
-        case .pending: return "Sending…"
-        case .sent:    return "Sent"
-        case .seen:    return "Seen"
+        case .pending: return LocalizedStringResource("Sending…", comment: "Chat message status: not delivered yet")
+        case .sent:    return LocalizedStringResource("Sent", comment: "Chat message status: delivered")
+        case .seen:    return LocalizedStringResource("Seen", comment: "Chat message status: the partner has read it")
         }
     }
 }
@@ -115,11 +119,24 @@ struct TextBubble: View {
 // MARK: - System line
 
 struct SystemLine: View {
-    let text: String
+    private let text: Text
+
+    /// App copy, localized.
+    init(text: LocalizedStringResource) {
+        self.text = Text(text)
+    }
+
+    /// Text that is already final (stored prose, or a line
+    /// `ChatSystemLine.display` resolved for the reader): drawn verbatim.
+    @_disfavoredOverload
+    init(text: String) {
+        self.text = Text(verbatim: text)
+    }
+
     var body: some View {
         HStack {
             Spacer()
-            Text(text)
+            text
                 .font(.system(size: 12, weight: .medium, design: .rounded))
                 .foregroundStyle(Brand.textSecondary)
                 .padding(.horizontal, 14)
@@ -241,11 +258,11 @@ struct QuizCardBubble: View {
 
     /// "Custom from you" when the viewer is the author, "Custom from your
     /// partner" otherwise. Keeps the model layer free of a name lookup.
-    private func customAuthorshipLabel(for quiz: ChatQuiz) -> String {
+    private func customAuthorshipLabel(for quiz: ChatQuiz) -> LocalizedStringResource {
         if quiz.authorId == viewerId {
-            return "Custom from you"
+            return LocalizedStringResource("Custom from you", comment: "Badge on a quiz card: the viewer wrote this quiz")
         }
-        return "Custom from your partner"
+        return LocalizedStringResource("Custom from your partner", comment: "Badge on a quiz card: the partner wrote this quiz")
     }
 
     /// Romantic note panel shown above the question on custom quizzes.
@@ -279,7 +296,7 @@ struct QuizCardBubble: View {
     ///   • "You've answered" when only viewer has answered → disabled
     ///   • "Waiting on you" when viewer is the author and partner hasn't answered → disabled
     ///   • "Answer" otherwise
-    private func buttonLabel(for quiz: ChatQuiz) -> String {
+    private func buttonLabel(for quiz: ChatQuiz) -> LocalizedStringResource {
         if quiz.bothAnswered(userIds: [viewerId, partnerId]) {
             return "View result"
         }
@@ -290,7 +307,7 @@ struct QuizCardBubble: View {
             }
             return "You've answered"
         }
-        return "Answer"
+        return LocalizedStringResource("Answer", comment: "Button on a quiz card: answer the quiz (verb)")
     }
 
     /// Disable the button when the viewer can't take action. Both-answered
@@ -309,19 +326,34 @@ struct QuizCardBubble: View {
         if let quiz {
             let mine    = quiz.hasAnswered(viewerId)
             let partner = quiz.hasAnswered(partnerId)
-            HStack(spacing: 6) {
-                Circle().fill(mine ? Brand.accentStart : Brand.textTertiary).frame(width: 6, height: 6)
-                Text(mine ? "You answered" : "Your turn")
-                    .font(.caption)
-                    .foregroundStyle(Brand.textSecondary)
-
-                Text("•").foregroundStyle(Brand.textTertiary)
-
-                Circle().fill(partner ? Brand.accentStart : Brand.textTertiary).frame(width: 6, height: 6)
-                Text(partner ? "Partner answered" : "Waiting on partner")
-                    .font(.caption)
-                    .foregroundStyle(Brand.textSecondary)
+            let myStatus: LocalizedStringResource = mine
+                ? LocalizedStringResource("You answered", comment: "Quiz card in chat: you have answered this quiz")
+                : LocalizedStringResource("Your turn", comment: "Quiz card in chat: you have not answered this quiz yet")
+            let partnerStatus: LocalizedStringResource = partner
+                ? LocalizedStringResource("Partner answered", comment: "Quiz card in chat: your partner has answered this quiz")
+                : LocalizedStringResource("Waiting on partner", comment: "Quiz card in chat: your partner has not answered yet")
+            // One line when both statuses fit; longer languages stack them.
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 6) {
+                    statusItem(done: mine, label: myStatus)
+                    Text(verbatim: "•").foregroundStyle(Brand.textTertiary)
+                    statusItem(done: partner, label: partnerStatus)
+                }
+                .lineLimit(1)
+                VStack(alignment: .leading, spacing: 4) {
+                    statusItem(done: mine, label: myStatus)
+                    statusItem(done: partner, label: partnerStatus)
+                }
             }
+        }
+    }
+
+    private func statusItem(done: Bool, label: LocalizedStringResource) -> some View {
+        HStack(spacing: 6) {
+            Circle().fill(done ? Brand.accentStart : Brand.textTertiary).frame(width: 6, height: 6)
+            Text(label)
+                .font(.caption)
+                .foregroundStyle(Brand.textSecondary)
         }
     }
 }
@@ -561,7 +593,7 @@ struct QuizReactionBar: View {
                 Spacer(minLength: 4)
                 HStack(spacing: 3) {
                     Text(partnerReaction.emoji).font(.system(size: 13))
-                    Text("them")
+                    Text("them", comment: "Tag after the partner's reaction emoji on a quiz result: the partner reacted with this")
                         .font(.system(size: 10, weight: .semibold, design: .rounded))
                         .foregroundStyle(Brand.textTertiary)
                 }
@@ -587,14 +619,16 @@ struct GuessOutcomeRow: View {
         quiz.guessWasRight(viewer: viewerId, partner: partnerId)
     }
 
+    /// Several picks are listed the way the reader's language lists things
+    /// (identical to ", " joining in English).
     private var guessText: String? {
-        quiz.guessLabels(ofUser: viewerId)?.joined(separator: ", ")
+        quiz.guessLabels(ofUser: viewerId)?.formatted(.list(type: .and, width: .narrow))
     }
 
     var body: some View {
         if let outcome, let guessText {
             HStack(spacing: 8) {
-                Text(outcome ? "🎯" : "🤔").font(.system(size: 16))
+                Text(verbatim: outcome ? "🎯" : "🤔").font(.system(size: 16))
                 Text(outcome
                      ? "You called it — you guessed exactly that"
                      : "You guessed \u{201C}\(guessText)\u{201D}")

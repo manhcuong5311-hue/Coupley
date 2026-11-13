@@ -245,7 +245,8 @@ final class ChatViewModel: ObservableObject {
                 await MainActor.run {
                     self.errorMessage = error.localizedDescription
                     self.draftText = body      // restore so the user doesn't lose it
-                    self.sendFailure = "It's back in the message box so you can try again."
+                    self.sendFailure = String(localized: "It's back in the message box so you can try again.",
+                                              comment: "Alert message after a chat message failed to send")
                 }
             }
         }
@@ -390,9 +391,9 @@ final class ChatViewModel: ObservableObject {
                 try await chatService.postSystemMessage(
                     // Base language: this prose is stored and read back by
                     // both partners, so it must not take this device's.
-                    // Still English for everyone until it becomes a key —
-                    // see the system-message item in PRE_L10N_AUDIT.md.
-                    "New quiz: \(quiz.topic.emoji) \(quiz.topic.baseLabel)",
+                    // Readers draw it in their own language through
+                    // `ChatSystemLine.display`.
+                    ChatSystemLine.newQuiz(quiz.topic),
                     coupleId: session.coupleId
                 )
                 try await chatService.postQuiz(quiz, coupleId: session.coupleId)
@@ -462,7 +463,8 @@ final class ChatViewModel: ObservableObject {
                 questionId: "custom_\(UUID().uuidString)",
                 topic: .loveLanguage,    // custom quizzes default to the love bucket — author's note carries the real flavor
                 question: question.trimmingCharacters(in: .whitespacesAndNewlines),
-                subtitle: trimmedTitle?.isEmpty == false ? trimmedTitle! : "From your partner ❤️",
+                // Stored, so base language; `displaySubtitle` translates it.
+                subtitle: trimmedTitle?.isEmpty == false ? trimmedTitle! : ChatQuiz.untitledCustomSubtitle,
                 options: options,
                 optionIds: options,   // user-authored text is its own identity
                 allowsMultiple: allowsMultiple,
@@ -477,7 +479,8 @@ final class ChatViewModel: ObservableObject {
 
             do {
                 try await chatService.postSystemMessage(
-                    "Custom quiz from \(authorDisplayLabel())",
+                    // Base language, like the "New quiz" line.
+                    ChatSystemLine.customQuiz,
                     coupleId: session.coupleId
                 )
                 try await chatService.postQuiz(quiz, coupleId: session.coupleId)
@@ -485,14 +488,6 @@ final class ChatViewModel: ObservableObject {
                 await MainActor.run { self.errorMessage = error.localizedDescription }
             }
         }
-    }
-
-    /// Short label for the system-line attribution. Falls back to "your
-    /// partner" when we don't have a stored display name — the chat view
-    /// model intentionally doesn't depend on the profile view model so this
-    /// is a deliberate, lightweight phrasing.
-    private func authorDisplayLabel() -> String {
-        "your partner ❤️"
     }
 
     // MARK: - Read receipts
@@ -556,7 +551,9 @@ final class ChatViewModel: ObservableObject {
 
         do {
             try await chatService.postSystemMessage(
-                "New quiz: \(quiz.topic.emoji) \(quiz.topic.label)",
+                // Base language: `topic.label` is now the reader's language
+                // and would store this device's translation.
+                ChatSystemLine.newQuiz(quiz.topic),
                 coupleId: session.coupleId
             )
             try await chatService.postQuiz(quiz, coupleId: session.coupleId)

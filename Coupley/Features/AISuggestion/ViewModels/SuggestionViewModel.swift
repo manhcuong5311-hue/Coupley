@@ -73,7 +73,7 @@ final class SuggestionViewModel: ObservableObject {
                 cachedResult = result
                 applyResult(result)
             } catch {
-                loadState = .error("Couldn't generate suggestions. Tap to retry.")
+                loadState = .error(String(localized: "Couldn't generate suggestions. Tap to retry."))
             }
         }
     }

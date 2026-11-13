@@ -62,20 +62,26 @@ struct AnniversaryEditorSheet: View {
                 Brand.bgGradient.ignoresSafeArea()
 
                 Form {
-                    Section("Title") {
+                    Section {
                         TextField("1 year together", text: $title)
                             .font(.system(size: 16, design: .rounded))
                             .textInputAutocapitalization(.sentences)
+                    } header: {
+                        Text("Title", comment: "Section header: the name of an anniversary")
                     }
 
-                    Section("Date") {
+                    // "Date" is ambiguous in a couples app: say which one.
+                    Section {
                         DatePicker(
-                            "Date",
                             selection: $date,
                             displayedComponents: [.date]
-                        )
+                        ) {
+                            Text("Date", comment: "The calendar day of an anniversary (not a romantic date)")
+                        }
                         .datePickerStyle(.graphical)
                         .tint(Brand.accentStart)
+                    } header: {
+                        Text("Date", comment: "The calendar day of an anniversary (not a romantic date)")
                     }
 
                     Section("Cover Photo") {
@@ -99,7 +105,9 @@ struct AnniversaryEditorSheet: View {
                 }
                 .scrollContentBackground(.hidden)
             }
-            .navigationTitle(isEditing ? "Edit" : "New Anniversary")
+            .navigationTitle(isEditing
+                             ? Text("Edit", comment: "Navigation title: editing an anniversary")
+                             : Text("New Anniversary"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {

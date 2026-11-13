@@ -52,8 +52,10 @@ struct AICoachRewriteView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
-                Button("Close") { dismiss() }
-                    .foregroundStyle(Brand.textSecondary)
+                Button { dismiss() } label: {
+                    Text("Close", comment: "Toolbar button (verb): dismiss the sheet")
+                }
+                .foregroundStyle(Brand.textSecondary)
             }
         }
         .alert("Something went wrong", isPresented: Binding(

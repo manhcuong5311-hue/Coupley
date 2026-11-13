@@ -43,8 +43,10 @@ struct CurrencyPickerSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") { dismiss() }
-                        .foregroundStyle(Brand.accentStart)
+                    Button(LocalizedStringResource("Done", comment: "Toolbar button: closes the sheet")) {
+                        dismiss()
+                    }
+                    .foregroundStyle(Brand.accentStart)
                 }
             }
         }
@@ -58,10 +60,10 @@ struct CurrencyPickerSheet: View {
             Text(info.flag)
                 .font(.system(size: 26))
             VStack(alignment: .leading, spacing: 2) {
-                Text(info.name)
+                Text(Self.displayName(for: info))
                     .font(.system(size: 15, weight: .semibold, design: .rounded))
                     .foregroundStyle(Brand.textPrimary)
-                Text("\(info.code) · \(info.symbol)")
+                Text(verbatim: "\(info.code) · \(info.symbol)")
                     .font(.system(size: 12, design: .rounded))
                     .foregroundStyle(Brand.textSecondary)
             }
@@ -76,18 +78,22 @@ struct CurrencyPickerSheet: View {
         .contentShape(Rectangle())
     }
 
+    // MARK: - Display name
+
+    /// The currency's name in the user's language ("Đô la Mỹ" for USD in
+    /// Vietnamese): `CurrencyInfo.name`, from Foundation's locale data and
+    /// capitalised to stand alone as a row title.
+    static func displayName(for info: CurrencyInfo) -> String {
+        info.name
+    }
+
     // MARK: - Search
 
+    /// Matches the code, the localized name, the English name and the symbol,
+    /// ignoring case and accents, "Đ" included ("do la" finds "Đô la Mỹ").
+    /// See `CurrencyInfo.matches(_:)`.
     private var filtered: [CurrencyInfo] {
-        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return CurrencyCatalog.all }
-
-        let needle = trimmed.lowercased()
-        return CurrencyCatalog.all.filter {
-            $0.code.lowercased().contains(needle)
-                || $0.name.lowercased().contains(needle)
-                || $0.symbol.lowercased().contains(needle)
-        }
+        CurrencyCatalog.search(query)
     }
 }
 

@@ -39,11 +39,16 @@ struct ChatQuizOption: Equatable {
     /// Short insight shown once the user has picked this option. `nil` for the
     /// four multi-select pickers (genres, sports, content, hobbies) that
     /// deliberately carry none.
+    ///
+    /// BASE-LANGUAGE text, like `label`. Draw `displayHint`.
     let hint: String?
 
-    /// What to draw. Identical to `label` until there is a string catalog;
-    /// then this becomes the lookup and `label` stays put.
-    var displayLabel: String { label }
+    /// What to draw: `label` in the reader's language, from the Content
+    /// catalog, falling back to `label` itself when it has no translation.
+    var displayLabel: String { ContentL10n.text(label) }
+
+    /// What to draw for `hint`, in the reader's language.
+    var displayHint: String? { hint.map(ContentL10n.text) }
 
     init(_ id: String, _ label: String, _ hint: String? = nil) {
         self.id = id
@@ -75,6 +80,11 @@ struct ChatQuizTemplate {
         self.options = options
         self.allowsMultiple = allowsMultiple
     }
+
+    /// `question` and `subtitle` are BASE-LANGUAGE: they are denormalized onto
+    /// every quiz document posted from this template. These are what to draw.
+    var displayQuestion: String { ContentL10n.text(question) }
+    var displaySubtitle: String { ContentL10n.text(subtitle) }
 
     /// Base-language text in declaration order — what gets denormalized onto
     /// a new quiz document. Storage, not display.
@@ -1570,3 +1580,26 @@ enum ChatQuizBank {
         all.filter { $0.topic == topic }
     }
 }
+
+#if DEBUG
+extension ChatQuizBank {
+    /// Every base string the UI shows through ContentL10n (to build the Content catalog).
+    ///
+    /// Topic names, then each template's question, subtitle, option labels
+    /// and hints, in bank order. Deduplicated: the catalog is keyed by the
+    /// base text, so a string two templates share is one entry.
+    static var l10nContentStrings: [String] {
+        var strings = QuizTopic.allCases.map(\.baseLabel)
+        for template in all {
+            strings.append(template.question)
+            strings.append(template.subtitle)
+            for option in template.options {
+                strings.append(option.label)
+                if let hint = option.hint { strings.append(hint) }
+            }
+        }
+        var seen = Set<String>()
+        return strings.filter { !$0.isEmpty && seen.insert($0).inserted }
+    }
+}
+#endif

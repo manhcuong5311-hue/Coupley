@@ -75,10 +75,14 @@ struct CustomChatQuizBuilderSheet: View {
                         .foregroundStyle(Brand.textSecondary)
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Send") { handleSend() }
-                        .fontWeight(.semibold)
-                        .foregroundStyle(canSend ? Brand.accentStart : Brand.textTertiary)
-                        .disabled(!canSend)
+                    Button {
+                        handleSend()
+                    } label: {
+                        Text("Send", comment: "Toolbar button: post the custom quiz to the chat (verb)")
+                    }
+                    .fontWeight(.semibold)
+                    .foregroundStyle(canSend ? Brand.accentStart : Brand.textTertiary)
+                    .disabled(!canSend)
                 }
             }
         }
@@ -111,7 +115,7 @@ struct CustomChatQuizBuilderSheet: View {
                 Text("Custom from you")
                     .font(.system(size: 12, weight: .semibold, design: .rounded))
                     .textCase(.uppercase)
-                    .kerning(0.5)
+                    .scriptAwareKerning(0.5)
             }
             .foregroundStyle(Brand.accentStart)
             .padding(.horizontal, 9)
@@ -139,7 +143,10 @@ struct CustomChatQuizBuilderSheet: View {
                 )
             }
 
-            Text(trimmedQuestion.isEmpty ? "Your question will appear here…" : trimmedQuestion)
+            Text(trimmedQuestion.isEmpty
+                 ? String(localized: "Your question will appear here…",
+                          comment: "Custom quiz preview, shown until a question is typed")
+                 : trimmedQuestion)
                 .font(.system(size: 17, weight: .semibold, design: .rounded))
                 .foregroundStyle(trimmedQuestion.isEmpty ? Brand.textTertiary : Brand.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -164,7 +171,7 @@ struct CustomChatQuizBuilderSheet: View {
     }
 
     private var titleCard: some View {
-        card(title: "TITLE (OPTIONAL)", icon: "textformat", tint: Color(red: 0.55, green: 0.74, blue: 0.95)) {
+        card(title: "Title (optional)", icon: "textformat", tint: Color(red: 0.55, green: 0.74, blue: 0.95)) {
             TextField("e.g. Just for you ❤️", text: $title)
                 .focused($focusedField, equals: .title)
                 .font(.system(size: 16, design: .rounded))
@@ -173,7 +180,7 @@ struct CustomChatQuizBuilderSheet: View {
     }
 
     private var questionCard: some View {
-        card(title: "QUESTION", icon: "questionmark.bubble.fill", tint: Brand.accentStart) {
+        card(title: LocalizedStringResource("Question", comment: "Custom quiz form: section for the question text (noun)"), icon: "questionmark.bubble.fill", tint: Brand.accentStart) {
             TextField("What do you think I love most about you?", text: $question, axis: .vertical)
                 .focused($focusedField, equals: .question)
                 .lineLimit(1...4)
@@ -183,7 +190,7 @@ struct CustomChatQuizBuilderSheet: View {
     }
 
     private var optionsCard: some View {
-        card(title: "ANSWER CHOICES", icon: "list.bullet", tint: Color(red: 1.0, green: 0.55, blue: 0.25)) {
+        card(title: "Answer choices", icon: "list.bullet", tint: Color(red: 1.0, green: 0.55, blue: 0.25)) {
             VStack(spacing: 10) {
                 ForEach(options.indices, id: \.self) { index in
                     optionRow(index: index)
@@ -253,7 +260,7 @@ struct CustomChatQuizBuilderSheet: View {
     }
 
     private var modeCard: some View {
-        card(title: "PICK MODE", icon: "checkmark.square.fill", tint: Color(red: 0.40, green: 0.70, blue: 1.0)) {
+        card(title: "Pick mode", icon: "checkmark.square.fill", tint: Color(red: 0.40, green: 0.70, blue: 1.0)) {
             Toggle(isOn: Binding(
                 get: { allowsMultiple },
                 set: { newValue in
@@ -278,7 +285,7 @@ struct CustomChatQuizBuilderSheet: View {
     }
 
     private var selectionCard: some View {
-        card(title: "YOUR ANSWER", icon: "heart.fill", tint: Brand.accentStart) {
+        card(title: "Your answer", icon: "heart.fill", tint: Brand.accentStart) {
             let valid = validOptions
             if valid.isEmpty {
                 Text("Add at least two choices above, then pick the answer that's true for you. Your partner gets a 💖 if they match.")
@@ -331,7 +338,7 @@ struct CustomChatQuizBuilderSheet: View {
     }
 
     private var noteCard: some View {
-        card(title: "ROMANTIC NOTE (OPTIONAL)", icon: "envelope.fill", tint: Color(red: 0.85, green: 0.40, blue: 0.80)) {
+        card(title: "Romantic note (optional)", icon: "envelope.fill", tint: Color(red: 0.85, green: 0.40, blue: 0.80)) {
             TextField("Just because I was thinking about you…", text: $note, axis: .vertical)
                 .focused($focusedField, equals: .note)
                 .lineLimit(1...4)
@@ -388,9 +395,11 @@ struct CustomChatQuizBuilderSheet: View {
 
     // MARK: - Card wrapper
 
+    /// `title` is sentence case in the catalog and set in capitals here, so
+    /// each language capitalizes it by its own rules.
     @ViewBuilder
     private func card<Content: View>(
-        title: String,
+        title: LocalizedStringResource,
         icon: String,
         tint: Color,
         @ViewBuilder content: () -> Content
@@ -403,7 +412,8 @@ struct CustomChatQuizBuilderSheet: View {
                 Text(title)
                     .font(.system(size: 12, weight: .semibold, design: .rounded))
                     .foregroundStyle(Brand.textSecondary)
-                    .tracking(0.5)
+                    .textCase(.uppercase)
+                    .scriptAwareTracking(0.5)
                 Spacer()
             }
             content()

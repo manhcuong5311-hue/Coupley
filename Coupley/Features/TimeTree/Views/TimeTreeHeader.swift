@@ -123,6 +123,10 @@ struct TimeTreeHeader: View {
         let startDay = JourneyCalendarDay.localDay(ofStored: anchor.startDate)
         let since = startDay.formatted(.dateTime.day().month(.abbreviated).year())
         let spokenSince = startDay.formatted(.dateTime.day().month(.wide).year())
+        let sinceText = Text("Since \(since)",
+                             comment: "Journey hero, under the stage: when the relationship started. %@ is the start date such as '26 Jan 2026'. An 'Edit' link follows it.")
+        let editLinkText = Text("Edit", comment: "Journey hero: link to edit the relationship start date")
+            .foregroundStyle(Brand.accentStart)
 
         return VStack(alignment: .leading, spacing: 0) {
             VStack(alignment: .leading, spacing: 2) {
@@ -131,9 +135,12 @@ struct TimeTreeHeader: View {
                     .foregroundStyle(Brand.textPrimary)
                     .monospacedDigit()
                     .contentTransition(.numericText())
-                Text(days == 1 ? "day together" : "days together")
-                    .font(JourneyFont.label)
-                    .foregroundStyle(Brand.textSecondary)
+                // Agrees with the count above it (Russian: 292 дня, 295 дней).
+                Text(verbatim: CountedCaption.removingCount(from: String(
+                    localized: "\(days) days together",
+                    comment: "Journey hero: caption under the big day count. The number is shown large above it and the app removes it here, so keep %lld and write each plural form to read naturally without the number ('%lld days together' shows as 'days together').")))
+                .font(JourneyFont.label)
+                .foregroundStyle(Brand.textSecondary)
             }
             // The column reads as one sentence; the caption below is folded
             // into it, and the two buttons stay their own elements.
@@ -158,7 +165,8 @@ struct TimeTreeHeader: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("\(stage.displayName). How your tree grows")
+            .accessibilityLabel(Text("\(stage.displayName). How your tree grows",
+                                     comment: "VoiceOver: the tree stage button, which opens a guide to the stages. %@ is the stage name such as 'Blooming'."))
 
             Text(stage.poeticCaption)
                 .font(JourneyFont.body)
@@ -170,28 +178,41 @@ struct TimeTreeHeader: View {
                 UIImpactFeedbackGenerator(style: .light).impactOccurred()
                 onEditStartDate()
             } label: {
-                Text("Since \(since) · \(Text("Edit").foregroundStyle(Brand.accentStart))")
-                    .font(JourneyFont.meta)
-                    .foregroundStyle(Brand.textSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(.vertical, 4)
-                    .contentShape(Rectangle())
+                // "Since 26 Jan 2026 · Edit" on one line when it fits. Long
+                // dates in a narrow column next to the tree put the link on
+                // its own line instead of leaving "· Edit" stranded.
+                ViewThatFits(in: .horizontal) {
+                    // One Text, so the spaces around the dot stay on both sides
+                    // in right-to-left languages too.
+                    (sinceText + Text(verbatim: " · ") + editLinkText)
+                        .lineLimit(1)
+                    VStack(alignment: .leading, spacing: 2) {
+                        sinceText
+                            .fixedSize(horizontal: false, vertical: true)
+                        editLinkText
+                    }
+                }
+                .font(JourneyFont.meta)
+                .foregroundStyle(Brand.textSecondary)
+                .padding(.vertical, 4)
+                .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             .padding(.top, 6)
-            .accessibilityLabel("Started \(spokenSince). Edit start date")
+            .accessibilityLabel(Text("Started \(spokenSince). Edit start date",
+                                     comment: "VoiceOver: the start date button. %@ is a date such as '26 January 2026'."))
         }
     }
 
     /// "291 days together. Blooming. First flowers on the branches."
     private func heroSummary(days: Int) -> String {
-        [
-            days == 1 ? "1 day together" : "\(days) days together",
-            stage.displayName,
-            stage.poeticCaption
-        ]
-        .map(Self.sentence)
-        .joined(separator: " ")
+        let name = stage.displayName
+        let caption = stage.poeticCaption
+        return days == 1
+            ? String(localized: "1 day together. \(name). \(caption)",
+                     comment: "VoiceOver summary of the Journey hero. First %@ is the tree stage name, second its caption (a full sentence).")
+            : String(localized: "\(days) days together. \(name). \(caption)",
+                     comment: "VoiceOver summary of the Journey hero: day count, then the tree stage name, then its caption (a full sentence).")
     }
 
     private func tree(days: Int, ornaments: [JourneyTreeOrnament]) -> some View {
@@ -227,31 +248,42 @@ struct TimeTreeHeader: View {
         let sealed = ornaments.filter { $0.kind == .sealedEnvelope }.count
         let blossoms = ornaments.filter { $0.kind == .blossom }.count
         let partner = letters.partnerName
-        var parts = ["Your tree."]
+        // Whole sentences, each its own key, read one after another.
+        var parts = [String(localized: "Your tree.", comment: "VoiceOver: first sentence describing the Journey tree picture")]
         if memoryCount > 0 {
             parts.append(memoryCount == 1
-                         ? "1 memory shines around it."
-                         : "\(memoryCount) memories shine around it.")
+                         ? String(localized: "1 memory shines around it.",
+                                  comment: "VoiceOver, Journey tree: memories are drawn as stars around the tree")
+                         : String(localized: "\(memoryCount) memories shine around it.",
+                                  comment: "VoiceOver, Journey tree: memories are drawn as stars around the tree"))
         }
         if readyForMe > 0 {
             parts.append(readyForMe == 1
-                         ? "1 letter for you is ready to open."
-                         : "\(readyForMe) letters for you are ready to open.")
+                         ? String(localized: "1 letter for you is ready to open.",
+                                  comment: "VoiceOver, Journey tree: letters hang on it as envelopes")
+                         : String(localized: "\(readyForMe) letters for you are ready to open.",
+                                  comment: "VoiceOver, Journey tree: letters hang on it as envelopes"))
         }
         if waiting > 0 {
             parts.append(waiting == 1
-                         ? "1 of your letters is waiting for \(partner) to open it."
-                         : "\(waiting) of your letters are waiting for \(partner) to open them.")
+                         ? String(localized: "1 of your letters is waiting for \(partner) to open it.",
+                                  comment: "VoiceOver, Journey tree. %@ is the partner's name.")
+                         : String(localized: "\(waiting) of your letters are waiting for \(partner) to open them.",
+                                  comment: "VoiceOver, Journey tree. The number counts the user's letters; %@ is the partner's name."))
         }
         if sealed > 0 {
             parts.append(sealed == 1
-                         ? "1 sealed letter waits on it."
-                         : "\(sealed) sealed letters wait on it.")
+                         ? String(localized: "1 sealed letter waits on it.",
+                                  comment: "VoiceOver, Journey tree: a sealed letter hangs on the tree as an envelope")
+                         : String(localized: "\(sealed) sealed letters wait on it.",
+                                  comment: "VoiceOver, Journey tree: sealed letters hang on the tree as envelopes"))
         }
         if blossoms > 0 {
             parts.append(blossoms == 1
-                         ? "1 opened letter is in bloom."
-                         : "\(blossoms) opened letters are in bloom.")
+                         ? String(localized: "1 opened letter is in bloom.",
+                                  comment: "VoiceOver, Journey tree: opened letters are drawn as blossoms")
+                         : String(localized: "\(blossoms) opened letters are in bloom.",
+                                  comment: "VoiceOver, Journey tree: opened letters are drawn as blossoms"))
         }
         return parts.joined(separator: " ")
     }
@@ -311,19 +343,25 @@ struct TimeTreeHeader: View {
 
     private func countdownBlock(_ anchor: RelationshipAnchor) -> some View {
         let next = Countdown(anchor: anchor, now: now)
+        let years = next.anniversaryNumber
 
         return BrandCard(tier: .quiet, showsRule: true) {
             VStack(alignment: .leading, spacing: 12) {
                 if let crown = next.crown, next.crownSharesAnniversaryDay {
+                    let crownTitle = crown.localizedTitle
                     countdownRow(
                         glyph: "crown.fill",
                         tint: FutureLetterStyle.gold,
-                        title: "\(next.anniversaryOrdinal) anniversary · \(crown.displayTitle) crown",
+                        title: String(localized: "\(years)-year anniversary · \(crownTitle) crown",
+                                      comment: "Journey countdown when the next anniversary and the next crown fall on the same day. %lld is how many years together that anniversary marks (1, 2, 3...); %@ is a crown title such as '1000 Days'."),
                         value: Self.countdownValue(next.anniversaryDays),
                         date: next.anniversaryDate,
                         progress: next.crownProgress,
-                        spoken: "Next anniversary, your \(next.anniversaryOrdinal), and the \(crown.displayTitle) crown. "
-                            + Self.spokenWhen(next.anniversaryDays, date: next.anniversaryDate)
+                        spoken: [
+                            String(localized: "Next anniversary, \(years) years together, and the \(crownTitle) crown.",
+                                   comment: "VoiceOver, Journey countdown. %lld is how many years together the next anniversary marks; %@ is a crown title such as '1000 Days'."),
+                            Self.spokenWhen(next.anniversaryDays, date: next.anniversaryDate)
+                        ].joined(separator: " ")
                     ) {
                         letterLine(anniversary: next.anniversaryDate)
                     }
@@ -331,26 +369,35 @@ struct TimeTreeHeader: View {
                     countdownRow(
                         glyph: "calendar",
                         tint: Brand.textSecondary,
-                        title: "\(next.anniversaryOrdinal) anniversary",
+                        title: String(localized: "\(years)-year anniversary",
+                                      comment: "Journey countdown row: the next yearly anniversary. %lld is how many years together it marks (1, 2, 3...)."),
                         value: Self.countdownValue(next.anniversaryDays),
                         date: next.anniversaryDate,
                         progress: nil,
-                        spoken: "Next anniversary, your \(next.anniversaryOrdinal). "
-                            + Self.spokenWhen(next.anniversaryDays, date: next.anniversaryDate)
+                        spoken: [
+                            String(localized: "Next anniversary, \(years) years together.",
+                                   comment: "VoiceOver, Journey countdown. %lld is how many years together the next anniversary marks."),
+                            Self.spokenWhen(next.anniversaryDays, date: next.anniversaryDate)
+                        ].joined(separator: " ")
                     ) {
                         letterLine(anniversary: next.anniversaryDate)
                     }
 
                     if let crown = next.crown, let crownDate = next.crownDate {
+                        let crownTitle = crown.localizedTitle
                         countdownRow(
                             glyph: "crown.fill",
                             tint: FutureLetterStyle.gold,
-                            title: "\(crown.displayTitle) crown",
+                            title: String(localized: "\(crownTitle) crown",
+                                          comment: "Journey countdown row: the next crown milestone. %@ is a crown title such as '100 Days' or '1 Year'."),
                             value: Self.countdownValue(next.crownDays),
                             date: crownDate,
                             progress: next.crownProgress,
-                            spoken: "Next crown, \(crown.displayTitle). "
-                                + Self.spokenWhen(next.crownDays, date: crownDate)
+                            spoken: [
+                                String(localized: "Next crown, \(crownTitle).",
+                                       comment: "VoiceOver, Journey countdown. %@ is a crown title such as '100 Days' or '1 Year'."),
+                                Self.spokenWhen(next.crownDays, date: crownDate)
+                            ].joined(separator: " ")
                         ) {
                             EmptyView()
                         }
@@ -359,11 +406,13 @@ struct TimeTreeHeader: View {
                         countdownRow(
                             glyph: "crown.fill",
                             tint: FutureLetterStyle.gold,
-                            title: "Every crown earned · Legendary.",
+                            title: String(localized: "Every crown earned · Legendary.",
+                                          comment: "Journey countdown row once every crown milestone (up to 10 years) is reached"),
                             value: nil,
                             date: nil,
                             progress: nil,
-                            spoken: "Every crown earned. Legendary."
+                            spoken: String(localized: "Every crown earned. Legendary.",
+                                           comment: "VoiceOver: every crown milestone (up to 10 years) is reached")
                         ) {
                             EmptyView()
                         }
@@ -387,7 +436,8 @@ struct TimeTreeHeader: View {
         spoken: String,
         @ViewBuilder footer: () -> Footer
     ) -> some View {
-        let percent: String = progress.map { "\(Int(($0 * 100).rounded())) percent" } ?? ""
+        // "42%" in the user's locale; VoiceOver reads it in their language.
+        let percent: String = progress.map { Int(($0 * 100).rounded()).formatted(.percent) } ?? ""
 
         return HStack(alignment: .firstTextBaseline, spacing: 10) {
             Image(systemName: glyph)
@@ -493,11 +543,16 @@ struct TimeTreeHeader: View {
                             UIImpactFeedbackGenerator(style: .light).impactOccurred()
                             onWriteLetter(opensAt)
                         } label: {
-                            Label("Letter for that day", systemImage: "envelope.fill")
-                                .font(JourneyFont.label)
-                                .foregroundStyle(FutureLetterStyle.accent)
-                                .padding(.vertical, 4)
-                                .contentShape(Rectangle())
+                            Label {
+                                Text("Letter for that day",
+                                     comment: "Journey countdown: button to write a future letter that opens on the next anniversary")
+                            } icon: {
+                                Image(systemName: "envelope.fill")
+                            }
+                            .font(JourneyFont.label)
+                            .foregroundStyle(FutureLetterStyle.accent)
+                            .padding(.vertical, 4)
+                            .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
                         .accessibilityLabel("Write a future letter that opens on your anniversary")
@@ -507,7 +562,7 @@ struct TimeTreeHeader: View {
         }
     }
 
-    private func letterNote(_ text: String) -> some View {
+    private func letterNote(_ text: LocalizedStringResource) -> some View {
         Label {
             Text(text)
                 .foregroundStyle(Brand.textSecondary)
@@ -524,9 +579,9 @@ struct TimeTreeHeader: View {
     /// "74 days", "1 day", "Today".
     private static func countdownValue(_ days: Int) -> String {
         switch days {
-        case ...0: return "Today"
-        case 1:    return "1 day"
-        default:   return "\(days) days"
+        case ...0: return String(localized: "Today", comment: "Journey countdown value: the anniversary or crown is today")
+        case 1:    return String(localized: "1 day", comment: "Journey countdown value: time left")
+        default:   return String(localized: "\(days) days", comment: "Journey countdown value: time left")
         }
     }
 
@@ -534,15 +589,16 @@ struct TimeTreeHeader: View {
     private static func spokenWhen(_ days: Int, date: Date) -> String {
         let spokenDate = date.formatted(.dateTime.weekday(.wide).day().month(.wide).year())
         switch days {
-        case ...0: return "Today, \(spokenDate)."
-        case 1:    return "In 1 day, \(spokenDate)."
-        default:   return "In \(days) days, \(spokenDate)."
+        case ...0:
+            return String(localized: "Today, \(spokenDate).",
+                          comment: "VoiceOver, Journey countdown. %@ is a full date such as 'Tuesday, 26 January 2027'.")
+        case 1:
+            return String(localized: "In 1 day, \(spokenDate).",
+                          comment: "VoiceOver, Journey countdown. %@ is a full date such as 'Tuesday, 26 January 2027'.")
+        default:
+            return String(localized: "In \(days) days, \(spokenDate).",
+                          comment: "VoiceOver, Journey countdown. %@ is a full date such as 'Tuesday, 26 January 2027'.")
         }
-    }
-
-    /// Pure, so it can be passed to `map` from any context.
-    nonisolated private static func sentence(_ text: String) -> String {
-        text.hasSuffix(".") || text.hasSuffix("!") || text.hasSuffix("…") ? text : text + "."
     }
 }
 
@@ -553,20 +609,16 @@ private struct Countdown {
 
     let anniversaryDate: Date
     let anniversaryDays: Int
-    /// "1st", "2nd", "21st".
-    let anniversaryOrdinal: String
+    /// How many years together the next anniversary marks: 1, 2, 3...
+    /// Counted, never an ordinal: NumberFormatter's ordinals read wrongly in
+    /// most of the app's languages ("第2記念日", a bare "2" in Russian).
+    let anniversaryNumber: Int
     let crown: CrownMilestone?
     let crownDate: Date?
     let crownDays: Int
     /// 0…1 from the previous crown (or the start day) to the next one.
     let crownProgress: Double
     let crownSharesAnniversaryDay: Bool
-
-    private static let ordinalFormatter: NumberFormatter = {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .ordinal
-        return formatter
-    }()
 
     init(anchor: RelationshipAnchor, now: Date) {
         let calendar = Calendar.current
@@ -580,7 +632,7 @@ private struct Countdown {
         let number = max(1, daysLeft == 0 ? years : years + 1)
         anniversaryDate = anniversary
         anniversaryDays = daysLeft
-        anniversaryOrdinal = Self.ordinalFormatter.string(from: NSNumber(value: number)) ?? "\(number)th"
+        anniversaryNumber = number
 
         let next = CrownMilestone.next(after: anchor.startDate, now: now)
         crown = next

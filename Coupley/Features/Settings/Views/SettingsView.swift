@@ -58,8 +58,12 @@ struct SettingsView: View {
         .navigationBarTitleDisplayMode(.large)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button("Done") { dismiss() }
-                    .foregroundStyle(Brand.accentStart)
+                Button {
+                    dismiss()
+                } label: {
+                    Text("Done", comment: "Toolbar button that closes Settings.")
+                }
+                .foregroundStyle(Brand.accentStart)
             }
         }
         .confirmationDialog("Sign out of Coupley?", isPresented: $showSignOutConfirm, titleVisibility: .visible) {
@@ -361,7 +365,7 @@ struct SettingsView: View {
                     }
                     Spacer()
                     if notificationViewModel.unreadCount > 0 {
-                        Text("\(notificationViewModel.unreadCount)")
+                        Text(notificationViewModel.unreadCount, format: .number)
                             .font(.system(size: 12, weight: .bold, design: .rounded))
                             .foregroundStyle(.white)
                             .padding(.horizontal, 7)
@@ -562,7 +566,8 @@ struct SettingsView: View {
 private struct SettingsRow: View {
     let icon: String
     let iconTint: Color
-    let title: String
+    let title: LocalizedStringResource
+    /// Account data or a version number: shown as it is.
     let value: String
 
     var body: some View {
@@ -681,7 +686,7 @@ private struct SettingsPairingContainer: View {
             Brand.bgGradient.ignoresSafeArea(.all)
             PairingView(viewModel: viewModel)
         }
-        .navigationTitle("Connect")
+        .navigationTitle(Text("Connect", comment: "Title of the screen for pairing with a partner."))
         .navigationBarTitleDisplayMode(.inline)
     }
 }

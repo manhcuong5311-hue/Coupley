@@ -15,6 +15,9 @@
 //     re-runs don't cause cards to flicker between two equivalent suggestions.
 //   • The engine never reads the network or any user-identifying data outside
 //     the inputs given. Easy to test, easy to reason about.
+//   • Titles and details are display text, localized here: each sentence is
+//     one catalog key with the user's data (titles, counts, emoji) as
+//     placeholders, so translators control the word order. Ids stay English.
 //
 
 import Foundation
@@ -109,8 +112,11 @@ enum TogetherCoachEngine {
                     id: "goal-near-\(goal.id)",
                     tone: .celebrate,
                     category: .progress,
-                    title: "Your \(goal.title) goal is \(Int(goal.progress * 100))% complete \(goal.category.emoji)",
-                    detail: "You're so close. One more push from both of you.",
+                    title: String(
+                        localized: "Your \(goal.title) goal is \(Int(goal.progress * 100))% complete \(goal.category.emoji)",
+                        comment: "Coach insight. Placeholders: goal title, percent complete, category emoji"
+                    ),
+                    detail: String(localized: "You're so close. One more push from both of you."),
                     action: .openGoal(id: goal.id),
                     weight: 90 + Int(goal.progress * 10)
                 ))
@@ -121,8 +127,9 @@ enum TogetherCoachEngine {
                     id: "goal-half-\(goal.id)",
                     tone: .encourage,
                     category: .progress,
-                    title: "\(goal.title) is past halfway",
-                    detail: "You've crossed the middle. The second half is where dreams turn real.",
+                    title: String(localized: "\(goal.title) is past halfway",
+                                  comment: "Coach insight. %@ is a goal title"),
+                    detail: String(localized: "You've crossed the middle. The second half is where dreams turn real."),
                     action: .openGoal(id: goal.id),
                     weight: 70
                 ))
@@ -133,8 +140,9 @@ enum TogetherCoachEngine {
                     id: "goal-stalled-\(goal.id)",
                     tone: .nudge,
                     category: .progress,
-                    title: "\(goal.title) hasn't moved in two weeks",
-                    detail: "Even a small step counts. Add a contribution to keep the momentum.",
+                    title: String(localized: "\(goal.title) hasn't moved in two weeks",
+                                  comment: "Coach insight. %@ is a goal title"),
+                    detail: String(localized: "Even a small step counts. Add a contribution to keep the momentum."),
                     action: .openGoal(id: goal.id),
                     weight: 60
                 ))
@@ -148,8 +156,9 @@ enum TogetherCoachEngine {
                         id: "goal-balance-low-\(goal.id)",
                         tone: .suggest,
                         category: .emotional,
-                        title: "Your partner is leading on \(goal.title)",
-                        detail: "A balanced contribution makes the win feel mutual. Add a little when you can.",
+                        title: String(localized: "Your partner is leading on \(goal.title)",
+                                      comment: "Coach insight. %@ is a goal title"),
+                        detail: String(localized: "A balanced contribution makes the win feel mutual. Add a little when you can."),
                         action: .openGoal(id: goal.id),
                         weight: 55
                     ))
@@ -158,8 +167,12 @@ enum TogetherCoachEngine {
                         id: "goal-balance-high-\(goal.id)",
                         tone: .suggest,
                         category: .emotional,
-                        title: "You're carrying \(goal.title)",
-                        detail: "Invite your partner in — even a small contribution makes this *theirs* too.",
+                        title: String(localized: "You're carrying \(goal.title)",
+                                      comment: "Coach insight: you contributed most of a goal. %@ is the goal title"),
+                        detail: String(
+                            localized: "Invite your partner in — even a small contribution makes this *theirs* too.",
+                            comment: "Coach insight detail. The asterisks are shown as typed (emphasis)"
+                        ),
                         action: .openGoal(id: goal.id),
                         weight: 50
                     ))
@@ -185,8 +198,11 @@ enum TogetherCoachEngine {
                     id: "ch-streak-\(ch.id)-\(ch.streak.current)",
                     tone: .celebrate,
                     category: .consistency,
-                    title: "You're on a \(ch.streak.current)-day \(ch.category.label.lowercased()) streak \(ch.category.emoji)",
-                    detail: "Consistency is the rarest thing. You're doing the rare thing together.",
+                    title: String(
+                        localized: "You're on a \(ch.streak.current)-day \(streakTopic(for: ch.category)) streak \(ch.category.emoji)",
+                        comment: "Coach insight. Placeholders: streak length in days, the challenge category in its mid-sentence form (e.g. 'gratitude'), category emoji"
+                    ),
+                    detail: String(localized: "Consistency is the rarest thing. You're doing the rare thing together."),
                     action: .openChallenge(id: ch.id),
                     weight: 85
                 ))
@@ -195,12 +211,21 @@ enum TogetherCoachEngine {
             // Almost-done
             if ch.progress >= 0.8 && ch.progress < 1.0 {
                 let remaining = ch.targetCount - ch.totalCheckIns
+                let title: String
+                switch ch.cadence {
+                case .daily:
+                    title = String(localized: "Only \(remaining) days left on \(ch.title)",
+                                   comment: "Coach insight. Placeholders: days remaining, challenge title")
+                case .weekly:
+                    title = String(localized: "Only \(remaining) weeks left on \(ch.title)",
+                                   comment: "Coach insight. Placeholders: weeks remaining, challenge title")
+                }
                 out.append(TogetherInsight(
                     id: "ch-near-\(ch.id)",
                     tone: .encourage,
                     category: .progress,
-                    title: "Only \(remaining) \(ch.cadence == .daily ? "days" : "weeks") left on \(ch.title)",
-                    detail: "You've come this far. Don't let this one slip in the last stretch.",
+                    title: title,
+                    detail: String(localized: "You've come this far. Don't let this one slip in the last stretch."),
                     action: .openChallenge(id: ch.id),
                     weight: 75
                 ))
@@ -212,8 +237,9 @@ enum TogetherCoachEngine {
                     id: "ch-restart-\(ch.id)",
                     tone: .nudge,
                     category: .habit,
-                    title: "\(ch.title) needs a check-in",
-                    detail: "Streaks break. Restarting is the part that counts.",
+                    title: String(localized: "\(ch.title) needs a check-in",
+                                  comment: "Coach insight. %@ is a challenge title"),
+                    detail: String(localized: "Streaks break. Restarting is the part that counts."),
                     action: .openChallenge(id: ch.id),
                     weight: 65
                 ))
@@ -225,8 +251,10 @@ enum TogetherCoachEngine {
                     id: "ch-today-\(ch.id)",
                     tone: .encourage,
                     category: .habit,
-                    title: "Don't let \(ch.title) skip today",
-                    detail: "Tap to check in and keep the \(ch.streak.current)-day streak alive.",
+                    title: String(localized: "Don't let \(ch.title) skip today",
+                                  comment: "Coach insight. %@ is a challenge title"),
+                    detail: String(localized: "Tap to check in and keep the \(ch.streak.current)-day streak alive.",
+                                   comment: "Coach insight detail. %lld is the current streak length in days"),
                     action: .openChallenge(id: ch.id),
                     weight: 80
                 ))
@@ -234,6 +262,37 @@ enum TogetherCoachEngine {
         }
 
         return out
+    }
+
+    /// The category as it reads inside the streak sentence ("a 14-day
+    /// gratitude streak"). Its own keys rather than `ChallengeCategory.label`,
+    /// so each language can use the form that sentence needs (English
+    /// lowercase, German capitalized, a grammatical case in others) without
+    /// lowercasing translated text at runtime.
+    private static func streakTopic(for category: ChallengeCategory) -> String {
+        switch category {
+        case .gratitude:
+            return String(localized: "together.streakTopic.gratitude", defaultValue: "gratitude",
+                          comment: "Challenge category inside 'You're on a 14-day gratitude streak'")
+        case .fitness:
+            return String(localized: "together.streakTopic.fitness", defaultValue: "fitness",
+                          comment: "Challenge category inside 'You're on a 14-day fitness streak'")
+        case .romance:
+            return String(localized: "together.streakTopic.romance", defaultValue: "romance",
+                          comment: "Challenge category inside 'You're on a 14-day romance streak'")
+        case .savings:
+            return String(localized: "together.streakTopic.savings", defaultValue: "savings",
+                          comment: "Challenge category inside 'You're on a 14-day savings streak'")
+        case .mindful:
+            return String(localized: "together.streakTopic.mindfulness", defaultValue: "mindfulness",
+                          comment: "Challenge category inside 'You're on a 14-day mindfulness streak'")
+        case .connection:
+            return String(localized: "together.streakTopic.connection", defaultValue: "connection",
+                          comment: "Challenge category (emotional closeness) inside 'You're on a 14-day connection streak'")
+        case .other:
+            return String(localized: "together.streakTopic.other", defaultValue: "other",
+                          comment: "Challenge category 'other' inside 'You're on a 14-day other streak'")
+        }
     }
 
     // MARK: - Dream Insights
@@ -253,12 +312,20 @@ enum TogetherCoachEngine {
                 dream.title.localizedCaseInsensitiveContains(goal.title)
             }
             if !hasMatchingGoal {
+                // The loop only admits these two horizons, so each gets its
+                // own whole sentence instead of a lowercased chip spliced in.
+                let detail = dream.horizon == .thisYear
+                    ? String(localized: "It's this year. Setting a goal makes it inevitable.",
+                             comment: "Coach insight detail for a dream planned for this year")
+                    : String(localized: "It's next year. Setting a goal makes it inevitable.",
+                             comment: "Coach insight detail for a dream planned for next year")
                 out.append(TogetherInsight(
                     id: "dream-bridge-\(dream.id)",
                     tone: .suggest,
                     category: .dream,
-                    title: "Turn \(dream.title) into a real plan",
-                    detail: "It's \(dream.horizon.shortLabel.lowercased()). Setting a goal makes it inevitable.",
+                    title: String(localized: "Turn \(dream.title) into a real plan",
+                                  comment: "Coach insight. %@ is a dream title"),
+                    detail: detail,
                     action: .openDream(id: dream.id),
                     weight: 50
                 ))
@@ -278,14 +345,16 @@ enum TogetherCoachEngine {
     ) -> [TogetherInsight] {
         var out: [TogetherInsight] = []
 
-        // Brand-new user: nothing exists yet.
+        // Brand-new user: nothing exists yet. (The `suggestion:` payloads are
+        // base-language suggestion titles and nothing displays them today; if
+        // a sheet ever prefills from them, show them via ContentL10n.text.)
         if goals.isEmpty && challenges.isEmpty && dreams.isEmpty {
             out.append(TogetherInsight(
                 id: "empty-start",
                 tone: .suggest,
                 category: .emotional,
-                title: "What are you building together?",
-                detail: "Add a dream or set a shared goal — even a small one starts the story.",
+                title: String(localized: "What are you building together?"),
+                detail: String(localized: "Add a dream or set a shared goal — even a small one starts the story."),
                 action: .createDream(suggestion: "Japan Together"),
                 weight: 100
             ))
@@ -298,8 +367,8 @@ enum TogetherCoachEngine {
                 id: "empty-challenge",
                 tone: .suggest,
                 category: .habit,
-                title: "Start a challenge together",
-                detail: "Daily check-ins build the small habits long-term love is made of.",
+                title: String(localized: "Start a challenge together"),
+                detail: String(localized: "Daily check-ins build the small habits long-term love is made of."),
                 action: .createChallenge(suggestion: "14 Days of Gratitude"),
                 weight: 40
             ))
@@ -311,8 +380,8 @@ enum TogetherCoachEngine {
                 id: "empty-dream",
                 tone: .suggest,
                 category: .dream,
-                title: "Your dream board is waiting",
-                detail: "What do you want your life together to look like? Start with one.",
+                title: String(localized: "Your dream board is waiting"),
+                detail: String(localized: "What do you want your life together to look like? Start with one."),
                 action: .createDream(suggestion: "Japan Together"),
                 weight: 35
             ))
@@ -325,8 +394,9 @@ enum TogetherCoachEngine {
                 id: "focus-many-goals",
                 tone: .suggest,
                 category: .emotional,
-                title: "You're tracking \(activeGoals.count) goals",
-                detail: "Focus is a love language. Picking one to lead with usually moves them all.",
+                title: String(localized: "You're tracking \(activeGoals.count) goals",
+                              comment: "Coach insight. %lld is the number of active goals (5 or more)"),
+                detail: String(localized: "Focus is a love language. Picking one to lead with usually moves them all."),
                 action: nil,
                 weight: 30
             ))

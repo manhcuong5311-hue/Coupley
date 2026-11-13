@@ -69,9 +69,10 @@ struct DisconnectNoticeBanner: View {
         )
     }
 
-    private var subtitle: String {
+    private var subtitle: LocalizedStringResource {
         if let name = sessionStore.lastPartnerName, !name.isEmpty {
-            return "\(name) ended the connection. Your shared data is still saved — you can review or delete it from Settings."
+            return LocalizedStringResource("\(name) ended the connection. Your shared data is still saved — you can review or delete it from Settings.",
+                                           comment: "Banner after a partner disconnects. The placeholder is the partner's name")
         }
         return "Your shared data is still saved — you can review or delete it from Settings."
     }

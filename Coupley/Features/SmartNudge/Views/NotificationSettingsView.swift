@@ -82,17 +82,21 @@ struct NotificationSettingsView: View {
             if viewModel.permissionState == .denied {
                 actionButton(label: "Open Settings", action: openAppSettings)
             } else if viewModel.permissionState == .unknown {
-                actionButton(label: "Enable", action: viewModel.requestPermissionIfNeeded)
+                actionButton(label: LocalizedStringResource("Enable",
+                                                            comment: "Button: allow push notifications"),
+                             action: viewModel.requestPermissionIfNeeded)
             }
         }
         .padding(16)
         .background(surfaceCard)
     }
 
-    private func actionButton(label: String, action: @escaping () -> Void) -> some View {
+    private func actionButton(label: LocalizedStringResource, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(label)
                 .font(.system(size: 12, weight: .semibold, design: .rounded))
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
                 .foregroundStyle(.white)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 7)
@@ -156,8 +160,8 @@ struct NotificationSettingsView: View {
     private func toggleRow(
         icon: String,
         iconColor: Color,
-        title: String,
-        subtitle: String,
+        title: LocalizedStringResource,
+        subtitle: LocalizedStringResource,
         isOn: Binding<Bool>
     ) -> some View {
         HStack(spacing: 14) {
@@ -235,10 +239,12 @@ struct NotificationSettingsView: View {
     private var recentNudgesCard: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .center) {
-                cardHeader("Recent")
+                cardHeader(LocalizedStringResource("Recent",
+                                                   comment: "Section header: recently received notifications"))
                 Spacer()
                 if viewModel.unreadCount > 0 {
-                    Text("\(viewModel.unreadCount) unread")
+                    Text("\(viewModel.unreadCount) unread",
+                         comment: "Badge: number of unread notifications")
                         .font(.system(size: 11, weight: .bold, design: .rounded))
                         .foregroundStyle(.white)
                         .padding(.horizontal, 8)
@@ -262,12 +268,12 @@ struct NotificationSettingsView: View {
 
     // MARK: - Shared Helpers
 
-    private func cardHeader(_ text: String) -> some View {
+    private func cardHeader(_ text: LocalizedStringResource) -> some View {
         Text(text)
             .font(.system(size: 12, weight: .semibold, design: .rounded))
             .foregroundStyle(Brand.textSecondary)
             .textCase(.uppercase)
-            .tracking(0.5)
+            .scriptAwareTracking(0.5)
             .padding(.horizontal, 16)
             .padding(.top, 14)
             .padding(.bottom, 10)
@@ -314,10 +320,17 @@ struct NotificationSettingsView: View {
         components.hour = hour
         components.minute = 0
         let date = Calendar.current.date(from: components) ?? Date()
-        let formatter = DateFormatter()
-        formatter.dateFormat = "h:00 a"
-        return formatter.string(from: date)
+        return Self.hourFormatter.string(from: date)
     }
+
+    /// "8:00 PM" or "20:00", as the user's locale writes the time of day
+    /// (`j` picks the 12- or 24-hour clock). One shared instance instead of
+    /// one per row per render.
+    private static let hourFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.setLocalizedDateFormatFromTemplate("jmm")
+        return f
+    }()
 
     // MARK: - Permission Helpers
 
@@ -337,12 +350,16 @@ struct NotificationSettingsView: View {
         }
     }
 
-    private var permissionDescription: String {
+    private var permissionDescription: LocalizedStringResource {
         switch viewModel.permissionState {
         case .authorized:   return "Enabled — you'll receive smart nudges from your partner"
         case .provisional:  return "Delivered quietly — tap to grant full access"
-        case .denied:       return "Disabled — open Settings to stay connected with your partner"
-        case .unknown:      return "Tap Enable to get notified when it matters most"
+        case .denied:
+            return LocalizedStringResource("Disabled — open Settings to stay connected with your partner",
+                                           comment: "Settings is the iOS Settings app")
+        case .unknown:
+            return LocalizedStringResource("Tap Enable to get notified when it matters most",
+                                           comment: "Enable is the button next to this text; use the same word")
         }
     }
 

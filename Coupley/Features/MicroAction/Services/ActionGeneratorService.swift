@@ -39,7 +39,7 @@ final class RuleBasedActionGenerator: ActionGeneratorService {
     // Finer-grained than Mood × EnergyLevel alone so copy can land on the
     // actual state — "stressed + high energy" (venting) is a different room
     // from "stressed + low energy" (burnt out).
-    private enum Bucket {
+    private enum Bucket: CaseIterable {
         case burnout            // stressed + low energy
         case venting            // stressed + medium/high energy
         case lowSpirits         // sad + medium/high energy
@@ -54,6 +54,11 @@ final class RuleBasedActionGenerator: ActionGeneratorService {
     }
 
     // MARK: - Pools
+    //
+    // A content bank: `text` and `rationale` are the English base strings.
+    // They are stored with each MicroAction and the generator dedupes on
+    // `text`, so they never change with the user's language. The card shows
+    // them through `ContentL10n.text(_:)` (see `l10nContentStrings` below).
 
     private lazy var pools: [Bucket: [Template]] = [
 
@@ -510,3 +515,27 @@ final class RuleBasedActionGenerator: ActionGeneratorService {
         return templates[value % templates.count]
     }
 }
+
+#if DEBUG
+extension RuleBasedActionGenerator {
+    /// Every base string the UI shows through ContentL10n (to build the Content catalog).
+    ///
+    /// Each template's `text`, then its `rationale`, in pool order, without
+    /// duplicates. The `personalize(_:context:tone:)` rewrites are not listed:
+    /// `MicroActionViewModel` never passes a profile, so they cannot reach
+    /// the UI today (one that did would fall back to English).
+    static var l10nContentStrings: [String] {
+        let generator = RuleBasedActionGenerator()
+        var seen = Set<String>()
+        var strings: [String] = []
+        for bucket in Bucket.allCases {
+            for template in generator.pools[bucket] ?? [] {
+                for base in [template.text, template.rationale] where seen.insert(base).inserted {
+                    strings.append(base)
+                }
+            }
+        }
+        return strings
+    }
+}
+#endif

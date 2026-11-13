@@ -54,6 +54,10 @@ enum AvatarOption: Equatable, Hashable, Codable {
     /// profile screen to attribute partner-added hints ("added by He / She").
     /// Falls back to a gender-neutral label for custom photos where we
     /// genuinely don't know.
+    ///
+    /// An English token ("He", "She", "Them") that screens pass around; it is
+    /// never shown itself. `addedByTag(pronounLabel:)` turns it into the
+    /// localized tag.
     var pronounLabel: String {
         switch self {
         case .asset(let name):
@@ -63,6 +67,20 @@ enum AvatarOption: Equatable, Hashable, Codable {
             return "Them"
         case .custom:
             return "Them"
+        }
+    }
+
+    /// The tag under a profile hint the partner added: "by He", "by She" or
+    /// "by Them", in the user's language. One whole phrase per pronoun, so a
+    /// translation can inflect the pronoun as its grammar needs.
+    static func addedByTag(pronounLabel: String) -> String {
+        switch pronounLabel {
+        case "He":
+            return String(localized: "by He", comment: "Tag on a profile hint the partner added; the partner uses 'he'.")
+        case "She":
+            return String(localized: "by She", comment: "Tag on a profile hint the partner added; the partner uses 'she'.")
+        default:
+            return String(localized: "by Them", comment: "Tag on a profile hint the partner added; pronoun unknown.")
         }
     }
 

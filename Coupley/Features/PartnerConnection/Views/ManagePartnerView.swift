@@ -34,7 +34,7 @@ struct ManagePartnerView: View {
             .scrollContentBackground(.hidden)
             .listRowSpacing(8)
         }
-        .navigationTitle("Partner")
+        .navigationTitle(Text("Partner", comment: "Navigation title: manage the connection with your partner"))
         .navigationBarTitleDisplayMode(.inline)
         .confirmationDialog(
             "Disconnect from your partner?",
@@ -63,14 +63,17 @@ struct ManagePartnerView: View {
 
     @ViewBuilder
     private var statusSection: some View {
-        Section("Connection") {
+        Section {
             row(icon: "heart.fill", tint: Brand.accentStart,
-                title: partnerDisplayName?.isEmpty == false ? partnerDisplayName! : "Your partner",
-                subtitle: "Connected · syncing in real time")
+                title: partnerDisplayName.flatMap { $0.isEmpty ? nil : Text(verbatim: $0) }
+                    ?? Text("Your partner"),
+                subtitle: Text("Connected · syncing in real time"))
             row(icon: "link", tint: Brand.textSecondary,
-                title: "Connection ID",
-                subtitle: session.coupleId,
+                title: Text("Connection ID"),
+                subtitle: Text(verbatim: session.coupleId),
                 monospaced: true)
+        } header: {
+            Text("Connection", comment: "Section header: details of a partner connection")
         }
         .listRowBackground(surfaceRowBackground)
     }
@@ -114,8 +117,8 @@ struct ManagePartnerView: View {
                     )
                 } label: {
                     row(icon: "tray.full.fill", tint: Brand.textSecondary,
-                        title: "Manage shared data",
-                        subtitle: "Review or delete data from a past partner")
+                        title: Text("Manage shared data"),
+                        subtitle: Text("Review or delete data from a past partner"))
                 }
             }
             .listRowBackground(surfaceRowBackground)
@@ -133,11 +136,13 @@ struct ManagePartnerView: View {
 
     // MARK: - Helpers
 
+    /// `Text` parameters: callers pass a literal (app copy, extracted for
+    /// translation) or `Text(verbatim:)` for a name or an id.
     private func row(
         icon: String,
         tint: Color,
-        title: String,
-        subtitle: String,
+        title: Text,
+        subtitle: Text,
         monospaced: Bool = false
     ) -> some View {
         HStack(spacing: 14) {
@@ -150,16 +155,18 @@ struct ManagePartnerView: View {
                     .foregroundStyle(tint)
             }
             VStack(alignment: .leading, spacing: 2) {
-                Text(title)
+                title
                     .font(.system(size: 15, weight: .medium, design: .rounded))
                     .foregroundStyle(Brand.textPrimary)
-                Text(subtitle)
+                // An id keeps its one line, cut in the middle; prose gets a
+                // second line, since translations run longer than English.
+                subtitle
                     .font(monospaced
                           ? .system(size: 11, design: .monospaced)
                           : .system(size: 12, design: .rounded))
                     .foregroundStyle(Brand.textSecondary)
-                    .lineLimit(1)
-                    .truncationMode(.middle)
+                    .lineLimit(monospaced ? 1 : 2)
+                    .truncationMode(monospaced ? .middle : .tail)
             }
             Spacer()
         }

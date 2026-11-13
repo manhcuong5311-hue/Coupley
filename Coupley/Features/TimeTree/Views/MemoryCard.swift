@@ -256,15 +256,20 @@ struct MemoryCard: View {
     }
 
     private var spokenLabel: String {
-        var sentences = ["\(spokenTitle), \(longDate)."]
+        var sentences = [String(localized: "\(spokenTitle), \(longDate).",
+                                comment: "VoiceOver: a memory card. First %@ is the memory's title, second its date such as 'May 1, 2026'.")]
         if !memory.emotions.isEmpty {
-            sentences.append(memory.emotions.map { $0.displayName }.joined(separator: ", ") + ".")
+            // "Nervous, Joyful, Tender" in English; the locale's own list
+            // separators elsewhere.
+            let feelings = memory.emotions.map { $0.displayName }
+                .formatted(.list(type: .and, width: .narrow))
+            sentences.append(JourneyTimelineSpeech.sentence(feelings))
         }
         if photoURL != nil {
-            sentences.append("Has a photo.")
+            sentences.append(String(localized: "Has a photo.", comment: "VoiceOver: the memory has a photo"))
         }
         if memory.isUnlockedCapsule(at: now) {
-            sentences.append("Capsule opened.")
+            sentences.append(String(localized: "Capsule opened.", comment: "VoiceOver: this memory was a capsule that has now opened"))
         }
         return sentences.joined(separator: " ")
     }

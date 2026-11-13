@@ -46,9 +46,10 @@ struct QuizPickerSheet: View {
                                     .font(.system(size: 12, weight: .semibold, design: .rounded))
                                     .foregroundStyle(Brand.textSecondary)
                                     .textCase(.uppercase)
-                                    .tracking(0.5)
+                                    .scriptAwareTracking(0.5)
                                 Spacer()
-                                Text("\(progress.answeredCount(in: topic))/\(progress.total(in: topic))")
+                                Text("\(progress.answeredCount(in: topic))/\(progress.total(in: topic))",
+                                     comment: "Quiz picker topic header: questions answered / questions in the topic, e.g. 3/8")
                                     .font(.system(size: 11, weight: .semibold, design: .rounded))
                                     .foregroundStyle(progress.isFullyAnswered(topic)
                                                      ? Brand.accentStart
@@ -95,7 +96,8 @@ struct QuizPickerSheet: View {
         Section {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
-                    chip(title: "All", emoji: "✨", isSelected: selectedTopic == nil) {
+                    chip(title: String(localized: "All", comment: "Quiz picker filter chip: show every topic"),
+                         emoji: "✨", isSelected: selectedTopic == nil) {
                         selectedTopic = nil
                     }
                     ForEach(availableTopics, id: \.self) { topic in
@@ -113,6 +115,8 @@ struct QuizPickerSheet: View {
         }
     }
 
+    /// `title` is drawn verbatim: a topic name already resolved by
+    /// `QuizTopic.label`, or chrome already passed through `String(localized:)`.
     private func chip(title: String, emoji: String, isSelected: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 5) {
@@ -140,12 +144,12 @@ struct QuizPickerSheet: View {
     private func row(for template: ChatQuizTemplate) -> some View {
         HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 4) {
-                Text(template.question)
+                Text(template.displayQuestion)
                     .font(.system(size: 15, weight: .semibold, design: .rounded))
                     .foregroundStyle(Brand.textPrimary)
                     .multilineTextAlignment(.leading)
                 if !template.subtitle.isEmpty {
-                    Text(template.subtitle)
+                    Text(template.displaySubtitle)
                         .font(.system(size: 12, design: .rounded))
                         .foregroundStyle(Brand.textSecondary)
                         .multilineTextAlignment(.leading)

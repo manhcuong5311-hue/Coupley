@@ -243,7 +243,7 @@ struct FutureLettersView: View {
         }
     }
 
-    private func section(_ title: String, letters: [FutureLetter], now: Date) -> some View {
+    private func section(_ title: LocalizedStringResource, letters: [FutureLetter], now: Date) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             // Not an Eyebrow, and not uppercase: the screen's labels stay
             // plain so tracked small caps keep meaning one thing.
@@ -294,12 +294,16 @@ private struct FutureLetterDoneToolbar: ViewModifier {
     func body(content: Content) -> some View {
         content.toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button("Done") { viewModel.route = nil }
-                    .foregroundStyle(viewModel.isSending ? Brand.textTertiary : Brand.accentStart)
-                    // Compose hides Back and blocks the swipe-down while a
-                    // seal is in flight; Done must not be a third way out,
-                    // or a failure would have no screen left to show it.
-                    .disabled(viewModel.isSending)
+                Button {
+                    viewModel.route = nil
+                } label: {
+                    Text("Done", comment: "Toolbar button that closes the letters sheet.")
+                }
+                .foregroundStyle(viewModel.isSending ? Brand.textTertiary : Brand.accentStart)
+                // Compose hides Back and blocks the swipe-down while a
+                // seal is in flight; Done must not be a third way out,
+                // or a failure would have no screen left to show it.
+                .disabled(viewModel.isSending)
             }
         }
     }

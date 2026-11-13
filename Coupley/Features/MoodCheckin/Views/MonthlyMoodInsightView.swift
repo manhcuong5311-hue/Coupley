@@ -55,8 +55,10 @@ struct MonthlyMoodInsightView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Close") { dismiss() }
-                        .foregroundStyle(Brand.textSecondary)
+                    Button { dismiss() } label: {
+                        Text("Close", comment: "Toolbar button: close the mood journal")
+                    }
+                    .foregroundStyle(Brand.textSecondary)
                 }
             }
             .onAppear { store.reload() }
@@ -120,7 +122,7 @@ struct MonthlyMoodInsightView: View {
             VStack(alignment: .leading, spacing: 14) {
                 Text("Your month")
                     .font(.system(size: 12, weight: .semibold, design: .rounded))
-                    .kerning(1.2)
+                    .scriptAwareKerning(1.2)
                     .textCase(.uppercase)
                     .foregroundStyle(.white.opacity(0.78))
 
@@ -142,7 +144,10 @@ struct MonthlyMoodInsightView: View {
                                 .font(.system(size: 22, weight: .bold, design: .rounded))
                                 .foregroundStyle(.white)
                                 .lineSpacing(1)
-                            Text("\(entries.count) check-in\(entries.count == 1 ? "" : "s") this month")
+                            // Whole phrase per key; translators add plural forms.
+                            Text(entries.count == 1
+                                 ? "1 check-in this month"
+                                 : "\(entries.count) check-ins this month")
                                 .font(.system(size: 12, weight: .semibold, design: .rounded))
                                 .foregroundStyle(.white.opacity(0.85))
                         }
@@ -169,37 +174,45 @@ struct MonthlyMoodInsightView: View {
         return HStack(spacing: 12) {
             statTile(
                 icon: "calendar",
-                title: "Days logged",
+                title: LocalizedStringResource("Days logged",
+                                               comment: "Stat tile: days this month with a check-in"),
                 value: "\(store.daysWithCheckin(in: monthAnchor))",
                 accent: Color(red: 0.40, green: 0.76, blue: 0.95)
             )
             statTile(
                 icon: "flame.fill",
-                title: "Streak",
-                value: "\(streakValue)d",
+                title: LocalizedStringResource("Streak",
+                                               comment: "Stat tile: consecutive days with a check-in"),
+                value: streakLabel(streakValue),
                 accent: Color(red: 1.0, green: 0.55, blue: 0.30)
             )
             statTile(
                 icon: "battery.50",
-                title: "Avg energy",
+                title: LocalizedStringResource("Avg energy",
+                                               comment: "Stat tile: average energy level this month, abbreviated"),
                 value: averageEnergyLabel(avgEnergy),
                 accent: averageEnergyColor(avgEnergy)
             )
         }
     }
 
-    private func statTile(icon: String, title: String, value: String, accent: Color) -> some View {
+    private func statTile(icon: String, title: LocalizedStringResource, value: String, accent: Color) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Image(systemName: icon)
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(accent)
+            // Third-width tiles: translations shrink before they wrap.
             Text(value)
                 .font(.system(size: 22, weight: .bold, design: .rounded))
                 .foregroundStyle(Brand.textPrimary)
                 .monospacedDigit()
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
             Text(title)
                 .font(.system(size: 11, weight: .semibold, design: .rounded))
                 .foregroundStyle(Brand.textSecondary)
+                .lineLimit(2)
+                .minimumScaleFactor(0.8)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(14)
@@ -232,9 +245,9 @@ struct MonthlyMoodInsightView: View {
                 Image(systemName: "rectangle.grid.3x2.fill")
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(Brand.textSecondary)
-                Text("Calendar")
+                Text("Calendar", comment: "Mood journal section header: month calendar of moods")
                     .font(.system(size: 12, weight: .semibold, design: .rounded))
-                    .kerning(0.4)
+                    .scriptAwareKerning(0.4)
                     .textCase(.uppercase)
                     .foregroundStyle(Brand.textSecondary)
             }
@@ -313,9 +326,9 @@ struct MonthlyMoodInsightView: View {
                 Image(systemName: "chart.bar.fill")
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(Brand.textSecondary)
-                Text("Mood mix")
+                Text("Mood mix", comment: "Mood journal section header: how often each mood was logged")
                     .font(.system(size: 12, weight: .semibold, design: .rounded))
-                    .kerning(0.4)
+                    .scriptAwareKerning(0.4)
                     .textCase(.uppercase)
                     .foregroundStyle(Brand.textSecondary)
             }
@@ -379,9 +392,9 @@ struct MonthlyMoodInsightView: View {
                 Image(systemName: "text.book.closed.fill")
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(Brand.textSecondary)
-                Text("Notes")
+                Text("Notes", comment: "Mood journal section header (noun): notes written with check-ins")
                     .font(.system(size: 12, weight: .semibold, design: .rounded))
-                    .kerning(0.4)
+                    .scriptAwareKerning(0.4)
                     .textCase(.uppercase)
                     .foregroundStyle(Brand.textSecondary)
             }
@@ -427,7 +440,7 @@ struct MonthlyMoodInsightView: View {
                     Text(entry.mood.label)
                         .font(.system(size: 12, weight: .semibold, design: .rounded))
                         .foregroundStyle(entry.mood.color)
-                    Text("·")
+                    Text(verbatim: "·")
                         .foregroundStyle(Brand.textTertiary)
                     Text(noteDateFormatter.string(from: entry.timestamp))
                         .font(.system(size: 12, weight: .medium, design: .rounded))
@@ -486,21 +499,38 @@ struct MonthlyMoodInsightView: View {
         return true
     }
 
-    private func headline(for mood: Mood, count: Int) -> String {
+    private func headline(for mood: Mood, count: Int) -> LocalizedStringResource {
         switch mood {
-        case .happy:    return count > 14 ? "A bright month" : "Mostly bright days"
-        case .neutral:  return "An even-keeled month"
-        case .sad:      return "A heavier month"
-        case .stressed: return "A heavy, busy month"
+        case .happy:
+            return count > 14
+                ? LocalizedStringResource("A bright month",
+                                          comment: "Mood journal headline: mostly happy, many check-ins")
+                : LocalizedStringResource("Mostly bright days",
+                                          comment: "Mood journal headline: mostly happy")
+        case .neutral:
+            return LocalizedStringResource("An even-keeled month",
+                                           comment: "Mood journal headline: mostly neutral")
+        case .sad:
+            return LocalizedStringResource("A heavier month",
+                                           comment: "Mood journal headline: mostly sad")
+        case .stressed:
+            return LocalizedStringResource("A heavy, busy month",
+                                           comment: "Mood journal headline: mostly stressed")
         }
+    }
+
+    /// Streak length for the stat tile ("5d" in English), abbreviated by the
+    /// system for the user's language.
+    private func streakLabel(_ days: Int) -> String {
+        Self.streakFormatter.string(from: DateComponents(day: days)) ?? "\(days)"
     }
 
     private func averageEnergyLabel(_ value: Double?) -> String {
         guard let value else { return "—" }
         switch value {
-        case ..<1.5:  return "Low"
-        case ..<2.5:  return "Med"
-        default:      return "High"
+        case ..<1.5:  return String(localized: "Low", comment: "Energy level")
+        case ..<2.5:  return String(localized: "Med", comment: "Energy level 'Medium', abbreviated for a small stat tile")
+        default:      return String(localized: "High", comment: "Energy level")
         }
     }
 
@@ -558,15 +588,28 @@ struct MonthlyMoodInsightView: View {
 
     // MARK: - Formatters
 
+    // Templates, not fixed patterns, so each language orders and marks the
+    // fields its own way ("November 2025", "tháng 11 năm 2025", "2025年11月").
+
     private let monthFormatter: DateFormatter = {
         let f = DateFormatter()
-        f.dateFormat = "LLLL yyyy"
+        f.setLocalizedDateFormatFromTemplate("yMMMM")
+        // A title on its own: capitalized where the language does that
+        // for a standalone month name.
+        f.formattingContext = .standalone
         return f
     }()
 
     private let noteDateFormatter: DateFormatter = {
         let f = DateFormatter()
-        f.dateFormat = "MMM d · h:mm a"
+        f.setLocalizedDateFormatFromTemplate("MMMdjmm")
+        return f
+    }()
+
+    private static let streakFormatter: DateComponentsFormatter = {
+        let f = DateComponentsFormatter()
+        f.allowedUnits = [.day]
+        f.unitsStyle = .abbreviated
         return f
     }()
 }

@@ -45,13 +45,15 @@ enum QuizTopic: String, Codable, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
-    /// What to draw. Identical to `baseLabel` until there is a string
-    /// catalog; then this becomes the lookup and `baseLabel` stays put.
-    var label: String { baseLabel }
+    /// What to draw: `baseLabel` in the reader's language, from the Content
+    /// catalog (ChatQuizBank.l10nContentStrings lists it), falling back to
+    /// `baseLabel` itself.
+    var label: String { ContentL10n.text(baseLabel) }
 
     /// BASE-LANGUAGE name. Interpolated into strings that get written to
-    /// Firestore — the mismatch verdict and the "New quiz" system line — and
-    /// read back by a device in another language, so it must not move.
+    /// Firestore — the legacy result summary and the "New quiz" system
+    /// line — and read back by a device in another language, so it must not
+    /// move. Never draw it; draw `label`.
     var baseLabel: String {
         switch self {
         case .loveLanguage:  return "Love & Emotion"
@@ -188,6 +190,60 @@ struct ChatMessage: Identifiable, Codable, Equatable {
     }
 }
 
+// MARK: - System lines
+
+/// The prose of the system lines this app posts into the thread.
+///
+/// The text is written into the message document and read by both partners,
+/// and by builds already on the App Store, so what is STORED stays English:
+/// the same base-language rule as quiz option labels. Readers recognise the
+/// shapes below and draw them in their own language; anything else (a line
+/// an older build worded differently) is drawn exactly as stored.
+enum ChatSystemLine {
+
+    /// Posted with every curated or suggested quiz. Base language.
+    static func newQuiz(_ topic: QuizTopic) -> String {
+        "New quiz: \(topic.emoji) \(topic.baseLabel)"
+    }
+
+    /// Posted with every custom quiz. Base language. Names no one: the chat
+    /// view model deliberately does not depend on the profile, so it has no
+    /// display name to put here.
+    static let customQuiz = "Custom quiz from your partner ❤️"
+
+    /// The line to draw for a system message's stored text.
+    static func display(_ stored: String) -> String {
+        if stored == customQuiz {
+            return String(localized: "Custom quiz from your partner ❤️",
+                          comment: "System line in the chat when a partner sends a quiz they wrote themselves")
+        }
+        if let topic = QuizTopic.allCases.first(where: { newQuiz($0) == stored }) {
+            return String(localized: "New quiz: \(topic.emoji) \(topic.label)",
+                          comment: "System line in the chat when a quiz is posted. The first placeholder is the topic's emoji, the second its name, e.g. “Finance”.")
+        }
+        return stored
+    }
+
+    /// Posted as the SENDER's own text message when they seal a future letter
+    /// with "Tell … in chat" on. Base language like the lines above, and for
+    /// one more reason: the server pushes a text message's words to the
+    /// partner as the notification body, and notifications stay English.
+    /// Bubbles redraw it for the reader with `displayText(_:)`.
+    static let futureLetterNote = "💌 I sealed a letter for you. It's pinned on Home until it opens."
+
+    /// `futureLetterNote` in the reader's language.
+    static var futureLetterNoteDisplay: String {
+        String(localized: "💌 I sealed a letter for you. It's pinned on Home until it opens.",
+               comment: "Chat message the sender posts when sealing a future letter.")
+    }
+
+    /// The words to draw for a TEXT message's stored text: the note above in
+    /// the reader's language, anything else (what someone typed) as stored.
+    static func displayText(_ stored: String) -> String {
+        stored == futureLetterNote ? futureLetterNoteDisplay : stored
+    }
+}
+
 // MARK: - Chat Quiz
 
 enum ChatQuizStatus: String, Codable {
@@ -294,6 +350,11 @@ struct ChatQuiz: Identifiable, Codable, Equatable {
     var reactions: [String: String]? = nil
 
     var isCustom: Bool { authorId != nil }
+
+    /// What a custom quiz posted without a title stores as its `subtitle`.
+    /// English, because it is written into the quiz document and read by
+    /// both partners; `displaySubtitle` draws it in the reader's language.
+    static let untitledCustomSubtitle = "From your partner ❤️"
 
     func reaction(of userId: String) -> ReactionKind? {
         guard let raw = reactions?[userId] else { return nil }

@@ -49,8 +49,10 @@ struct SuggestionView: View {
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") { dismiss() }
-                        .fontWeight(.medium)
+                    Button { dismiss() } label: {
+                        Text("Done", comment: "Toolbar button: close the suggestions sheet")
+                    }
+                    .fontWeight(.medium)
                 }
             }
         }
@@ -99,9 +101,26 @@ struct SuggestionView: View {
 
     // MARK: - Header
 
+    /// One whole sentence per mood, so translators control the word order and
+    /// the form of the mood word (this used to splice `label.lowercased()`
+    /// into an English frame).
+    private var headline: LocalizedStringResource {
+        let name = viewModel.partnerProfile.name
+        switch viewModel.moodContext.mood {
+        case .happy:
+            return LocalizedStringResource("\(name) seems happy", comment: "Suggestions sheet headline; the partner's name")
+        case .neutral:
+            return LocalizedStringResource("\(name) seems neutral", comment: "Suggestions sheet headline; the partner's name")
+        case .sad:
+            return LocalizedStringResource("\(name) seems sad", comment: "Suggestions sheet headline; the partner's name")
+        case .stressed:
+            return LocalizedStringResource("\(name) seems stressed", comment: "Suggestions sheet headline; the partner's name")
+        }
+    }
+
     private var headerSection: some View {
         VStack(spacing: 8) {
-            Text("\(viewModel.partnerProfile.name) seems \(viewModel.moodContext.mood.label.lowercased())")
+            Text(headline)
                 .font(.title3)
                 .fontWeight(.semibold)
 

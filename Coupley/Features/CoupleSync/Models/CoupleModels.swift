@@ -115,7 +115,7 @@ struct SharedMoodEntry: Identifiable, Codable, Equatable {
 
     var relativeTimestamp: String {
         let formatter = RelativeDateTimeFormatter()
-        formatter.unitsStyle = .abbreviated
+        formatter.unitsStyle = RelativeDateTimeFormatter.compactUnitsStyle
         return formatter.localizedString(for: timestamp, relativeTo: Date())
     }
 }

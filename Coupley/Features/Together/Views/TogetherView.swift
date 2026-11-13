@@ -219,7 +219,10 @@ struct TogetherView: View {
                     .zIndex(900)
                 }
             }
-            .navigationTitle("Together")
+            .navigationTitle(LocalizedStringResource(
+                "Together",
+                comment: "Name of the Together tab; also a label for what both partners did jointly"
+            ))
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 if session.isPaired {
@@ -327,8 +330,10 @@ struct TogetherView: View {
                 RemoveAdsSheet(showsCloseButton: false)
                     .toolbar {
                         ToolbarItem(placement: .topBarTrailing) {
-                            Button("Done") { presentedSheet = nil }
-                                .foregroundStyle(Brand.accentStart)
+                            Button(LocalizedStringResource("Done", comment: "Toolbar button: closes the sheet")) {
+                                presentedSheet = nil
+                            }
+                            .foregroundStyle(Brand.accentStart)
                         }
                     }
             }

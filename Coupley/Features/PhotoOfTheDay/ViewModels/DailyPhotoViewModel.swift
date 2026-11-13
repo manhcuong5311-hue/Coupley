@@ -80,7 +80,11 @@ final class DailyPhotoViewModel: ObservableObject {
                 },
                 onError: { [weak self] error in
                     Task { @MainActor in
-                        self?.errorMessage = error.localizedDescription
+                        // The card draws this. Firestore's own description
+                        // is English-only and written for developers.
+                        print("[DailyPhoto] listener failed: \(error.localizedDescription)")
+                        self?.errorMessage = String(localized: "Couldn't load today's photo.",
+                                                    comment: "Daily photo card error: the prompt or photos failed to load")
                         self?.isLoading = false
                     }
                 }
@@ -131,7 +135,13 @@ final class DailyPhotoViewModel: ObservableObject {
                                          userId: session.userId)
                 await MainActor.run { AdsManager.shared.recordAction() }
             } catch {
-                await MainActor.run { self.errorMessage = error.localizedDescription }
+                // Not the raw description: Storage and Firestore errors are
+                // English-only, and the image-encoding one is jargon.
+                print("[DailyPhoto] submit failed: \(error.localizedDescription)")
+                await MainActor.run {
+                    self.errorMessage = String(localized: "Couldn't send your photo. Please try again.",
+                                               comment: "Daily photo card error: the upload failed")
+                }
             }
         }
     }

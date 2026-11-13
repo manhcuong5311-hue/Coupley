@@ -92,6 +92,10 @@ final class QuestionOfTheDayViewModel: ObservableObject {
 
     /// What the partner's pick says about them. The payoff of answering
     /// blind — available only once both have answered.
+    ///
+    /// Display only. `insight(for:)` already hands back the hint in the
+    /// reader's language (`ChatQuizOption.displayHint`, via the Content
+    /// catalog), so it is drawn as is.
     var partnerAnswerInsight: String? {
         guard let quiz, quiz.hasAnswered(session.userId) else { return nil }
         return quiz.insight(for: session.partnerId)
@@ -103,6 +107,7 @@ final class QuestionOfTheDayViewModel: ObservableObject {
     ///
     /// Was its own copy of the hint lookup, keyed by the stored display
     /// string; it is now the same id-based resolution the chat card uses.
+    /// Display only, already in the reader's language like the insight.
     var myAnswerHint: String? {
         quiz?.insight(for: session.userId)
     }

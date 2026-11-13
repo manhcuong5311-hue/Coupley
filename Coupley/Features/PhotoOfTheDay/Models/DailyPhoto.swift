@@ -48,7 +48,8 @@ struct DailyPhoto: Identifiable, Codable, Equatable {
     /// to a prompt — which works for every document already written, because
     /// `developmentRegion = en` keeps those exact strings in source as the
     /// catalog's base values. Only a prompt since removed from the bank falls
-    /// through to the stored text.
+    /// through to the stored text, and that still goes through the Content
+    /// catalog, which may keep a translation the bank no longer does.
     var promptText: String {
         if let promptId, let known = DailyPhotoPrompts.byId(promptId) {
             return known.displayText
@@ -56,7 +57,7 @@ struct DailyPhoto: Identifiable, Codable, Equatable {
         if let known = DailyPhotoPrompts.byText(prompt) {
             return known.displayText
         }
-        return prompt
+        return ContentL10n.text(prompt)
     }
 
     func photoURL(for userId: String) -> String? { photos[userId] }
@@ -79,9 +80,9 @@ struct DailyPhotoPrompt: Equatable {
     /// Never translated — draw `displayText`.
     let text: String
 
-    /// What to draw. Identical to `text` until there is a string catalog;
-    /// then this becomes the lookup and `text` stays put.
-    var displayText: String { text }
+    /// What to draw: the prompt in the reader's language when the Content
+    /// catalog has it, otherwise `text` unchanged. `text` itself never moves.
+    var displayText: String { ContentL10n.text(text) }
 
     init(_ id: String, _ text: String) {
         self.id = id
@@ -156,3 +157,10 @@ enum DailyPhotoPrompts {
         return all[(step + offset) % all.count]
     }
 }
+
+#if DEBUG
+extension DailyPhotoPrompts {
+    /// Every base string the UI shows through ContentL10n (to build the Content catalog).
+    static var l10nContentStrings: [String] { all.map(\.text) }
+}
+#endif

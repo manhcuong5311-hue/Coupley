@@ -88,7 +88,11 @@ struct JourneyLetter: Identifiable, Equatable {
 
     /// "Letter from Sam" or "Your letter to Sam".
     func title(partnerName: String) -> String {
-        direction == .toMe ? "Letter from \(partnerName)" : "Your letter to \(partnerName)"
+        direction == .toMe
+            ? String(localized: "Letter from \(partnerName)",
+                     comment: "A future letter the partner wrote for the user. %@ is the partner's name.")
+            : String(localized: "Your letter to \(partnerName)",
+                     comment: "A future letter the user wrote for the partner. %@ is the partner's name.")
     }
 
     /// "Opens Thu, Dec 25 at 9:00 AM", "Ready to open",
@@ -97,15 +101,30 @@ struct JourneyLetter: Identifiable, Equatable {
     func status(partnerName: String, now: Date) -> String {
         switch stage {
         case .sealed:
-            if isPending { return "Sending…" }
-            return "Opens \(FutureLetterClock.moment(opensAt, now: now))"
+            if isPending { return Self.sendingStatus }
+            return String(localized: "Opens \(FutureLetterClock.moment(opensAt, now: now))",
+                          comment: "Status of a sealed future letter. %@ is a moment such as 'today at 9:00 AM' or 'Thu, Dec 25 at 9:00 AM'.")
         case .ready:
-            if direction == .toMe { return "Ready to open" }
-            return isPending ? "Sending…" : "Ready — \(partnerName) hasn't opened it yet"
+            if direction == .toMe {
+                return String(localized: "Ready to open", comment: "Status of a future letter whose moment has come")
+            }
+            return isPending
+                ? Self.sendingStatus
+                : String(localized: "Ready — \(partnerName) hasn't opened it yet",
+                         comment: "Status of the user's letter that the partner can open now. %@ is the partner's name.")
         case .opened:
             let day = FutureLetterClock.shortDate(openedAt ?? opensAt, now: now)
-            return direction == .toMe ? "Opened \(day)" : "\(partnerName) opened it \(day)"
+            return direction == .toMe
+                ? String(localized: "Opened \(day)",
+                         comment: "Status of a letter the user opened. %@ is a short date such as 'Nov 13'.")
+                : String(localized: "\(partnerName) opened it \(day)",
+                         comment: "Status of the user's letter the partner opened. First %@ is the partner's name, second a short date such as 'Nov 13'.")
         }
+    }
+
+    /// While the seal is still a local write on this phone.
+    private static var sendingStatus: String {
+        String(localized: "Sending…", comment: "Status of a sealed letter still uploading from this phone")
     }
 
     /// "12 days", "5 hr", "42 min" while sealed; nil otherwise.
@@ -116,13 +135,12 @@ struct JourneyLetter: Identifiable, Equatable {
     /// Title, status and countdown read as sentences, for one VoiceOver element.
     func spokenLabel(partnerName: String, now: Date) -> String {
         let sealedTitle = stage == .sealed && direction == .toMe
-            ? "Sealed letter from \(partnerName)"
+            ? String(localized: "Sealed letter from \(partnerName)",
+                     comment: "VoiceOver: a still-sealed future letter from the partner. %@ is the partner's name.")
             : title(partnerName: partnerName)
         var parts = [sealedTitle, status(partnerName: partnerName, now: now)]
         if let countdown = countdown(now: now) { parts.append(countdown) }
-        return parts
-            .map { $0.hasSuffix(".") || $0.hasSuffix("…") ? $0 : $0 + "." }
-            .joined(separator: " ")
+        return JourneyTimelineSpeech.sentences(parts)
     }
 
     /// The same glyphs as `FutureLetterRowContent`, so a letter looks the
@@ -159,7 +177,8 @@ struct JourneyLetterFeed: Equatable {
     /// False until the letters listener has answered once.
     var hasLoaded: Bool
 
-    static func unavailable(partnerName: String = "your partner") -> JourneyLetterFeed {
+    static func unavailable(partnerName: String = String(localized: "your partner",
+                                                                comment: "Stands in for the partner's name inside a sentence when it is unknown")) -> JourneyLetterFeed {
         JourneyLetterFeed(letters: [], partnerName: partnerName, isAvailable: false, hasLoaded: true)
     }
 

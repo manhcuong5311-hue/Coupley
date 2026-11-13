@@ -16,6 +16,12 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
     ) -> Bool {
+        #if DEBUG
+        // `-coupleyDumpContentStrings`: prints the Content catalog's base
+        // strings to stdout, then the launch carries on as usual.
+        ContentL10nCatalogDump.printIfRequested()
+        #endif
+
         FirebaseApp.configure()
 
         // The two delegate hooks the rest of the notification stack relies
@@ -261,11 +267,12 @@ struct SplashView: View {
                     .fill(Brand.surfaceLight)
                     .frame(width: 96, height: 96)
                     .overlay(Circle().strokeBorder(Brand.divider, lineWidth: 1))
-                    .overlay { Text("💑").font(.system(size: 40)) }
+                    .overlay { Text(verbatim: "💑").font(.system(size: 40)) }
             }
             .scaleEffect(scale)
 
-            Text("Coupley")
+            // The brand name is never translated, so it stays out of the catalog.
+            Text(verbatim: "Coupley")
                 .font(.system(size: 32, weight: .bold, design: .rounded))
                 .foregroundStyle(Brand.textPrimary)
         }

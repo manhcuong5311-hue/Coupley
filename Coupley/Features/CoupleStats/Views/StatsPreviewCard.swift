@@ -55,7 +55,7 @@ struct StatsPreviewCard: View {
                     .foregroundStyle(Brand.textPrimary)
             }
 
-            Text("day streak")
+            Text("day streak", comment: "Caption under the streak count, a number of days in a row; must read with any number")
                 .font(.caption2)
                 .foregroundStyle(Brand.textSecondary)
         }
@@ -80,7 +80,9 @@ struct StatsPreviewCard: View {
                 }
             }
 
-            Text(viewModel.todaySyncScore != nil ? "sync score" : "check in first")
+            Text(viewModel.todaySyncScore != nil
+                 ? LocalizedStringResource("sync score", comment: "Caption under today's sync percentage")
+                 : LocalizedStringResource("check in first", comment: "Caption shown instead of a sync score: check in to get one"))
                 .font(.caption2)
                 .foregroundStyle(Brand.textSecondary)
         }

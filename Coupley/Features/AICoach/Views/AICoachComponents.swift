@@ -66,13 +66,13 @@ struct CoachCard<Content: View>: View {
 // MARK: - Section Title
 
 struct CoachSectionTitle: View {
-    let text: String
+    let text: LocalizedStringResource
     var body: some View {
         Text(text)
             .font(.system(size: 12, weight: .semibold, design: .rounded))
             .foregroundStyle(Brand.textSecondary)
             .textCase(.uppercase)
-            .tracking(0.6)
+            .scriptAwareTracking(0.6)
     }
 }
 
@@ -137,7 +137,7 @@ struct CoachAvatar: View {
 // MARK: - Pillar Meter
 
 struct CoachPillarMeter: View {
-    let label: String
+    let label: LocalizedStringResource
     let icon: String
     let score: Int  // 0–100
 
@@ -164,7 +164,7 @@ struct CoachPillarMeter: View {
                     .font(.system(size: 14, weight: .semibold, design: .rounded))
                     .foregroundStyle(Brand.textPrimary)
                 Spacer()
-                Text("\(score)")
+                Text(score, format: .number)
                     .font(.system(size: 15, weight: .bold, design: .rounded))
                     .foregroundStyle(tint)
             }

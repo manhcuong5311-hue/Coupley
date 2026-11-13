@@ -75,7 +75,7 @@ struct QuestionOfTheDayCard: View {
                     .font(BrandType.label)
                     .foregroundStyle(Brand.textSecondary)
 
-                if !isHero {
+                if !isHero, let headerSubtitle {
                     Text(headerSubtitle)
                         .font(BrandType.meta)
                         .foregroundStyle(Brand.textTertiary)
@@ -85,11 +85,13 @@ struct QuestionOfTheDayCard: View {
             Spacer()
 
             if case .complete = viewModel.state {
-                statusBadge("Both answered",
+                statusBadge(LocalizedStringResource("Both answered",
+                                                    comment: "Question of the day badge: you and your partner have both answered"),
                             icon: "checkmark.circle.fill",
                             tint: completeAccent)
             } else if case .awaitingPartner = viewModel.state {
-                statusBadge("Waiting",
+                statusBadge(LocalizedStringResource("Waiting",
+                                                    comment: "Question of the day badge: waiting for your partner's answer"),
                             icon: "hourglass",
                             tint: waitingAccent)
             } else if let quiz = currentQuiz {
@@ -98,12 +100,14 @@ struct QuestionOfTheDayCard: View {
         }
     }
 
-    private var headerSubtitle: String {
+    /// nil for the two states that never draw the header (they show the
+    /// loading row or nothing), rather than a " " key in the catalog.
+    private var headerSubtitle: LocalizedStringResource? {
         switch viewModel.state {
         case .awaitingMe:      return "Answer separately, compare after"
         case .awaitingPartner: return "\(partnerName) hasn't answered yet"
         case .complete:        return "Here's how you two lined up"
-        case .loading, .hidden: return " "
+        case .loading, .hidden: return nil
         }
     }
 
@@ -130,11 +134,13 @@ struct QuestionOfTheDayCard: View {
         )
     }
 
-    private func statusBadge(_ text: String, icon: String, tint: Color) -> some View {
+    private func statusBadge(_ text: LocalizedStringResource, icon: String, tint: Color) -> some View {
         HStack(spacing: 5) {
             Image(systemName: icon).font(.system(size: 11, weight: .semibold))
             Text(text)
                 .font(.system(size: 10, weight: .semibold, design: .rounded))
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
         }
         .foregroundStyle(tint)
         .padding(.horizontal, 9)
@@ -165,7 +171,7 @@ struct QuestionOfTheDayCard: View {
                 HStack(spacing: 7) {
                     Image(systemName: "pencil.and.scribble")
                         .font(.system(size: 14, weight: .semibold))
-                    Text("Answer")
+                    Text("Answer", comment: "Button (verb): answer today's question")
                         .font(.system(size: 15, weight: .semibold, design: .rounded))
                 }
                 .foregroundStyle(.white)
@@ -254,11 +260,11 @@ struct QuestionOfTheDayCard: View {
 
             VStack(spacing: 8) {
                 answerRow(
-                    label: "You",
+                    label: Text("You", comment: "Question of the day result: label in front of your own answer"),
                     options: quiz.optionLabels(ofUser: viewModel.myUserId)
                 )
                 answerRow(
-                    label: partnerName,
+                    label: Text(partnerName),
                     options: quiz.optionLabels(ofUser: viewModel.partnerUserId)
                 )
             }
@@ -306,9 +312,12 @@ struct QuestionOfTheDayCard: View {
         )
     }
 
-    private func answerRow(label: String, options: [String]) -> some View {
+    /// `label` is a `Text` because one caller passes the partner's name, which
+    /// must stay verbatim, and the other "You", which must not: a `String`
+    /// parameter drew both verbatim.
+    private func answerRow(label: Text, options: [String]) -> some View {
         HStack(alignment: .top, spacing: 10) {
-            Text(label)
+            label
                 .font(.system(size: 12, weight: .semibold, design: .rounded))
                 .foregroundStyle(Brand.textTertiary)
                 .lineLimit(1)
@@ -317,7 +326,9 @@ struct QuestionOfTheDayCard: View {
                 // two-word name from breaking mid-word inside it.
                 .frame(width: 64, alignment: .leading)
 
-            Text(options.isEmpty ? "—" : options.joined(separator: ", "))
+            // The locale's list separator ("A, B" in English, "A、B" in
+            // Japanese) instead of a hardcoded ", ".
+            Text(options.isEmpty ? "—" : options.formatted(.list(type: .and, width: .narrow)))
                 .font(.system(size: 13, weight: .medium, design: .rounded))
                 .foregroundStyle(Brand.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)

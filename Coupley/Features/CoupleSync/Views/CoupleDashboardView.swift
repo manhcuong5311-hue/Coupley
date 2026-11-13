@@ -240,6 +240,9 @@ struct CoupleDashboardView: View {
         }
         .animation(.spring(response: 0.45, dampingFraction: 0.85),
                    value: viewModel.partnerIsOnline)
+        #if DEBUG
+        .task { await openLaunchArgumentScreen() }
+        #endif
         // `onAppear` does not fire when a suspended app comes back, so an app
         // left open overnight kept showing yesterday's finished question until
         // someone switched tabs. Both calls are throttled and idempotent.
@@ -291,11 +294,16 @@ struct CoupleDashboardView: View {
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.top, 4)
 
-            Text(heroStandfirst)
-                .font(BrandType.meta)
-                .foregroundStyle(Brand.textSecondary)
-                .lineLimit(1)
-                .padding(.top, 6)
+            if let heroStandfirst {
+                Text(heroStandfirst)
+                    .font(BrandType.meta)
+                    .foregroundStyle(Brand.textSecondary)
+                    // One line in English; German and Russian run 30-50%
+                    // longer, and a truncated standfirst loses its point.
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.8)
+                    .padding(.top, 6)
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -357,7 +365,9 @@ struct CoupleDashboardView: View {
         .buttonStyle(BouncyButtonStyle(scale: 0.92))
         .accessibilityLabel("Write a future letter")
         .contextMenu {
-            Button("All letters", systemImage: "tray.full") { lettersViewModel.openHub() }
+            Button(LocalizedStringResource("All letters",
+                                           comment: "Context menu on Home's envelope button: open the list of future letters"),
+                   systemImage: "tray.full") { lettersViewModel.openHub() }
         }
     }
 
@@ -467,7 +477,7 @@ struct CoupleDashboardView: View {
         return .none
     }
 
-    private var heroHeadline: String {
+    private var heroHeadline: LocalizedStringResource {
         switch homeHero {
         case .letter:
             let count = lettersViewModel.readyForMeCount
@@ -485,14 +495,12 @@ struct CoupleDashboardView: View {
         }
     }
 
-    private var heroStandfirst: String {
+    /// nil only in a state the resolver never produces (a letter hero with no
+    /// letter); the masthead then drops the line instead of drawing an empty one.
+    private var heroStandfirst: LocalizedStringResource? {
         switch homeHero {
         case .letter:
-            guard let letter = lettersViewModel.heroLetter else { return "" }
-            let when = FutureLetterClock.sealedPhrase(letter.sealedMoment, now: lettersViewModel.now)
-            return lettersViewModel.readyForMeCount > 1
-                ? "From \(partnerName), the first sealed \(when)"
-                : "\(partnerName) sealed it \(when)"
+            return lettersViewModel.heroLetter.map { letterStandfirst(for: $0) }
         case .togetherNow: return "Reach for them while they are here"
         case .question:
             if case .awaitingMe = qotdViewModel.state { return "Answer blind, then compare" }
@@ -504,6 +512,40 @@ struct CoupleDashboardView: View {
         case .mood:        return "Here is how their day is going"
         case .none:        return "Nothing waiting — enjoy the quiet"
         }
+    }
+
+    /// "Sam sealed it yesterday", as whole sentences.
+    ///
+    /// Was a frame with `FutureLetterClock.sealedPhrase` ("today", "yesterday",
+    /// "on Nov 13") spliced into it, which hands a translator the day word with
+    /// no sentence around it. Same buckets, same English, one key per sentence.
+    private func letterStandfirst(for letter: FutureLetter) -> LocalizedStringResource {
+        let sealed = letter.sealedMoment
+        let now = lettersViewModel.now
+        let calendar = Calendar.current
+        let several = lettersViewModel.readyForMeCount > 1
+
+        if calendar.isDate(sealed, inSameDayAs: now) {
+            return several
+                ? LocalizedStringResource("From \(partnerName), the first sealed today",
+                                          comment: "Home, under 'N letters for you.'; the placeholder is the partner's name")
+                : LocalizedStringResource("\(partnerName) sealed it today",
+                                          comment: "Home, under 'A letter for you.'; the placeholder is the partner's name")
+        }
+        if let yesterday = calendar.date(byAdding: .day, value: -1, to: now),
+           calendar.isDate(sealed, inSameDayAs: yesterday) {
+            return several
+                ? LocalizedStringResource("From \(partnerName), the first sealed yesterday",
+                                          comment: "Home, under 'N letters for you.'; the placeholder is the partner's name")
+                : LocalizedStringResource("\(partnerName) sealed it yesterday",
+                                          comment: "Home, under 'A letter for you.'; the placeholder is the partner's name")
+        }
+        let date = FutureLetterClock.shortDate(sealed, now: now, calendar: calendar)
+        return several
+            ? LocalizedStringResource("From \(partnerName), the first sealed on \(date)",
+                                      comment: "Home, under 'N letters for you.'; partner's name, then a short date such as 'Nov 13'")
+            : LocalizedStringResource("\(partnerName) sealed it on \(date)",
+                                      comment: "Home, under 'A letter for you.'; partner's name, then a short date such as 'Nov 13'")
     }
 
     // MARK: - Hero slot (T1)
@@ -690,22 +732,25 @@ struct CoupleDashboardView: View {
             statsLine(
                 icon: "flame.fill",
                 iconColor: Color(red: 1.0, green: 0.55, blue: 0.20),
-                value: "\(statsViewModel.streak.currentStreak)",
-                label: "streak"
+                value: statsViewModel.streak.currentStreak.formatted(),
+                label: Text(verbatim: Self.streakCaption(statsViewModel.streak.currentStreak))
             )
             Divider().opacity(0.6)
             statsLine(
                 icon: "arrow.triangle.2.circlepath",
                 iconColor: Brand.accentStart,
-                value: statsViewModel.todaySyncScore.map { "\($0.score)%" } ?? "--",
-                label: "sync"
+                value: statsViewModel.todaySyncScore.map {
+                    String(localized: "\($0.score)%", comment: "Home stats chip: today's mood sync score as a percentage, e.g. 72%")
+                } ?? "--",
+                label: Text("sync",
+                            comment: "Home stats chip caption beside a percentage: how in sync your moods are today")
             )
             Divider().opacity(0.6)
             statsLine(
                 icon: "calendar",
                 iconColor: Color(red: 0.40, green: 0.70, blue: 1.0),
-                value: "\(viewModel.weeklyHistory.count)",
-                label: "check-ins"
+                value: viewModel.weeklyHistory.count.formatted(),
+                label: Text(verbatim: Self.checkInsCaption(viewModel.weeklyHistory.count))
             )
         }
         .padding(10)
@@ -726,7 +771,25 @@ struct CoupleDashboardView: View {
         }
     }
 
-    private func statsLine(icon: String, iconColor: Color, value: String, label: String) -> some View {
+    /// "streak" in a form that agrees with the count of days drawn before it.
+    private static func streakCaption(_ days: Int) -> String {
+        CountedCaption.removingCount(from: String(
+            localized: "home.stats.streakDays",
+            defaultValue: "\(days) streak",
+            comment: "Home stats chip: how many days in a row you both checked in. The number is drawn in bold just before this text and the app removes it from here, so keep %lld and write each plural form to read naturally without the number ('%lld streak' shows as 'streak'; Russian '%lld дней подряд' shows as 'дней подряд')."))
+    }
+
+    /// "check-ins" in a form that agrees with the count drawn before it.
+    private static func checkInsCaption(_ count: Int) -> String {
+        // Its own key: "%lld check-ins" already means ticking off a
+        // challenge, which several languages word differently.
+        CountedCaption.removingCount(from: String(
+            localized: "home.stats.moodCheckIns",
+            defaultValue: "\(count) check-ins",
+            comment: "Home stats chip: your partner's MOOD check-ins this week (not challenge check-ins). The number is drawn in bold just before this text and the app removes it from here, so keep %lld and write each plural form to read naturally without the number ('%lld check-ins' shows as 'check-ins')."))
+    }
+
+    private func statsLine(icon: String, iconColor: Color, value: String, label: Text) -> some View {
         HStack(spacing: 6) {
             Image(systemName: icon)
                 .font(.system(size: 11, weight: .semibold))
@@ -737,10 +800,12 @@ struct CoupleDashboardView: View {
                 .font(.system(size: 14, weight: .bold, design: .rounded))
                 .foregroundStyle(Brand.textPrimary)
 
-            Text(label)
+            label
                 .font(.system(size: 11, weight: .medium, design: .rounded))
                 .foregroundStyle(Brand.textSecondary)
-                .lineLimit(1)
+                // Wraps before it truncates: most languages run longer than
+                // "check-ins" in a box this narrow.
+                .lineLimit(2)
                 .minimumScaleFactor(0.8)
 
             Spacer(minLength: 0)
@@ -763,14 +828,14 @@ struct CoupleDashboardView: View {
                 activityCard(
                     icon: "heart.fill",
                     tint: Brand.accentStart,
-                    title: "Mood",
+                    title: LocalizedStringResource("Mood", comment: "Home activity tile: opens the Mood tab"),
                     subtitle: "Share today"
                 ) { selectedTab = .mood }
 
                 activityCard(
                     icon: "bubble.left.and.bubble.right.fill",
                     tint: Color(red: 0.40, green: 0.70, blue: 1.0),
-                    title: "Couple Chat",
+                    title: LocalizedStringResource("Couple Chat", comment: "Home activity tile: opens the chat tab"),
                     subtitle: "Talk together"
                 ) { selectedTab = .chat }
             }
@@ -779,7 +844,7 @@ struct CoupleDashboardView: View {
                 activityCard(
                     icon: "sparkles",
                     tint: Color(red: 1.0, green: 0.55, blue: 0.20),
-                    title: "Date Ideas",
+                    title: LocalizedStringResource("Date Ideas", comment: "Home activity tile: AI date suggestions"),
                     subtitle: "Plan a night"
                 ) {
                     if !premiumStore.hasAccess(to: .dateIdeas) {
@@ -799,7 +864,7 @@ struct CoupleDashboardView: View {
                 activityCard(
                     icon: "chart.bar.fill",
                     tint: Color(red: 0.50, green: 0.40, blue: 1.0),
-                    title: "Our Stats",
+                    title: LocalizedStringResource("Our Stats", comment: "Home activity tile: opens the couple's streak and sync stats"),
                     subtitle: "Track progress"
                 ) { showStatsSheet = true }
             }
@@ -808,14 +873,14 @@ struct CoupleDashboardView: View {
                 activityCard(
                     icon: "heart.text.square.fill",
                     tint: Color(red: 1.0, green: 0.40, blue: 0.55),
-                    title: "Profile",
+                    title: LocalizedStringResource("Profile", comment: "Home activity tile: opens both partners' profiles (likes, dislikes)"),
                     subtitle: "Likes, dislikes & more"
                 ) { showProfileHub = true }
 
                 activityCard(
                     icon: "envelope.fill",
                     tint: FutureLetterStyle.accent,
-                    title: "Future Letters",
+                    title: LocalizedStringResource("Future Letters", comment: "Home activity tile: letters sealed until a chosen date"),
                     subtitle: "Sealed until a day you choose"
                 ) {
                     if lettersViewModel.isAvailable {
@@ -860,10 +925,10 @@ struct CoupleDashboardView: View {
                         Text("AI Relationship Coach")
                             .font(.system(size: 15, weight: .semibold, design: .rounded))
                             .foregroundStyle(Brand.textPrimary)
-                        Text("NEW")
+                        Text("NEW", comment: "Badge on the AI coach card: the feature is new. Keep it short, capitals")
                             .font(.system(size: 9, weight: .bold, design: .rounded))
                             .foregroundStyle(.white)
-                            .tracking(0.4)
+                            .scriptAwareTracking(0.4)
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
                             .background(
@@ -880,7 +945,8 @@ struct CoupleDashboardView: View {
                     Text("Help us solve this — together")
                         .font(.system(size: 12, weight: .regular, design: .rounded))
                         .foregroundStyle(Brand.textSecondary)
-                        .lineLimit(1)
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.8)
                 }
 
                 Spacer(minLength: 0)
@@ -913,10 +979,13 @@ struct CoupleDashboardView: View {
         .buttonStyle(BouncyButtonStyle(scale: 0.96))
     }
 
+    /// - Parameter subtitle: Not drawn (see the body). Deliberately left a
+    ///   plain `String`, so the string catalog does not extract copy nobody
+    ///   sees and translators are not paid for it.
     private func activityCard(
         icon: String,
         tint: Color,
-        title: String,
+        title: LocalizedStringResource,
         subtitle: String,
         action: @escaping () -> Void
     ) -> some View {
@@ -937,8 +1006,10 @@ struct CoupleDashboardView: View {
                     Text(title)
                         .font(BrandType.label)
                         .foregroundStyle(Brand.textPrimary)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.85)
+                        // Half-width tile: "Unsere Statistiken" needs a
+                        // second line rather than an ellipsis.
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.8)
 
                     Spacer(minLength: 0)
                 }
@@ -980,7 +1051,9 @@ struct CoupleDashboardView: View {
                     .font(.system(size: 17, weight: .semibold, design: .rounded))
                     .foregroundStyle(Brand.textPrimary)
 
-                Text("Their mood will appear here\nonce they check in today")
+                // No hardcoded "\n": it would become part of the catalog key,
+                // and every language breaks this line in a different place.
+                Text("Their mood will appear here once they check in today")
                     .font(.system(size: 14, weight: .regular, design: .rounded))
                     .foregroundStyle(Brand.textSecondary)
                     .multilineTextAlignment(.center)
@@ -1049,7 +1122,7 @@ struct CoupleDashboardView: View {
                 HStack(spacing: 6) {
                     Image(systemName: entry.energyValue.icon)
                         .font(.system(size: 12, weight: .semibold))
-                    Text("\(entry.energyValue.label) energy")
+                    Text(energyPhrase(entry.energyValue))
                         .font(.system(size: 13, weight: .medium, design: .rounded))
                 }
                 .foregroundStyle(Brand.textSecondary)
@@ -1195,7 +1268,9 @@ struct CoupleDashboardView: View {
                         Image(systemName: didSendPing ? "checkmark" : "heart.fill")
                             .font(.system(size: 12, weight: .semibold))
                     }
-                    Text(didSendPing ? "Sent" : "Ping")
+                    Text(didSendPing
+                         ? LocalizedStringResource("Sent", comment: "Ping button just after sending: the ping went through")
+                         : LocalizedStringResource("Ping", comment: "Button: send your partner a 'thinking of you' ping"))
                         .font(.system(size: 13, weight: .semibold, design: .rounded))
                 }
                 // Outlined, not filled. The accent used to appear on the Ping
@@ -1217,16 +1292,20 @@ struct CoupleDashboardView: View {
         }
     }
 
-    private var presenceSubtitle: String {
+    private var presenceSubtitle: LocalizedStringResource {
         if viewModel.partnerIsOnline {
-            return "Active now"
+            return LocalizedStringResource("Active now", comment: "Home presence row: your partner has the app open")
         }
         guard let lastSeen = viewModel.partnerLastSeen else {
-            return "No recent activity"
+            return LocalizedStringResource("No recent activity", comment: "Home presence row: your partner has not been seen lately")
         }
         let formatter = RelativeDateTimeFormatter()
-        formatter.unitsStyle = .abbreviated
-        return "Last seen " + formatter.localizedString(for: lastSeen, relativeTo: Date())
+        formatter.unitsStyle = RelativeDateTimeFormatter.compactUnitsStyle
+        let relative = formatter.localizedString(for: lastSeen, relativeTo: Date())
+        // One key with the relative time as its argument. Was "Last seen " +
+        // the formatter's output: an English frame around a localized phrase.
+        return LocalizedStringResource("Last seen \(relative)",
+                                       comment: "Home presence row; the placeholder is a relative time such as '5 min. ago'")
     }
 
     private func sendThinkingOfYou() {
@@ -1271,9 +1350,16 @@ struct CoupleDashboardView: View {
                 } label: {
                     VStack(spacing: 4) {
                         Text(kind.emoji).font(.system(size: 22))
-                        Text(isSent ? "Sent!" : kind.label)
+                        // Was `isSent ? "Sent!" : kind.label` with a String
+                        // label, which made the whole ternary a String and
+                        // drew "Sent!" verbatim, in English, everywhere.
+                        Text(isSent
+                             ? LocalizedStringResource("Sent!", comment: "Reaction button just after tapping it: the reaction was sent")
+                             : kind.label)
                             .font(.system(size: 10, weight: .medium, design: .rounded))
                             .foregroundStyle(isSent ? Brand.accentStart : Brand.textSecondary)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 10)
@@ -1391,11 +1477,11 @@ struct CoupleDashboardView: View {
         let entry = viewModel.weeklyHistory.first {
             cal.isDate($0.timestamp, inSameDayAs: date)
         }
-        let dayLabel: String = {
-            let f = DateFormatter()
-            f.dateFormat = "EEEEE"
-            return f.string(from: date)
-        }()
+        // The locale's abbreviated weekday ("Mon", "Th 2", "月"). Was a
+        // hardcoded narrow "EEEEE": ambiguous single letters in German
+        // ("M D M D F S S"), and a 2-3 character label in Vietnamese in a
+        // cell sized for one. Also no longer a formatter per cell per render.
+        let dayLabel = date.formatted(.dateTime.weekday(.abbreviated))
 
         return VStack(spacing: 6) {
             ZStack {
@@ -1421,11 +1507,27 @@ struct CoupleDashboardView: View {
             Text(dayLabel)
                 .font(.system(size: 10, weight: .semibold, design: .rounded))
                 .foregroundStyle(Brand.textSecondary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
         }
         .frame(maxWidth: .infinity)
     }
 
     // MARK: - Helpers
+
+    /// Whole phrases, not "\(level.label) energy": an adjective translated on
+    /// its own cannot agree with a noun it has never seen ("énergie faible",
+    /// "niedrige Energie").
+    private func energyPhrase(_ level: EnergyLevel) -> LocalizedStringResource {
+        switch level {
+        case .low:
+            return LocalizedStringResource("Low energy", comment: "Partner's energy level on the Home mood card")
+        case .medium:
+            return LocalizedStringResource("Medium energy", comment: "Partner's energy level on the Home mood card")
+        case .high:
+            return LocalizedStringResource("High energy", comment: "Partner's energy level on the Home mood card")
+        }
+    }
 
     private func moodColor(_ entry: SharedMoodEntry) -> Color {
         switch entry.moodValue {
@@ -1436,6 +1538,37 @@ struct CoupleDashboardView: View {
         }
     }
 }
+
+#if DEBUG
+// MARK: - Screenshot launch argument
+
+extension CoupleDashboardView {
+
+    /// DEBUG only, for automated localization screenshots: the screen named
+    /// by the `-coupleyOpen coach|letters|compose` launch argument. Read once.
+    private static let launchArgumentScreen: String? = {
+        let arguments = ProcessInfo.processInfo.arguments
+        guard let flag = arguments.firstIndex(of: "-coupleyOpen"),
+              arguments.indices.contains(flag + 1) else { return nil }
+        return arguments[flag + 1]
+    }()
+
+    private static var didOpenLaunchArgumentScreen = false
+
+    /// Opens that screen once per process, after Home has settled.
+    private func openLaunchArgumentScreen() async {
+        guard let screen = Self.launchArgumentScreen, !Self.didOpenLaunchArgumentScreen else { return }
+        Self.didOpenLaunchArgumentScreen = true
+        try? await Task.sleep(for: .seconds(1.5))
+        switch screen {
+        case "coach":   openAICoach()
+        case "letters": lettersViewModel.openHub()
+        case "compose": lettersViewModel.compose()
+        default:        break
+        }
+    }
+}
+#endif
 
 // MARK: - Preview
 

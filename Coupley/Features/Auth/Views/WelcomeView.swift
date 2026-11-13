@@ -70,11 +70,13 @@ struct WelcomeView: View {
                     .offset(x: 6, y: 0)
             }
 
+            // The logotype, never translated: verbatim keeps "AI" out of the
+            // catalog, where it could be rendered "KI" or "IA" mid-wordmark.
             HStack(spacing: 0) {
-                Text("Coupley")
+                Text(verbatim: "Coupley")
                     .font(.system(size: 30, weight: .bold, design: .rounded))
                     .foregroundStyle(Brand.textPrimary)
-                Text("AI")
+                Text(verbatim: "AI")
                     .font(.system(size: 30, weight: .bold, design: .rounded))
                     .foregroundStyle(Brand.accentStart)
             }
@@ -127,19 +129,23 @@ struct WelcomeView: View {
 
     private var legalFooter: some View {
         VStack(spacing: 6) {
-            Text("By continuing you agree to our")
+            Text("By continuing you agree to our",
+                 comment: "Welcome screen footer, shown on its own line above two links: 'Terms (EULA) · Privacy Policy'")
                 .font(.system(size: 11, design: .rounded))
                 .foregroundStyle(Brand.textTertiary)
+                .multilineTextAlignment(.center)
             HStack(spacing: 4) {
-                legalLink("Terms (EULA)", url: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")
+                legalLink(LocalizedStringResource("Terms (EULA)", comment: "Link to the terms of use (Apple's standard EULA)"),
+                          url: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")
                 Text("·").foregroundStyle(Brand.textTertiary)
-                legalLink("Privacy Policy", url: "https://manhcuong5311-hue.github.io/Coupley/")
+                legalLink(LocalizedStringResource("Privacy Policy", comment: "Link to the privacy policy"),
+                          url: "https://manhcuong5311-hue.github.io/Coupley/")
             }
             .font(.system(size: 11, weight: .medium, design: .rounded))
         }
     }
 
-    private func legalLink(_ title: String, url: String) -> some View {
+    private func legalLink(_ title: LocalizedStringResource, url: String) -> some View {
         Group {
             if let u = URL(string: url) {
                 Link(title, destination: u)

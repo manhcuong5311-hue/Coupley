@@ -55,8 +55,10 @@ struct AICoachRecoveryPlanView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
-                Button("Close") { dismiss() }
-                    .foregroundStyle(Brand.textSecondary)
+                Button { dismiss() } label: {
+                    Text("Close", comment: "Toolbar button (verb): dismiss the sheet")
+                }
+                .foregroundStyle(Brand.textSecondary)
             }
         }
         .alert("Something went wrong", isPresented: Binding(
@@ -123,9 +125,10 @@ struct AICoachRecoveryPlanView: View {
                         .foregroundStyle(Brand.textSecondary)
 
                     CoachFlowLayout(spacing: 8) {
-                        chip(title: "General", isSelected: issue == nil) { issue = nil }
+                        chip(title: LocalizedStringResource("General", comment: "Recovery plan focus chip: no specific issue"),
+                             isSelected: issue == nil) { issue = nil }
                         ForEach([CoachIssueType.fight, .distance, .trust, .reconnect, .communication], id: \.self) { i in
-                            chip(title: i.title, isSelected: issue == i) { issue = i }
+                            chip(title: i.displayTitle, isSelected: issue == i) { issue = i }
                         }
                     }
                 }
@@ -141,7 +144,7 @@ struct AICoachRecoveryPlanView: View {
         }
     }
 
-    private func chip(title: String, isSelected: Bool, action: @escaping () -> Void) -> some View {
+    private func chip(title: LocalizedStringResource, isSelected: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(title)
                 .font(.system(size: 13, weight: .semibold, design: .rounded))
@@ -179,10 +182,11 @@ struct AICoachRecoveryPlanView: View {
                     Image(systemName: "sparkles")
                         .font(.system(size: 12, weight: .bold))
                         .foregroundStyle(Color(red: 0.48, green: 0.75, blue: 0.56))
-                    Text(p.length.label.uppercased())
+                    Text(p.length.label)
                         .font(.system(size: 11, weight: .bold, design: .rounded))
                         .foregroundStyle(Color(red: 0.48, green: 0.75, blue: 0.56))
-                        .tracking(0.6)
+                        .textCase(.uppercase)
+                        .scriptAwareTracking(0.6)
                 }
                 Text(p.title)
                     .font(.system(size: 20, weight: .bold, design: .rounded))
@@ -211,7 +215,7 @@ struct AICoachRecoveryPlanView: View {
                             Circle()
                                 .fill(Brand.accentStart.opacity(0.14))
                                 .frame(width: 40, height: 40)
-                            Text("\(day.dayNumber)")
+                            Text(day.dayNumber, format: .number)
                                 .font(.system(size: 16, weight: .bold, design: .rounded))
                                 .foregroundStyle(Brand.accentStart)
                         }
@@ -220,7 +224,7 @@ struct AICoachRecoveryPlanView: View {
                                 .font(.system(size: 12, weight: .semibold, design: .rounded))
                                 .foregroundStyle(Brand.textSecondary)
                                 .textCase(.uppercase)
-                                .tracking(0.5)
+                                .scriptAwareTracking(0.5)
                             Text(day.theme)
                                 .font(.system(size: 16, weight: .semibold, design: .rounded))
                                 .foregroundStyle(Brand.textPrimary)
@@ -244,7 +248,7 @@ struct AICoachRecoveryPlanView: View {
                                 .font(.system(size: 12, weight: .semibold, design: .rounded))
                                 .foregroundStyle(Brand.textSecondary)
                                 .textCase(.uppercase)
-                                .tracking(0.5)
+                                .scriptAwareTracking(0.5)
                             ForEach(day.actions, id: \.self) { action in
                                 HStack(alignment: .top, spacing: 10) {
                                     Image(systemName: "circle")
@@ -278,7 +282,7 @@ struct AICoachRecoveryPlanView: View {
                     .font(.system(size: 12, weight: .semibold, design: .rounded))
                     .foregroundStyle(Brand.textSecondary)
                     .textCase(.uppercase)
-                    .tracking(0.5)
+                    .scriptAwareTracking(0.5)
                 Spacer()
                 Button {
                     UIPasteboard.general.string = message

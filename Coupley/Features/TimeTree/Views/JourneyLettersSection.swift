@@ -89,7 +89,8 @@ struct JourneyLettersSection: View {
 
     private var emptyText: String {
         let partner = letters.partnerName
-        return "Seal a letter for \(partner) to open on a day you pick. Letters \(partner) writes you show up here too."
+        return String(localized: "Seal a letter for \(partner) to open on a day you pick. Letters \(partner) writes you show up here too.",
+                      comment: "Journey letters section with no letters yet. Both %@ are the partner's name.")
     }
 
     // MARK: - Tiles
@@ -168,7 +169,7 @@ struct JourneyLettersSection: View {
                     .fixedSize(horizontal: false, vertical: true)
 
                 if more > 0 {
-                    Text(verbatim: "+\(more) more")
+                    Text("+\(more) more", comment: "Letter tile footer: how many other letters go this direction")
                         .font(JourneyFont.meta)
                         .foregroundStyle(Brand.textTertiary)
                 }
@@ -180,7 +181,10 @@ struct JourneyLettersSection: View {
     // MARK: - Copy
 
     private func directionLabel(_ direction: JourneyLetterDirection) -> String {
-        direction == .toMe ? "From \(letters.partnerName)" : "From you"
+        direction == .toMe
+            ? String(localized: "From \(letters.partnerName)",
+                     comment: "Letter tile label: letters the partner wrote. %@ is the partner's name.")
+            : String(localized: "From you", comment: "Letter tile label: letters the user wrote")
     }
 
     /// "12 days", "Ready to open", "Opened by Sam", "Nothing yet"…
@@ -188,16 +192,26 @@ struct JourneyLettersSection: View {
                              headline: JourneyLetter?,
                              now: Date) -> String {
         guard let headline else {
-            return direction == .toMe ? "Nothing yet" : "Nothing sealed"
+            return direction == .toMe
+                ? String(localized: "Nothing yet", comment: "Letter tile: the partner has written no letter yet")
+                : String(localized: "Nothing sealed", comment: "Letter tile: the user has sealed no letter yet")
         }
         switch headline.stage {
         case .sealed:
-            if headline.isPending { return "Sending…" }
-            return headline.countdown(now: now) ?? "Sealed"
+            if headline.isPending {
+                return String(localized: "Sending…", comment: "Status of a sealed letter still uploading from this phone")
+            }
+            return headline.countdown(now: now)
+                ?? String(localized: "Sealed", comment: "Letter tile: the letter is sealed (adjective)")
         case .ready:
-            return direction == .toMe ? "Ready to open" : "Ready"
+            return direction == .toMe
+                ? String(localized: "Ready to open", comment: "Status of a future letter whose moment has come")
+                : String(localized: "Ready", comment: "Letter tile: the user's letter can be opened now (adjective)")
         case .opened:
-            return direction == .toMe ? "Opened" : "Opened by \(letters.partnerName)"
+            return direction == .toMe
+                ? String(localized: "Opened", comment: "Letter tile: the user has opened this letter (adjective)")
+                : String(localized: "Opened by \(letters.partnerName)",
+                         comment: "Letter tile: the partner opened the user's letter. %@ is the partner's name.")
         }
     }
 
@@ -207,19 +221,25 @@ struct JourneyLettersSection: View {
                             now: Date) -> String {
         guard let headline else {
             return direction == .toMe
-                ? "Letters from \(letters.partnerName) show up here"
-                : "Write one below"
+                ? String(localized: "Letters from \(letters.partnerName) show up here",
+                         comment: "Letter tile with no letter from the partner yet. %@ is the partner's name.")
+                : String(localized: "Write one below", comment: "Letter tile with no letter from the user yet; the Write button is below")
         }
         switch headline.stage {
         case .sealed:
-            return "Opens \(FutureLetterClock.moment(headline.opensAt, now: now))"
+            return String(localized: "Opens \(FutureLetterClock.moment(headline.opensAt, now: now))",
+                          comment: "Status of a sealed future letter. %@ is a moment such as 'today at 9:00 AM' or 'Thu, Dec 25 at 9:00 AM'.")
         case .ready:
             if direction == .toMe {
-                return "Sealed \(FutureLetterClock.sealedPhrase(headline.sealedAt, now: now))"
+                return String(localized: "Sealed \(FutureLetterClock.sealedPhrase(headline.sealedAt, now: now))",
+                              comment: "When a letter was sealed. %@ is 'today', 'yesterday' or 'on Nov 13'.")
             }
             // Due by this phone's clock, but a seal still queued here has not
             // reached the server, so it is not ready for anyone yet.
-            return headline.isPending ? "Sending…" : "\(letters.partnerName) hasn't opened it yet"
+            return headline.isPending
+                ? String(localized: "Sending…", comment: "Status of a sealed letter still uploading from this phone")
+                : String(localized: "\(letters.partnerName) hasn't opened it yet",
+                         comment: "Letter tile: the partner has not opened the user's letter. %@ is the partner's name.")
         case .opened:
             return FutureLetterClock.shortDate(headline.openedAt ?? headline.opensAt, now: now)
         }
@@ -231,15 +251,17 @@ struct JourneyLettersSection: View {
                              headline: JourneyLetter?,
                              more: Int,
                              now: Date) -> String {
-        var parts = [directionLabel(direction) + "."]
+        var parts = [JourneyTimelineSpeech.sentence(directionLabel(direction))]
         if let headline {
             parts.append(headline.spokenLabel(partnerName: letters.partnerName, now: now))
         } else {
-            parts.append(primaryLine(direction, headline: nil, now: now) + ".")
-            parts.append(detailLine(direction, headline: nil, now: now) + ".")
+            parts.append(JourneyTimelineSpeech.sentence(primaryLine(direction, headline: nil, now: now)))
+            parts.append(JourneyTimelineSpeech.sentence(detailLine(direction, headline: nil, now: now)))
         }
         if more > 0 {
-            parts.append(more == 1 ? "1 more letter." : "\(more) more letters.")
+            parts.append(more == 1
+                         ? String(localized: "1 more letter.", comment: "VoiceOver: one other letter goes this direction")
+                         : String(localized: "\(more) more letters.", comment: "VoiceOver: how many other letters go this direction"))
         }
         return parts.joined(separator: " ")
     }

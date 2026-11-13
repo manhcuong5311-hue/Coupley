@@ -1,0 +1,198 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "NSUserTrackingUsageDescription" : {
+      "comment" : "App Tracking Transparency prompt shown before personalized ads.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ستُستخدم بياناتك لعرض إعلانات أكثر صلة بك. يمكنك تغيير ذلك في أي وقت من الإعدادات."
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tvoje údaje použijeme k zobrazování relevantnějších reklam. Kdykoli to můžeš změnit v Nastavení."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dine data bruges til at vise dig mere relevante reklamer. Du kan altid ændre det i Indstillinger."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deine Daten werden genutzt, um dir passendere Werbung zu zeigen. Du kannst das jederzeit in den Einstellungen ändern."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Τα δεδομένα σου θα χρησιμοποιούνται για να σου δείχνουμε πιο σχετικές διαφημίσεις. Μπορείς να το αλλάξεις όποτε θέλεις στις Ρυθμίσεις."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your data will be used to show you more relevant ads. You can change this anytime in Settings."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usaremos tus datos para mostrarte anuncios más relevantes. Puedes cambiarlo cuando quieras en Ajustes."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tietojasi käytetään, jotta voimme näyttää sinulle osuvampia mainoksia. Voit muuttaa tätä milloin tahansa Asetuksissa."
+          }
+        },
+        "fil" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gagamitin ang data mo para magpakita sa iyo ng mas angkop na ads. Puwede mo itong baguhin anumang oras sa Mga Setting."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tes données serviront à t'afficher des publicités plus pertinentes. Tu peux changer cela à tout moment dans Réglages."
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "הנתונים שלך ישמשו להצגת פרסומות רלוונטיות יותר. אפשר לשנות את זה בכל עת בהגדרות."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "आपके डेटा का इस्तेमाल आपको ज़्यादा काम के विज्ञापन दिखाने के लिए किया जाएगा। इसे कभी भी सेटिंग्स में बदला जा सकता है।"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Az adataidat arra használjuk, hogy relevánsabb reklámokat mutassunk neked. Ezt bármikor módosíthatod a Beállításokban."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Datamu akan digunakan untuk menampilkan iklan yang lebih relevan untukmu. Kamu bisa mengubahnya kapan saja di Pengaturan."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "I tuoi dati verranno usati per mostrarti annunci più pertinenti. Puoi modificare questa scelta in qualsiasi momento in Impostazioni."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "データは、より関連性の高い広告を表示するために使用されます。この設定は「設定」からいつでも変更できます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "데이터는 더 관련성 높은 광고를 보여 드리는 데 사용돼요. 설정에서 언제든지 변경할 수 있어요."
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Data anda akan digunakan untuk menunjukkan iklan yang lebih relevan kepada anda. Anda boleh menukar pilihan ini pada bila-bila masa dalam Tetapan."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dataene dine brukes til å vise deg mer relevant reklame. Du kan endre dette når som helst i Innstillinger."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Je gegevens worden gebruikt om je relevantere advertenties te tonen. Je kunt dit altijd wijzigen in Instellingen."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Twoje dane posłużą do wyświetlania reklam lepiej dopasowanych do ciebie. W każdej chwili możesz to zmienić w Ustawieniach."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seus dados serão usados para mostrar anúncios mais relevantes para você. Você pode mudar isso quando quiser nos Ajustes."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Datele tale vor fi folosite pentru a-ți arăta reclame mai relevante. Poți schimba asta oricând din Setări."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Твои данные будут использоваться, чтобы показывать более подходящую рекламу. Это можно изменить в любой момент в Настройках."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dina data används för att visa dig mer relevanta annonser. Du kan ändra det när som helst i Inställningar."
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ข้อมูลของคุณจะถูกใช้เพื่อแสดงโฆษณาที่ตรงกับความสนใจของคุณมากขึ้น คุณเปลี่ยนการตั้งค่านี้ได้ทุกเมื่อในการตั้งค่า"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verilerin, sana daha alakalı reklamlar göstermek için kullanılacak. Bunu istediğin zaman Ayarlar'dan değiştirebilirsin."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Твої дані використовуватимуться, щоб показувати тобі релевантнішу рекламу. Це можна будь-коли змінити в Налаштуваннях."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dữ liệu của bạn sẽ được dùng để hiển thị quảng cáo phù hợp hơn với bạn. Bạn có thể thay đổi lựa chọn này bất cứ lúc nào trong Cài đặt."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你的数据将用于向你展示更相关的广告。你可以随时在“设置”中更改。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你的資料將用於顯示與你更相關的廣告。你隨時可以在「設定」中變更此選項。"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

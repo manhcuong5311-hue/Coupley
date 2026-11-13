@@ -20,7 +20,7 @@ struct PartnerProfileDetailView: View {
     let displayName: String
     /// Pronoun label for the *non-owner* contributor, used in attribution
     /// chips ("by He / by She / by Them"). Derived from the partner's avatar
-    /// in both viewing modes.
+    /// in both viewing modes. The English token from `AvatarOption.pronounLabel`.
     let partnerPronounLabel: String
 
     @Environment(\.dismiss) private var dismiss
@@ -72,12 +72,18 @@ struct PartnerProfileDetailView: View {
                 .padding(.bottom, 40)
             }
         }
-        .navigationTitle(viewModel.mode == .mine ? "My Profile" : "\(displayName)'s Profile")
+        .navigationTitle(viewModel.mode == .mine
+                         ? Text("My Profile")
+                         : Text("\(displayName)'s Profile", comment: "Title of the partner's profile. %@ is their name."))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
-                Button("Close") { dismiss() }
-                    .foregroundStyle(Brand.textSecondary)
+                Button {
+                    dismiss()
+                } label: {
+                    Text("Close", comment: "Toolbar button (verb): closes the profile.")
+                }
+                .foregroundStyle(Brand.textSecondary)
             }
             if viewModel.isSaving {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -118,7 +124,7 @@ struct PartnerProfileDetailView: View {
         .padding(.vertical, 20)
     }
 
-    private var headerSubtitle: String {
+    private var headerSubtitle: LocalizedStringResource {
         switch viewModel.mode {
         case .mine:
             return "Keep this up to date — your partner sees it and can add hints too."
@@ -131,7 +137,7 @@ struct PartnerProfileDetailView: View {
 
     private var likesSection: some View {
         ChipSection(
-            title: "Likes",
+            title: LocalizedStringResource("Likes", comment: "Profile section header (noun): things the person likes."),
             icon: "heart.fill",
             tint: Brand.accentStart,
             items: viewModel.profile.likes,
@@ -140,7 +146,7 @@ struct PartnerProfileDetailView: View {
             canRemove: { viewModel.canRemove(addedBy: viewModel.profile.likesAddedBy[$0]) },
             canAdd: viewModel.canAdd,
             draft: $likeDraft,
-            placeholder: "+ Add like",
+            placeholder: LocalizedStringResource("+ Add like", comment: "Placeholder: add an item to the person's Likes."),
             emptyMessage: "No likes added yet",
             onAdd: { viewModel.addLike($0) },
             onRemove: { viewModel.removeLike($0) }
@@ -149,7 +155,7 @@ struct PartnerProfileDetailView: View {
 
     private var dislikesSection: some View {
         ChipSection(
-            title: "Dislikes",
+            title: LocalizedStringResource("Dislikes", comment: "Profile section header (noun): things the person dislikes."),
             icon: "hand.raised.fill",
             tint: Color(red: 1.0, green: 0.55, blue: 0.25),
             items: viewModel.profile.dislikes,
@@ -158,7 +164,7 @@ struct PartnerProfileDetailView: View {
             canRemove: { viewModel.canRemove(addedBy: viewModel.profile.dislikesAddedBy[$0]) },
             canAdd: viewModel.canAdd,
             draft: $dislikeDraft,
-            placeholder: "+ Add dislike",
+            placeholder: LocalizedStringResource("+ Add dislike", comment: "Placeholder: add an item to the person's Dislikes."),
             emptyMessage: "No dislikes added yet",
             onAdd: { viewModel.addDislike($0) },
             onRemove: { viewModel.removeDislike($0) }
@@ -180,8 +186,9 @@ struct PartnerProfileDetailView: View {
                 .font(.system(size: 15, design: .rounded))
                 .foregroundStyle(Brand.textPrimary)
             } else {
+                // The empty state is app copy; anything else is what they wrote.
                 Text(viewModel.profile.communicationStyle.isEmpty
-                     ? "No preferences added yet"
+                     ? String(localized: "No preferences added yet")
                      : viewModel.profile.communicationStyle)
                     .font(.system(size: 15, design: .rounded))
                     .foregroundStyle(viewModel.profile.communicationStyle.isEmpty
@@ -193,7 +200,8 @@ struct PartnerProfileDetailView: View {
     }
 
     private var notesSection: some View {
-        SectionCard(title: "Notes", icon: "note.text", tint: Color(red: 0.50, green: 0.40, blue: 1.0)) {
+        SectionCard(title: LocalizedStringResource("Notes", comment: "Profile section header (noun): free-form notes about the person."),
+                    icon: "note.text", tint: Color(red: 0.50, green: 0.40, blue: 1.0)) {
             if viewModel.canEditFreeText {
                 TextField(
                     "Anything you want to remember…",
@@ -208,7 +216,7 @@ struct PartnerProfileDetailView: View {
                 .foregroundStyle(Brand.textPrimary)
             } else {
                 Text(viewModel.profile.notes.isEmpty
-                     ? "No notes yet"
+                     ? String(localized: "No notes yet")
                      : viewModel.profile.notes)
                     .font(.system(size: 15, design: .rounded))
                     .foregroundStyle(viewModel.profile.notes.isEmpty
@@ -245,8 +253,10 @@ struct PartnerProfileDetailView: View {
     private func attributionFor(addedBy: String?) -> String? {
         guard let addedBy else { return nil }
         if addedBy == viewModel.targetUserId { return nil }
-        if addedBy == viewModel.currentUserId { return "by me" }
-        return "by \(partnerPronounLabel)"
+        if addedBy == viewModel.currentUserId {
+            return String(localized: "by me", comment: "Tag on a profile hint the viewer added themselves.")
+        }
+        return AvatarOption.addedByTag(pronounLabel: partnerPronounLabel)
     }
 
     // MARK: - Error Banner
@@ -273,7 +283,7 @@ struct PartnerProfileDetailView: View {
 // MARK: - Section Card
 
 private struct SectionCard<Content: View>: View {
-    let title: String
+    let title: LocalizedStringResource
     let icon: String
     let tint: Color
     @ViewBuilder var content: () -> Content
@@ -288,7 +298,7 @@ private struct SectionCard<Content: View>: View {
                     .font(.system(size: 13, weight: .semibold, design: .rounded))
                     .foregroundStyle(Brand.textSecondary)
                     .textCase(.uppercase)
-                    .tracking(0.5)
+                    .scriptAwareTracking(0.5)
                 Spacer()
             }
             content()
@@ -307,17 +317,18 @@ private struct SectionCard<Content: View>: View {
 // MARK: - Chip Section (likes / dislikes / activities)
 
 private struct ChipSection: View {
-    let title: String
+    let title: LocalizedStringResource
     let icon: String
     let tint: Color
+    /// What the two of them wrote: shown as it is.
     let items: [String]
     let addedBy: [String: String]
     let attributionFor: (String?) -> String?
     let canRemove: (String) -> Bool
     let canAdd: Bool
     @Binding var draft: String
-    let placeholder: String
-    let emptyMessage: String
+    let placeholder: LocalizedStringResource
+    let emptyMessage: LocalizedStringResource
     let onAdd: (String) -> Void
     let onRemove: (String) -> Void
 
@@ -340,7 +351,8 @@ private struct ChipSection: View {
 
             if canAdd {
                 HStack(spacing: 8) {
-                    TextField(placeholder, text: $draft)
+                    // TextField takes a LocalizedStringResource only from iOS 26.
+                    TextField(String(localized: placeholder), text: $draft)
                         .font(.system(size: 14, design: .rounded))
                         .foregroundStyle(Brand.textPrimary)
                         .textFieldStyle(.plain)

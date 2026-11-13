@@ -9,13 +9,18 @@
 import SwiftUI
 
 extension PremiumFeature {
-    /// Plural noun used in the limit message.
-    var dailyLimitName: String {
+    /// The limit message, one whole sentence per feature so each language can
+    /// word it its own way.
+    var dailyLimitMessage: LocalizedStringResource {
         switch self {
-        case .aiMoodSuggestions: return "AI suggestions"
-        case .aiCoach:           return "AI Coach sessions"
-        case .dateIdeas:         return "date ideas"
-        default:                 return "uses"
+        case .aiMoodSuggestions:
+            return "You've used all of today's AI suggestions. They reset tomorrow."
+        case .aiCoach:
+            return "You've used all of today's AI Coach sessions. They reset tomorrow."
+        case .dateIdeas:
+            return "You've used all of today's date ideas. They reset tomorrow."
+        default:
+            return "You've used all of today's uses. They reset tomorrow."
         }
     }
 }
@@ -33,7 +38,7 @@ extension View {
         ) { _ in
             Button("OK", role: .cancel) {}
         } message: { feature in
-            Text("You've used all of today's \(feature.dailyLimitName). They reset tomorrow.")
+            Text(feature.dailyLimitMessage)
         }
     }
 }

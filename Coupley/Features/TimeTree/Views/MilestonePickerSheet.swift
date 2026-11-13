@@ -84,8 +84,12 @@ struct MilestonePickerSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Close") { dismiss() }
-                        .foregroundStyle(Brand.textSecondary)
+                    Button {
+                        dismiss()
+                    } label: {
+                        Text("Close", comment: "Toolbar button: close this sheet")
+                    }
+                    .foregroundStyle(Brand.textSecondary)
                 }
             }
         }
@@ -162,7 +166,8 @@ struct MilestonePickerSheet: View {
                                 Image(systemName: "checkmark")
                                     .font(JourneyFont.meta)
                                     .foregroundStyle(FutureLetterStyle.opened)
-                                Text("Added \(added.formatted(.dateTime.day().month(.abbreviated)))")
+                                Text("Added \(added.formatted(.dateTime.day().month(.abbreviated)))",
+                                     comment: "Memory kind tile: this kind is already on the timeline. %@ is a day such as 'May 1'.")
                                     .font(JourneyFont.meta)
                                     .foregroundStyle(Brand.textSecondary)
                             }
@@ -183,10 +188,12 @@ struct MilestonePickerSheet: View {
     /// or just the kind. Never the emoji.
     private func spokenLabel(for kind: MemoryKind, added: Date?) -> String {
         if kind == .custom {
-            return "\(kind.displayName), anything you'd remember"
+            return String(localized: "\(kind.displayName), anything you'd remember",
+                          comment: "VoiceOver: the custom memory kind in the picker. %@ is its name, such as 'Custom Moment'.")
         }
         if let added {
-            return "\(kind.displayName), added \(added.formatted(.dateTime.day().month(.wide)))"
+            return String(localized: "\(kind.displayName), added \(added.formatted(.dateTime.day().month(.wide)))",
+                          comment: "VoiceOver: a memory kind already on the timeline. First %@ is the kind such as 'First Kiss', second a day such as 'May 1'.")
         }
         return kind.displayName
     }

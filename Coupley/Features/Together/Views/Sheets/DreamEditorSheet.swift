@@ -75,7 +75,7 @@ struct DreamEditorSheet: View {
             }
             .alert("Free plan includes 1 dream",
                    isPresented: $showLimitAlert) {
-                Button("Upgrade", role: .none) {
+                Button(LocalizedStringResource("Upgrade", comment: "Alert button: opens the Premium plans"), role: .none) {
                     dismiss()
                     NotificationCenter.default.post(name: .togetherShowPaywall, object: nil)
                 }
@@ -102,7 +102,7 @@ struct DreamEditorSheet: View {
                 HStack {
                     Text(horizon.shortLabel)
                         .font(.system(size: 10, weight: .bold, design: .rounded))
-                        .kerning(0.4)
+                        .scriptAwareKerning(0.4)
                         .textCase(.uppercase)
                         .foregroundStyle(.white)
                         .padding(.horizontal, 9)
@@ -124,7 +124,9 @@ struct DreamEditorSheet: View {
                     }
                     .foregroundStyle(.white.opacity(0.85))
 
-                    Text(title.isEmpty ? "Your dream title" : title)
+                    Text(title.isEmpty
+                         ? String(localized: "Your dream title", comment: "Placeholder on the dream card preview until a title is typed")
+                         : title)
                         .font(.system(size: 22, weight: .bold, design: .rounded))
                         .foregroundStyle(.white)
                         .lineLimit(2)
@@ -153,9 +155,9 @@ struct DreamEditorSheet: View {
 
     private var suggestionTray: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Quick Start")
+            Text("Quick Start", comment: "Section header above tappable ready-made suggestions")
                 .font(.system(size: 12, weight: .semibold, design: .rounded))
-                .kerning(0.6)
+                .scriptAwareKerning(0.6)
                 .textCase(.uppercase)
                 .foregroundStyle(Brand.textSecondary)
 
@@ -166,11 +168,11 @@ struct DreamEditorSheet: View {
                             VStack(alignment: .leading, spacing: 6) {
                                 HStack(spacing: 6) {
                                     Text(suggestion.emoji)
-                                    Text(suggestion.title)
+                                    Text(ContentL10n.text(suggestion.title))
                                         .font(.system(size: 13, weight: .bold, design: .rounded))
                                         .foregroundStyle(Brand.textPrimary)
                                 }
-                                Text(suggestion.inspiration)
+                                Text(ContentL10n.text(suggestion.inspiration))
                                     .font(.system(size: 11, design: .rounded))
                                     .foregroundStyle(Brand.textSecondary)
                                     .lineLimit(2)
@@ -200,7 +202,7 @@ struct DreamEditorSheet: View {
 
     private var titleField: some View {
         VStack(alignment: .leading, spacing: 8) {
-            sectionLabel("Title")
+            sectionLabel(LocalizedStringResource("Title", comment: "Form section label: the name of the item"))
             TextField("e.g. Japan Together", text: $title)
                 .focused($focusedField, equals: .title)
                 .font(.system(size: 16, weight: .medium, design: .rounded))
@@ -212,7 +214,7 @@ struct DreamEditorSheet: View {
 
     private var categoryPicker: some View {
         VStack(alignment: .leading, spacing: 10) {
-            sectionLabel("Category")
+            sectionLabel(LocalizedStringResource("Category", comment: "Form section label"))
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
                     ForEach(DreamCategory.allCases) { cat in
@@ -229,13 +231,16 @@ struct DreamEditorSheet: View {
 
     private var horizonPicker: some View {
         VStack(alignment: .leading, spacing: 10) {
-            sectionLabel("When")
+            sectionLabel(LocalizedStringResource("When", comment: "Form section label: when the couple hopes the dream happens"))
             HStack(spacing: 0) {
                 ForEach(DreamHorizon.allCases, id: \.self) { h in
                     Button(action: { horizon = h }) {
                         Text(h.label)
                             .font(.system(size: 13, weight: .semibold, design: .rounded))
                             .foregroundStyle(horizon == h ? Brand.textPrimary : Brand.textSecondary)
+                            .multilineTextAlignment(.center)
+                            .lineLimit(2)
+                            .minimumScaleFactor(0.8)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 11)
                             .background(
@@ -265,7 +270,7 @@ struct DreamEditorSheet: View {
 
     private var colorwayPicker: some View {
         VStack(alignment: .leading, spacing: 10) {
-            sectionLabel("Colorway")
+            sectionLabel(LocalizedStringResource("Colorway", comment: "Form section label: pick the card's color theme"))
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 10) {
                     ForEach(TogetherColorway.allCases) { c in
@@ -386,11 +391,12 @@ struct DreamEditorSheet: View {
     }
 
     private func applySuggestion(_ suggestion: DreamSuggestion) {
-        title       = suggestion.title
+        // Saved as the couple's own words, so they go in the user's language.
+        title       = ContentL10n.text(suggestion.title)
         category    = suggestion.category
         colorway    = TogetherColorway.suggested(for: suggestion.category)
         horizon     = suggestion.horizon
-        inspiration = suggestion.inspiration
+        inspiration = ContentL10n.text(suggestion.inspiration)
         UIImpactFeedbackGenerator(style: .light).impactOccurred()
     }
 
@@ -403,15 +409,15 @@ struct DreamEditorSheet: View {
             )
     }
 
-    private func sectionLabel(_ text: String) -> some View {
+    private func sectionLabel(_ text: LocalizedStringResource) -> some View {
         Text(text)
             .font(.system(size: 12, weight: .semibold, design: .rounded))
-            .kerning(0.6)
+            .scriptAwareKerning(0.6)
             .textCase(.uppercase)
             .foregroundStyle(Brand.textSecondary)
     }
 
-    private func chip(label: String, icon: String, selected: Bool, onTap: @escaping () -> Void) -> some View {
+    private func chip(label: LocalizedStringResource, icon: String, selected: Bool, onTap: @escaping () -> Void) -> some View {
         Button(action: {
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
             onTap()

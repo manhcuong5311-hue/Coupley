@@ -65,19 +65,29 @@ struct MemoryDetailSheet: View {
                 .padding(.bottom, 40)
             }
             .background(Brand.bgGradient.ignoresSafeArea())
-            .navigationTitle(isLocked ? "Capsule" : "Memory")
+            .navigationTitle(isLocked
+                             ? Text("Capsule", comment: "Title of the detail sheet for a sealed memory capsule")
+                             : Text("Memory", comment: "Title of the detail sheet for one memory"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Close") { dismiss() }
-                        .foregroundStyle(Brand.textSecondary)
+                    Button {
+                        dismiss()
+                    } label: {
+                        Text("Close", comment: "Toolbar button: close this sheet")
+                    }
+                    .foregroundStyle(Brand.textSecondary)
                 }
                 // A sealed capsule is editable by its author only: the
                 // editor pre-fills everything the seal is hiding.
                 if viewModel.canEdit(current) {
                     ToolbarItem(placement: .topBarTrailing) {
-                        Button("Edit") { showEditor = true }
-                            .foregroundStyle(Brand.accentStart)
+                        Button {
+                            showEditor = true
+                        } label: {
+                            Text("Edit", comment: "Toolbar button: edit this memory")
+                        }
+                        .foregroundStyle(Brand.accentStart)
                     }
                 }
             }
@@ -111,7 +121,9 @@ struct MemoryDetailSheet: View {
                         Text("Sealed capsule")
                             .font(JourneyFont.label)
                             .foregroundStyle(JourneyStyle.goldText)
-                        Text(current.title.isEmpty ? "A moment for you both" : current.title)
+                        Text(current.title.isEmpty
+                             ? String(localized: "A moment for you both", comment: "Title of a memory capsule that has no title")
+                             : current.title)
                             .font(JourneyFont.title)
                             .foregroundStyle(Brand.textPrimary)
                             .multilineTextAlignment(.center)
@@ -123,7 +135,8 @@ struct MemoryDetailSheet: View {
                     if let unlockDate = current.unlockDate {
                         countdown(to: unlockDate)
 
-                        Text("Opens \(unlockDate.formatted(date: .long, time: .omitted))")
+                        Text("Opens \(unlockDate.formatted(date: .long, time: .omitted))",
+                             comment: "When a sealed memory capsule opens. %@ is a date such as 'January 26, 2027'.")
                             .font(JourneyFont.body)
                             .foregroundStyle(Brand.textSecondary)
                             .multilineTextAlignment(.center)
@@ -148,7 +161,7 @@ struct MemoryDetailSheet: View {
     private func countdown(to unlockDate: Date) -> some View {
         let remaining = FutureLetterClock.bigCountdown(to: unlockDate, now: viewModel.now)
         return VStack(spacing: 2) {
-            Text("\(remaining.value)")
+            Text(remaining.value, format: .number)
                 .font(JourneyFont.number)
                 .foregroundStyle(Brand.textPrimary)
                 .monospacedDigit()
@@ -212,7 +225,7 @@ struct MemoryDetailSheet: View {
         .clipShape(RoundedRectangle(cornerRadius: radius, style: Brand.cornerStyle))
         .shadow(color: .black.opacity(0.10), radius: 12, y: 3)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Photo")
+        .accessibilityLabel(Text("Photo", comment: "VoiceOver: the memory's photo"))
         .accessibilityAddTraits(.isImage)
     }
 
@@ -264,7 +277,7 @@ struct MemoryDetailSheet: View {
     private func noteCard(_ note: String) -> some View {
         BrandCard(tier: .card) {
             VStack(alignment: .leading, spacing: 8) {
-                Text("The story")
+                Text("The story", comment: "Header above a memory's written note")
                     .font(JourneyFont.label)
                     .foregroundStyle(Brand.textSecondary)
                     .accessibilityAddTraits(.isHeader)
@@ -283,7 +296,7 @@ struct MemoryDetailSheet: View {
     private var emotionsCard: some View {
         BrandCard(tier: .card) {
             VStack(alignment: .leading, spacing: 10) {
-                Text("Felt like")
+                Text("Felt like", comment: "Header above a memory's feeling tags, e.g. 'Felt like: Happy, Loved'")
                     .font(JourneyFont.label)
                     .foregroundStyle(Brand.textSecondary)
 

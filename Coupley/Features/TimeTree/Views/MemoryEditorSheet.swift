@@ -72,7 +72,8 @@ struct MemoryEditorSheet: View {
 
     init(viewModel: TimeTreeViewModel,
          mode: Mode,
-         partnerName: String = "your partner",
+         partnerName: String = String(localized: "your partner",
+                                      comment: "Stands in for the partner's name inside a sentence when it is unknown"),
          onWriteLetterInstead: ((_ seed: String, _ opensAt: Date?) -> Void)? = nil) {
         self.viewModel = viewModel
         self.mode = mode
@@ -250,7 +251,7 @@ struct MemoryEditorSheet: View {
             }
             .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
         } header: {
-            sectionHeader("Kind")
+            sectionHeader(LocalizedStringResource("Kind", comment: "Memory editor section header: what kind of memory this is"))
         }
     }
 
@@ -299,7 +300,7 @@ struct MemoryEditorSheet: View {
                 .foregroundStyle(Brand.textPrimary)
                 .textInputAutocapitalization(.sentences)
         } header: {
-            sectionHeader("Title")
+            sectionHeader(LocalizedStringResource("Title", comment: "Memory editor section header: the memory's title"))
         }
     }
 
@@ -326,19 +327,24 @@ struct MemoryEditorSheet: View {
             }
 
             if isSealing {
-                DatePicker("Opens on",
-                           selection: $unlockDay,
+                DatePicker(selection: $unlockDay,
                            in: unlockRange,
-                           displayedComponents: [.date])
-                    .datePickerStyle(.graphical)
-                    .tint(Brand.accentStart)
+                           displayedComponents: [.date]) {
+                    Text("Opens on", comment: "Memory editor: the day a sealed capsule opens")
+                }
+                .datePickerStyle(.graphical)
+                .tint(Brand.accentStart)
             } else {
-                DatePicker("Date", selection: $date, displayedComponents: [.date])
-                    .datePickerStyle(.graphical)
-                    .tint(Brand.accentStart)
+                DatePicker(selection: $date, displayedComponents: [.date]) {
+                    Text("Date", comment: "Memory editor: the calendar day the memory happened (not a romantic date)")
+                }
+                .datePickerStyle(.graphical)
+                .tint(Brand.accentStart)
             }
         } header: {
-            sectionHeader(isSealing ? "Opens on" : "Date")
+            sectionHeader(isSealing
+                          ? LocalizedStringResource("Opens on", comment: "Memory editor: the day a sealed capsule opens")
+                          : LocalizedStringResource("Date", comment: "Memory editor: the calendar day the memory happened (not a romantic date)"))
         }
     }
 
@@ -353,7 +359,8 @@ struct MemoryEditorSheet: View {
                     Text("Seal until a day, for both of you")
                         .font(JourneyFont.label)
                         .foregroundStyle(Brand.textPrimary)
-                    Text("The app keeps the note, photo and feelings out of sight for both of you until \(sealOpeningTime) that day. It's hidden, not locked.")
+                    Text("The app keeps the note, photo and feelings out of sight for both of you until \(sealOpeningTime) that day. It's hidden, not locked.",
+                         comment: "Memory editor, under the capsule switch. %@ is a time of day such as '9:00 AM'.")
                         .font(JourneyFont.meta)
                         .foregroundStyle(Brand.textSecondary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -446,7 +453,7 @@ struct MemoryEditorSheet: View {
             }
             .padding(.vertical, 4)
         } header: {
-            sectionHeader("Photo")
+            sectionHeader(LocalizedStringResource("Photo", comment: "Memory editor section header: the memory's photo"))
         }
     }
 
@@ -535,7 +542,7 @@ struct MemoryEditorSheet: View {
                 .foregroundStyle(Brand.textPrimary)
                 .lineLimit(3...8)
         } header: {
-            sectionHeader("Note")
+            sectionHeader(LocalizedStringResource("Note", comment: "Memory editor section header: the memory's written story (noun)"))
         }
     }
 
@@ -551,7 +558,7 @@ struct MemoryEditorSheet: View {
             .padding(.vertical, 6)
             .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
         } header: {
-            sectionHeader("Emotions")
+            sectionHeader(LocalizedStringResource("Emotions", comment: "Memory editor section header: feeling tags for the memory"))
         }
     }
 
@@ -591,12 +598,15 @@ struct MemoryEditorSheet: View {
 
     private var attributionSection: some View {
         Section {
-            TextField("e.g. \"From Sam\" or \"From us both\"", text: $attribution)
-                .font(JourneyFont.body)
-                .foregroundStyle(Brand.textPrimary)
-                .textInputAutocapitalization(.sentences)
+            TextField(text: $attribution) {
+                Text("e.g. \"From Sam\" or \"From us both\"",
+                     comment: "Placeholder: who a memory is from. 'Sam' is an example first name; use a common one in your language.")
+            }
+            .font(JourneyFont.body)
+            .foregroundStyle(Brand.textPrimary)
+            .textInputAutocapitalization(.sentences)
         } header: {
-            sectionHeader("Who's writing this?")
+            sectionHeader(LocalizedStringResource("Who's writing this?", comment: "Memory editor section header: who the memory is from"))
         }
     }
 
@@ -612,7 +622,7 @@ struct MemoryEditorSheet: View {
         }
     }
 
-    private func sectionHeader(_ text: String) -> some View {
+    private func sectionHeader(_ text: LocalizedStringResource) -> some View {
         Text(text)
             .font(JourneyFont.caption)
             .foregroundStyle(Brand.textSecondary)

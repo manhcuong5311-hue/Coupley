@@ -267,14 +267,18 @@ struct TouchTogetherView: View {
         .padding(.bottom, 10)
     }
 
-    private var title: String {
-        if viewModel.bothTouching { return "Together" }
+    private var title: LocalizedStringResource {
+        if viewModel.bothTouching {
+            return LocalizedStringResource("Together",
+                                           comment: "Touch Together title: both partners are holding the circle")
+        }
         if viewModel.partnerIsTouching { return "\(partnerName) is holding" }
         if viewModel.iAmTouching { return "Waiting for \(partnerName)…" }
-        return "Touch together"
+        return LocalizedStringResource("Touch together",
+                                       comment: "Name of the feature where both partners hold a circle at once")
     }
 
-    private var subtitle: String {
+    private var subtitle: LocalizedStringResource {
         if viewModel.bothTouching { return "Both of you are holding on." }
         if viewModel.partnerIsTouching { return "Press and hold to meet them." }
         if viewModel.iAmTouching { return "Keep holding — they'll feel it when they join." }

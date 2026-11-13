@@ -341,9 +341,9 @@ enum CoupleChatError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .quizNotFound:      return "This quiz is no longer available."
-        case .transactionFailed: return "Couldn't save your answer. Please try again."
-        case .notPaired:         return "Connect a partner to start chatting."
+        case .quizNotFound:      return String(localized: "This quiz is no longer available.")
+        case .transactionFailed: return String(localized: "Couldn't save your answer. Please try again.")
+        case .notPaired:         return String(localized: "Connect a partner to start chatting.")
         }
     }
 }

@@ -132,14 +132,19 @@ struct GoalProgressCard: View {
                         }
 
                         VStack(alignment: .leading, spacing: 3) {
+                            // Two lines before an ellipsis: amounts such as
+                            // "325 US$ / 1.000 US$" are wider in most locales.
                             Text(goal.title)
                                 .font(.system(size: 16, weight: .semibold, design: .rounded))
                                 .foregroundStyle(Brand.textPrimary)
-                                .lineLimit(1)
+                                .lineLimit(2)
                             Text(goal.category.label)
                                 .font(.system(size: 11, weight: .medium, design: .rounded))
                                 .foregroundStyle(Brand.textSecondary)
                         }
+                        // The title takes the width first; the amount beside it
+                        // shrinks (minimumScaleFactor) before the title wraps.
+                        .layoutPriority(1)
 
                         Spacer()
 
@@ -160,7 +165,8 @@ struct GoalProgressCard: View {
                             HStack(spacing: 5) {
                                 Image(systemName: "clock")
                                     .font(.system(size: 10, weight: .semibold))
-                                Text("Est. \(estimate.formatted(.dateTime.month(.abbreviated).year()))")
+                                Text("Est. \(estimate.formatted(.dateTime.month(.abbreviated).year()))",
+                                     comment: "Estimated completion month of a goal, e.g. 'Est. Jun 2026'")
                                     .font(.system(size: 11, weight: .semibold, design: .rounded))
                             }
                             .foregroundStyle(Brand.textTertiary)
@@ -193,6 +199,7 @@ struct GoalProgressCard: View {
                 .font(.system(size: 11, weight: .medium, design: .rounded))
                 .foregroundStyle(Brand.textSecondary)
                 .lineLimit(1)
+                .minimumScaleFactor(0.75)
         }
     }
 
@@ -207,9 +214,12 @@ struct GoalProgressCard: View {
                         leading: goal.colorway.primary,
                         trailing: goal.colorway.deep
                     )
-                    Text("You: \(myShare)% · Partner: \(100 - myShare)%")
+                    Text("You: \(myShare)% · Partner: \(100 - myShare)%",
+                         comment: "Contribution split between you and your partner, in percent")
                         .font(.system(size: 11, weight: .semibold, design: .rounded))
                         .foregroundStyle(Brand.textSecondary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
                 }
             } else {
                 HStack(spacing: 8) {
@@ -358,7 +368,7 @@ struct ChallengeProgressCard: View {
                                     .font(.system(size: 11, weight: .medium, design: .rounded))
                                     .foregroundStyle(Brand.textSecondary)
                                 if challenge.streak.current > 0 {
-                                    Text("·")
+                                    Text(verbatim: "·")
                                         .foregroundStyle(Brand.textTertiary)
                                     StreakPill(streak: challenge.streak.current)
                                 }
@@ -409,9 +419,12 @@ struct ChallengeProgressCard: View {
                         leading: challenge.colorway.primary,
                         trailing: challenge.colorway.deep
                     )
-                    Text("You: \(myShare)% · Partner: \(100 - myShare)%")
+                    Text("You: \(myShare)% · Partner: \(100 - myShare)%",
+                         comment: "Contribution split between you and your partner, in percent")
                         .font(.system(size: 11, weight: .semibold, design: .rounded))
                         .foregroundStyle(Brand.textSecondary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
                 }
             } else {
                 HStack(spacing: 8) {
@@ -445,9 +458,10 @@ struct ChallengeProgressCard: View {
             HStack(spacing: 6) {
                 Image(systemName: alreadyChecked ? "checkmark" : "plus.circle.fill")
                     .font(.system(size: 12, weight: .bold))
-                Text(alreadyChecked ? "Done today" :
-                        (challenge.hasStarted ? "Check in" : "Soon"))
+                checkInLabel(alreadyChecked: alreadyChecked)
                     .font(.system(size: 12, weight: .bold, design: .rounded))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
             }
             .foregroundStyle(.white)
             .padding(.horizontal, 12)
@@ -467,5 +481,15 @@ struct ChallengeProgressCard: View {
         .buttonStyle(BouncyButtonStyle())
         .scaleEffect(checkInBouncing ? 1.10 : 1.0)
         .disabled(alreadyChecked || !challenge.hasStarted)
+    }
+
+    private func checkInLabel(alreadyChecked: Bool) -> Text {
+        if alreadyChecked {
+            return Text("Done today", comment: "Challenge card button state: you already checked in today")
+        }
+        if challenge.hasStarted {
+            return Text("Check in", comment: "Challenge card button (verb): record today's check-in")
+        }
+        return Text("Soon", comment: "Challenge card button state: the challenge has not started yet")
     }
 }

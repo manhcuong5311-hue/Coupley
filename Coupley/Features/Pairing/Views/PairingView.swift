@@ -188,7 +188,7 @@ struct PairingView: View {
 
             Spacer()
 
-            GhostButton(title: "Back") { viewModel.back() }
+            GhostButton(title: LocalizedStringResource("Back", comment: "Button: return to the previous pairing step")) { viewModel.back() }
                 .padding(.horizontal, 24)
                 .padding(.bottom, 48)
         }
@@ -272,18 +272,19 @@ struct PairingView: View {
                     viewModel.joinWithCode()
                 }
 
-                GhostButton(title: "Back") { viewModel.back() }
+                GhostButton(title: LocalizedStringResource("Back", comment: "Button: return to the previous pairing step")) { viewModel.back() }
             }
             .padding(.horizontal, 24)
             .padding(.bottom, 48)
         }
     }
 
-    private var connectTitle: String {
+    private var connectTitle: LocalizedStringResource {
         if let partner = viewModel.detectedPartner {
-            return "Connect with \(partner.displayName)"
+            return LocalizedStringResource("Connect with \(partner.displayName)",
+                                           comment: "Button: pair with the partner whose invite code was entered. The placeholder is their name")
         }
-        return "Connect"
+        return LocalizedStringResource("Connect", comment: "Button: pair with a partner using the entered invite code")
     }
 
     private var lookupBorderColor: Color {

@@ -155,7 +155,7 @@ struct DreamCard: View {
                             .font(.system(size: 11, weight: .semibold))
                         Text(dream.category.label)
                             .font(.system(size: 11, weight: .semibold, design: .rounded))
-                            .kerning(0.3)
+                            .scriptAwareKerning(0.3)
                     }
                     .foregroundStyle(.white.opacity(0.85))
 
@@ -259,7 +259,7 @@ struct DreamCard: View {
     private var horizonChip: some View {
         Text(dream.horizon.shortLabel)
             .font(.system(size: 10, weight: .bold, design: .rounded))
-            .kerning(0.4)
+            .scriptAwareKerning(0.4)
             .textCase(.uppercase)
             .foregroundStyle(.white)
             .padding(.horizontal, 9)

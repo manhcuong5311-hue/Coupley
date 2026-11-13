@@ -60,8 +60,10 @@ struct WidgetSmallView: View {
 
     private var signature: String {
         if let name = entry.snapshot.partner?.displayName, !name.isEmpty {
-            return "you & \(name)"
+            return String(localized: "you & \(name)",
+                          comment: "Widget sign-off line, lowercase on purpose: the user and their partner's name, e.g. 'you & Lena'")
         }
-        return "you & partner"
+        return String(localized: "you & partner",
+                      comment: "Widget sign-off line, lowercase on purpose, when the partner's name is unknown")
     }
 }

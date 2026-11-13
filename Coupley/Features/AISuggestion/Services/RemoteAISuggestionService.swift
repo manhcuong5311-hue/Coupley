@@ -19,6 +19,11 @@ enum AIAPIConfig {
     }
 
     static let timeoutInterval: TimeInterval = 25
+
+    /// The user's preferred language (BCP-47), sent with every request so the
+    /// backend can answer in it. Mood, energy and style keep travelling as
+    /// `rawValue`.
+    static var replyLocale: String { Locale.preferredLanguages.first ?? "en" }
 }
 
 // MARK: - API Request Body
@@ -28,6 +33,7 @@ private struct SuggestionRequestBody: Encodable {
     let energy: String
     let note: String?
     let profile: ProfilePayload
+    let locale: String
 
     struct ProfilePayload: Encodable {
         let communicationStyle: String
@@ -72,15 +78,17 @@ enum RemoteAISuggestionError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .invalidURL:
-            return "Invalid API configuration"
+            return String(localized: "Invalid API configuration")
         case .networkError(let error):
-            return "Network error: \(error.localizedDescription)"
+            return String(localized: "Network error: \(error.localizedDescription)",
+                          comment: "AI suggestions error; the system's description of the network failure")
         case .serverError(let code, let message):
-            return "Server error (\(code)): \(message)"
+            return String(localized: "Server error (\(code)): \(message)",
+                          comment: "AI suggestions error; the HTTP status code and the server's message")
         case .decodingError:
-            return "Failed to parse response"
+            return String(localized: "Failed to parse response")
         case .rateLimited:
-            return "Too many requests. Please wait a moment."
+            return String(localized: "Too many requests. Please wait a moment.")
         }
     }
 }
@@ -114,7 +122,8 @@ final class RemoteAISuggestionService: AISuggestionService {
                 communicationStyle: profile.communicationStyle.rawValue,
                 likes: profile.allLikes,
                 dislikes: profile.dislikes
-            )
+            ),
+            locale: AIAPIConfig.replyLocale
         )
 
         guard let url = URL(string: AIAPIConfig.baseURL) else {
@@ -155,7 +164,8 @@ final class RemoteAISuggestionService: AISuggestionService {
             if let apiError = try? JSONDecoder().decode(APIErrorResponse.self, from: data) {
                 errorMessage = apiError.error
             } else {
-                errorMessage = String(data: data, encoding: .utf8) ?? "Unknown error"
+                errorMessage = String(data: data, encoding: .utf8)
+                    ?? String(localized: "Unknown error", comment: "Error message when the server gave no details")
             }
             throw RemoteAISuggestionError.serverError(httpResponse.statusCode, errorMessage)
         }
@@ -190,7 +200,7 @@ final class RemoteAISuggestionService: AISuggestionService {
         ]
 
         let action = ActionSuggestion(
-            title: "Suggested Action",
+            title: String(localized: "Suggested Action", comment: "Title of the card holding the AI's suggested action"),
             description: response.action,
             icon: "sparkles"
         )

@@ -20,8 +20,8 @@ import SwiftUI
 struct OnboardingStepScaffold<Content: View>: View {
 
     @ObservedObject var viewModel: OnboardingViewModel
-    var primaryTitle: String = "Continue"
-    var secondaryTitle: String? = nil
+    var primaryTitle: LocalizedStringResource = LocalizedStringResource("Continue", comment: "Button: go to the next onboarding step")
+    var secondaryTitle: LocalizedStringResource? = nil
     var canAdvance: Bool = true
     var hideBack: Bool = false
     var hideProgress: Bool = false
@@ -76,10 +76,18 @@ struct OnboardingStepScaffold<Content: View>: View {
             }
 
             if viewModel.step.allowsSkip {
-                Button("Skip") { viewModel.skip() }
-                    .font(.system(size: 14, weight: .medium, design: .rounded))
-                    .foregroundStyle(Brand.textSecondary)
-                    .frame(width: 50, height: 36)
+                Button {
+                    viewModel.skip()
+                } label: {
+                    // Fixed 50pt slot: "Überspringen" or "Пропустить" shrink
+                    // to fit rather than truncate.
+                    Text("Skip", comment: "Onboarding top bar button: skip this step")
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.6)
+                }
+                .font(.system(size: 14, weight: .medium, design: .rounded))
+                .foregroundStyle(Brand.textSecondary)
+                .frame(width: 50, height: 36)
             } else {
                 Color.clear.frame(width: 50, height: 36)
             }
@@ -159,19 +167,21 @@ struct ProgressBar: View {
 // MARK: - Step Header
 
 /// Title + supporting copy that anchors every step. `eyebrow` is an
-/// optional small uppercase label shown above the title.
+/// optional small uppercase label shown above the title. All three are app
+/// copy: callers pass literals, which are extracted for translation.
 struct StepHeader: View {
-    var eyebrow: String? = nil
-    let title: String
-    var subtitle: String? = nil
+    var eyebrow: LocalizedStringResource? = nil
+    let title: LocalizedStringResource
+    var subtitle: LocalizedStringResource? = nil
     var alignment: HorizontalAlignment = .leading
 
     var body: some View {
         VStack(alignment: alignment, spacing: 10) {
             if let eyebrow {
-                Text(eyebrow.uppercased())
+                Text(eyebrow)
+                    .textCase(.uppercase)
                     .font(.system(size: 11, weight: .bold, design: .rounded))
-                    .tracking(1.5)
+                    .scriptAwareTracking(1.5)
                     .foregroundStyle(Brand.accentStart)
             }
             Text(title)
@@ -244,15 +254,15 @@ struct OnboardingHeroIcon: View {
 struct SelectableCard<Trailing: View>: View {
 
     let icon: String
-    let title: String
-    var subtitle: String? = nil
+    let title: LocalizedStringResource
+    var subtitle: LocalizedStringResource? = nil
     let isSelected: Bool
     let action: () -> Void
     @ViewBuilder var trailing: () -> Trailing
 
     init(icon: String,
-         title: String,
-         subtitle: String? = nil,
+         title: LocalizedStringResource,
+         subtitle: LocalizedStringResource? = nil,
          isSelected: Bool,
          action: @escaping () -> Void,
          @ViewBuilder trailing: @escaping () -> Trailing = { EmptyView() }) {
@@ -319,8 +329,8 @@ struct SelectableCard<Trailing: View>: View {
 struct BenefitTile: View {
     let icon: String
     let tint: Color
-    let title: String
-    let copy: String
+    let title: LocalizedStringResource
+    let copy: LocalizedStringResource
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {

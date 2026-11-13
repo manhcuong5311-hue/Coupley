@@ -80,12 +80,28 @@ final class TimeTreeViewModel: ObservableObject {
     /// "Try again"); a user-action failure is only dismissed.
     var errorIsRetryable: Bool { errorMessage != nil && !errorIsFromUserAction }
 
+    /// Shown as-is in Journey's error strip, so already localized.
     private enum Copy {
-        static let listenerFailed = "Couldn't load your Journey. Check your connection and try again."
-        static let saveFailed = "Couldn't save that. Check your connection and try again."
-        static let photoFailed = "Couldn't upload the photo, so the memory was saved without it."
-        static let startDateFailed = "Couldn't save the start date. Try again."
-        static let memoryDeleted = "That memory was deleted, so your changes weren't saved."
+        static var listenerFailed: String {
+            String(localized: "Couldn't load your Journey. Check your connection and try again.",
+                   comment: "Journey error: the memories or start date failed to load")
+        }
+        static var saveFailed: String {
+            String(localized: "Couldn't save that. Check your connection and try again.",
+                   comment: "Journey error: saving or deleting a memory failed")
+        }
+        static var photoFailed: String {
+            String(localized: "Couldn't upload the photo, so the memory was saved without it.",
+                   comment: "Journey error: the memory was saved but its photo upload failed")
+        }
+        static var startDateFailed: String {
+            String(localized: "Couldn't save the start date. Try again.",
+                   comment: "Journey error: saving the relationship start date failed")
+        }
+        static var memoryDeleted: String {
+            String(localized: "That memory was deleted, so your changes weren't saved.",
+                   comment: "Journey error: the memory being edited was deleted meanwhile")
+        }
     }
 
     // MARK: - Dependencies

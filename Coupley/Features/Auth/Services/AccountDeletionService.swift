@@ -65,24 +65,24 @@ enum AccountDeletionError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .notSignedIn:
-            return "You're not signed in."
+            return String(localized: "You're not signed in.")
         case .requiresPasswordEntry:
-            return "Please enter your password to confirm account deletion."
+            return String(localized: "Please enter your password to confirm account deletion.")
         case .incorrectPassword:
-            return "Incorrect password. Please try again."
+            return String(localized: "Incorrect password. Please try again.")
         case .userCancelledReauth:
             return ""  // silent — user backed out on purpose
         case .unsupportedProvider(let provider):
-            return "Account deletion isn't supported yet for the \(provider) sign-in method. " +
-                   "Please contact support."
+            return String(localized: "Account deletion isn't supported yet for the \(provider) sign-in method. Please contact support.",
+                          comment: "The placeholder is a technical sign-in method id, such as phone or github.com")
         case .reauthenticationFailed(let message):
             return message
         case .requiresRecentLogin:
-            return "For your security, please sign out and sign back in, then try deleting again."
+            return String(localized: "For your security, please sign out and sign back in, then try deleting again.")
         case .deletionFailed(let message):
             return message
         case .offline:
-            return "You appear to be offline. Connect to the internet and try again."
+            return String(localized: "You appear to be offline. Connect to the internet and try again.")
         }
     }
 }
@@ -99,9 +99,9 @@ enum AccountAuthProvider: String, Equatable {
 
     var displayName: String {
         switch self {
-        case .password: return "Email & Password"
-        case .apple:    return "Apple"
-        case .google:   return "Google"
+        case .password: return String(localized: "Email & Password", comment: "Name of a sign-in method")
+        case .apple:    return "Apple"   // brand name, never translated
+        case .google:   return "Google"  // brand name, never translated
         }
     }
 
@@ -207,7 +207,9 @@ final class AccountDeletionService: NSObject, ObservableObject {
             if nsError.code == AuthErrorCode.networkError.rawValue {
                 throw AccountDeletionError.offline
             }
-            throw AccountDeletionError.reauthenticationFailed(nsError.localizedDescription)
+            throw AccountDeletionError.reauthenticationFailed(
+                AuthError.friendlyMessage(for: nsError, isEmailSignIn: true) ?? nsError.localizedDescription
+            )
         }
     }
 
@@ -229,7 +231,7 @@ final class AccountDeletionService: NSObject, ObservableObject {
                 throw AccountDeletionError.userCancelledReauth
             }
             throw AccountDeletionError.reauthenticationFailed(
-                err.errorDescription ?? "Apple sign-in failed."
+                err.errorDescription ?? String(localized: "Apple sign-in failed.")
             )
         }
 
@@ -245,10 +247,12 @@ final class AccountDeletionService: NSObject, ObservableObject {
         } catch let nsError as NSError {
             if nsError.code == AuthErrorCode.userMismatch.rawValue {
                 throw AccountDeletionError.reauthenticationFailed(
-                    "Please sign in with the same Apple ID you used to create this account."
+                    String(localized: "Please sign in with the same Apple ID you used to create this account.")
                 )
             }
-            throw AccountDeletionError.reauthenticationFailed(nsError.localizedDescription)
+            throw AccountDeletionError.reauthenticationFailed(
+                AuthError.friendlyMessage(for: nsError) ?? nsError.localizedDescription
+            )
         }
     }
 
@@ -260,14 +264,20 @@ final class AccountDeletionService: NSObject, ObservableObject {
         let credential: AuthCredential = try await withCheckedThrowingContinuation { cont in
             provider.getCredentialWith(nil) { credential, error in
                 if let error {
-                    cont.resume(throwing: AccountDeletionError.reauthenticationFailed(
-                        error.localizedDescription
-                    ))
+                    // Dismissing Google's sheet is the same deliberate back-out
+                    // as cancelling Apple's, which DeleteAccountView keeps silent.
+                    if AuthError.isWebSignInCancel(error) {
+                        cont.resume(throwing: AccountDeletionError.userCancelledReauth)
+                    } else {
+                        cont.resume(throwing: AccountDeletionError.reauthenticationFailed(
+                            AuthError.friendlyMessage(for: error) ?? error.localizedDescription
+                        ))
+                    }
                     return
                 }
                 guard let credential else {
                     cont.resume(throwing: AccountDeletionError.reauthenticationFailed(
-                        "Google sign-in returned no credential."
+                        String(localized: "Sign in was incomplete. Please try again.")
                     ))
                     return
                 }
@@ -280,10 +290,12 @@ final class AccountDeletionService: NSObject, ObservableObject {
         } catch let nsError as NSError {
             if nsError.code == AuthErrorCode.userMismatch.rawValue {
                 throw AccountDeletionError.reauthenticationFailed(
-                    "Please sign in with the same Google account you used to create this account."
+                    String(localized: "Please sign in with the same Google account you used to create this account.")
                 )
             }
-            throw AccountDeletionError.reauthenticationFailed(nsError.localizedDescription)
+            throw AccountDeletionError.reauthenticationFailed(
+                AuthError.friendlyMessage(for: nsError) ?? nsError.localizedDescription
+            )
         }
     }
 
@@ -363,7 +375,9 @@ final class AccountDeletionService: NSObject, ObservableObject {
             if nsError.code == AuthErrorCode.networkError.rawValue {
                 throw AccountDeletionError.offline
             }
-            throw AccountDeletionError.deletionFailed(nsError.localizedDescription)
+            throw AccountDeletionError.deletionFailed(
+                AuthError.friendlyMessage(for: nsError) ?? nsError.localizedDescription
+            )
         }
     }
 

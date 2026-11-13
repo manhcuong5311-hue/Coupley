@@ -32,9 +32,9 @@ enum PairingError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .invalidCode:       return "That code doesn't exist or has already been used."
-        case .cannotJoinOwnCode: return "You can't connect using your own invite code."
-        case .expiredCode:       return "This code has expired. Ask your partner to create a new one."
+        case .invalidCode:       return String(localized: "That code doesn't exist or has already been used.")
+        case .cannotJoinOwnCode: return String(localized: "You can't connect using your own invite code.")
+        case .expiredCode:       return String(localized: "This code has expired. Ask your partner to create a new one.")
         }
     }
 }
@@ -89,7 +89,10 @@ final class FirestorePairingService: PairingServiceProtocol {
         let userSnap = try await db.collection(FirestorePath.users)
             .document(creatorId)
             .getDocument()
-        let displayName = (userSnap.data()?["displayName"] as? String) ?? "Partner"
+        // The preview is display-only (joinWithCode never reads it), so the
+        // fallback can be in the user's language.
+        let displayName = (userSnap.data()?["displayName"] as? String)
+            ?? String(localized: "Partner", comment: "Stands in for the name of a partner who hasn't set one")
         return PartnerPreview(userId: creatorId, displayName: displayName)
     }
 

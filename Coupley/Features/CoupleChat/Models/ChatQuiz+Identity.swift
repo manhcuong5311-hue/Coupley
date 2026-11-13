@@ -36,11 +36,12 @@ import Foundation
 /// An option resolved for use: stable identity, the text to draw, and the
 /// text to store.
 ///
-/// `label` and `baseLabel` are the same string today and will diverge the
-/// moment there is a string catalog. Keeping them apart now means the write
-/// path is already correct and cannot be broken by the translation work:
-/// anything written to Firestore takes `baseLabel`, anything drawn takes
-/// `label`.
+/// `label` is the bank option's `displayLabel` (the Content catalog's
+/// translation) and `baseLabel` its English source; they are the same string
+/// only for a custom quiz or an option the bank cannot resolve. Keeping them
+/// apart is what keeps the write path correct whatever language the device
+/// runs: anything written to Firestore takes `baseLabel`, anything drawn
+/// takes `label`.
 ///
 /// This matters more than it looks. The build already on the App Store
 /// rewrites the whole quiz document on every answer (`setData(from:)` with no
@@ -80,12 +81,17 @@ extension ChatQuiz {
     /// Without this the card mixed languages: the options resolved through
     /// the bank while the question above them stayed frozen in whatever
     /// language posted the quiz.
-    var displayQuestion: String { template?.question ?? question }
+    var displayQuestion: String { template?.displayQuestion ?? question }
 
     var displaySubtitle: String {
         // Only curated quizzes take the bank's subtitle. A custom quiz stores
-        // the author's own title here.
-        isCustom ? subtitle : (template?.subtitle ?? subtitle)
+        // the author's own title here, or, when they gave none, the English
+        // default the composer writes, which is drawn in the reader's
+        // language instead.
+        guard isCustom else { return template?.displaySubtitle ?? subtitle }
+        guard subtitle == Self.untitledCustomSubtitle else { return subtitle }
+        return String(localized: "From your partner ❤️",
+                      comment: "Subtitle of a custom quiz whose author gave it no title")
     }
 
     /// Keeps the first entry for each id.
@@ -190,10 +196,10 @@ extension ChatQuiz {
             ?? id
     }
 
-    /// The hint paragraph for a stable id, or nil for custom quizzes and the
-    /// four multi-select pickers that carry none.
+    /// The hint paragraph to DRAW for a stable id, or nil for custom quizzes
+    /// and the four multi-select pickers that carry none.
     func hint(forOptionId id: String) -> String? {
-        template?.option(id: id)?.hint
+        template?.option(id: id)?.displayHint
     }
 
     /// What `userId` picked, drawn for whoever is reading. Empty when they

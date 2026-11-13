@@ -62,6 +62,8 @@ struct AnniversaryCard: View {
                         Text(state.marker)
                             .font(.system(size: 48, weight: .bold, design: .rounded))
                             .foregroundStyle(accent)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.6)
                             .contentTransition(.numericText())
 
                         Text(state.caption)

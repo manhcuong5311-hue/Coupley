@@ -23,8 +23,10 @@ struct CoupleyHomeWidget: Widget {
                     WidgetBackground(snapshot: entry.snapshot)
                 }
         }
-        .configurationDisplayName("Coupley")
-        .description("Your relationship, alive on your home screen.")
+        // The brand name is never translated, so it stays out of the catalog.
+        .configurationDisplayName(Text(verbatim: "Coupley"))
+        .description(Text("Your relationship, alive on your home screen.",
+                          comment: "Widget gallery: description of the Coupley home screen widget"))
         .supportedFamilies([.systemSmall, .systemMedium])
         .contentMarginsDisabled()
     }

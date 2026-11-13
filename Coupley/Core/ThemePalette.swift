@@ -19,17 +19,18 @@ enum ThemeVariant: String, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
-    var label: String {
+    /// Display name only (the stored value is `rawValue`).
+    var label: LocalizedStringResource {
         switch self {
-        case .coupleSync: return "CoupleSync"
-        case .classic:    return "Classic"
+        case .coupleSync: return LocalizedStringResource("CoupleSync", comment: "Name of a visual theme (a proper name, usually left as is)")
+        case .classic:    return LocalizedStringResource("Classic", comment: "Name of a visual theme: the original look")
         }
     }
 
-    var tagline: String {
+    var tagline: LocalizedStringResource {
         switch self {
-        case .coupleSync: return "Soft, warm, and calm"
-        case .classic:    return "Bold rose gradient"
+        case .coupleSync: return LocalizedStringResource("Soft, warm, and calm", comment: "Theme picker: describes the CoupleSync theme")
+        case .classic:    return LocalizedStringResource("Bold rose gradient", comment: "Theme picker: describes the Classic theme")
         }
     }
 

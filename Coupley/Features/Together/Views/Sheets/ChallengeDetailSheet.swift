@@ -90,7 +90,7 @@ struct ChallengeDetailSheet: View {
                         .font(.system(size: 12, weight: .semibold))
                     Text(live.category.label)
                         .font(.system(size: 12, weight: .semibold, design: .rounded))
-                        .kerning(0.4)
+                        .scriptAwareKerning(0.4)
                         .textCase(.uppercase)
                 }
                 .foregroundStyle(.white.opacity(0.85))
@@ -120,19 +120,26 @@ struct ChallengeDetailSheet: View {
     private func streakStatsCard(_ live: CoupleChallenge) -> some View {
         TogetherCard(tint: live.colorway) {
             HStack(alignment: .center, spacing: 16) {
-                streakStat(value: "\(live.streak.current)", label: "Current")
+                streakStat(
+                    value: "\(live.streak.current)",
+                    label: LocalizedStringResource("Current", comment: "Challenge stat label: the current streak")
+                )
                 Divider().frame(height: 36).opacity(0.5)
-                streakStat(value: "\(live.streak.longest)", label: "Longest")
+                streakStat(
+                    value: "\(live.streak.longest)",
+                    label: LocalizedStringResource("Longest", comment: "Challenge stat label: the longest streak so far")
+                )
                 Divider().frame(height: 36).opacity(0.5)
                 streakStat(
                     value: "\(live.targetCount - live.totalCheckIns)",
-                    label: "To go"
+                    label: LocalizedStringResource("To go", comment: "Challenge stat label: check-ins still needed to finish")
                 )
             }
         }
     }
 
-    private func streakStat(value: String, label: String) -> some View {
+    /// `value` is a number, shown as given.
+    private func streakStat(value: String, label: LocalizedStringResource) -> some View {
         VStack(spacing: 4) {
             Text(value)
                 .font(.system(size: 22, weight: .bold, design: .rounded))
@@ -140,9 +147,12 @@ struct ChallengeDetailSheet: View {
                 .monospacedDigit()
             Text(label)
                 .font(.system(size: 11, weight: .semibold, design: .rounded))
-                .kerning(0.4)
+                .scriptAwareKerning(0.4)
                 .textCase(.uppercase)
                 .foregroundStyle(Brand.textSecondary)
+                .multilineTextAlignment(.center)
+                .lineLimit(2)
+                .minimumScaleFactor(0.8)
         }
         .frame(maxWidth: .infinity)
     }
@@ -303,7 +313,7 @@ struct ChallengeDetailSheet: View {
 
                 historyRow(
                     icon: "leaf.fill",
-                    title: "Started",
+                    title: LocalizedStringResource("Started", comment: "History row label: the date the challenge started"),
                     detail: live.startDate.formatted(date: .abbreviated, time: .omitted),
                     accent: live.colorway.primary
                 )
@@ -311,21 +321,24 @@ struct ChallengeDetailSheet: View {
                 historyRow(
                     icon: "flame.fill",
                     title: "Best streak",
-                    detail: "\(live.streak.longest) \(live.cadence == .daily ? "days" : "weeks")",
+                    detail: bestStreakText(live),
                     accent: Color(red: 1.0, green: 0.55, blue: 0.30)
                 )
                 Divider().opacity(0.4)
                 historyRow(
                     icon: "person.2.fill",
-                    title: "Together",
-                    detail: "\(Int(live.contribution.amount(for: viewModel.sessionUserId))) by you · \(Int(live.contribution.total - live.contribution.amount(for: viewModel.sessionUserId))) by partner",
+                    title: LocalizedStringResource(
+                        "Together",
+                        comment: "Name of the Together tab; also a label for what both partners did jointly"
+                    ),
+                    detail: checkInSplitText(live),
                     accent: Brand.accentStart
                 )
                 if let completed = live.completedAt {
                     Divider().opacity(0.4)
                     historyRow(
                         icon: "checkmark.seal.fill",
-                        title: "Completed",
+                        title: LocalizedStringResource("Completed", comment: "History row label: the date it was completed"),
                         detail: completed.formatted(date: .long, time: .omitted),
                         accent: Color(red: 0.30, green: 0.78, blue: 0.50)
                     )
@@ -334,7 +347,29 @@ struct ChallengeDetailSheet: View {
         }
     }
 
-    private func historyRow(icon: String, title: String, detail: String, accent: Color) -> some View {
+    /// The whole phrase is one key per cadence, so translators get the noun
+    /// with its count (and can add plural forms).
+    private func bestStreakText(_ live: CoupleChallenge) -> String {
+        let longest = live.streak.longest
+        switch live.cadence {
+        case .daily:
+            return String(localized: "\(longest) days", comment: "Best streak of a daily challenge, e.g. '12 days'")
+        case .weekly:
+            return String(localized: "\(longest) weeks", comment: "Best streak of a weekly challenge, e.g. '3 weeks'")
+        }
+    }
+
+    private func checkInSplitText(_ live: CoupleChallenge) -> String {
+        let mine = live.contribution.amount(for: viewModel.sessionUserId)
+        let theirs = live.contribution.total - mine
+        return String(
+            localized: "\(Int(mine)) by you · \(Int(theirs)) by partner",
+            comment: "Check-ins per partner on a challenge. Placeholders: your count, your partner's count"
+        )
+    }
+
+    /// `detail` is a date, a number or an already-localized phrase, shown as given.
+    private func historyRow(icon: String, title: LocalizedStringResource, detail: String, accent: Color) -> some View {
         HStack(spacing: 12) {
             ZStack {
                 Circle()

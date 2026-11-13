@@ -130,6 +130,9 @@ final class AICoachViewModel: ObservableObject {
 
         activeIssue = issue
 
+        // English on purpose: this text is persisted and sent to the backend
+        // with the transcript. The chat view shows it through
+        // `CoachIssueType.matching(storedTitle:)` in the user's language.
         let framing = CoachChatMessage(
             role: .systemPrompt,
             text: issue.title

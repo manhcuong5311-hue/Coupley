@@ -84,7 +84,9 @@ final class AppleSignInCoordinator:
         defer { continuation = nil; self.controller = nil }
 
         guard let credential = authorization.credential as? ASAuthorizationAppleIDCredential else {
-            continuation?.resume(throwing: AuthError.providerFailed("Unexpected credential type."))
+            continuation?.resume(throwing: AuthError.providerFailed(
+                String(localized: "Sign in was incomplete. Please try again.")
+            ))
             return
         }
         guard let tokenData = credential.identityToken,

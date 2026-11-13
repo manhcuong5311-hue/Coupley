@@ -27,9 +27,10 @@ struct WidgetMoodCapsule: View {
                         .font(WidgetType.body(compact ? 11 : 12))
                         .foregroundStyle(WidgetPalette.textPrimary)
                         .lineLimit(1)
+                        .minimumScaleFactor(0.8)
 
                     if !compact {
-                        Text("·")
+                        Text(verbatim: "·")
                             .font(WidgetType.caption(11))
                             .foregroundStyle(WidgetPalette.textTertiary)
 
@@ -44,16 +45,20 @@ struct WidgetMoodCapsule: View {
             WidgetGlassCapsule(horizontalPadding: compact ? 10 : 12,
                                verticalPadding: compact ? 5 : 7) {
                 HStack(spacing: 6) {
-                    Text("💭")
+                    Text(verbatim: "💭")
                         .font(.system(size: compact ? 13 : 15))
-                    Text("No mood yet")
+                    Text("No mood yet", comment: "Widget: the partner hasn't shared a mood")
                         .font(WidgetType.body(compact ? 11 : 12))
                         .foregroundStyle(WidgetPalette.textSecondary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
                 }
             }
         }
     }
 
+    /// The partner's own words when they wrote some (shown as is), otherwise
+    /// the mood's name in this widget's language.
     private func label(for mood: MoodSnapshot) -> String {
         if let custom = mood.customLabel, !custom.isEmpty {
             return custom

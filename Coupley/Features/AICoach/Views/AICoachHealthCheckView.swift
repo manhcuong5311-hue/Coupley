@@ -64,8 +64,10 @@ struct AICoachHealthCheckView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
-                Button("Close") { dismiss() }
-                    .foregroundStyle(Brand.textSecondary)
+                Button { dismiss() } label: {
+                    Text("Close", comment: "Toolbar button (verb): dismiss the sheet")
+                }
+                .foregroundStyle(Brand.textSecondary)
             }
         }
         .onAppear { if health == nil { runHealthCheck() } }
@@ -150,10 +152,10 @@ struct AICoachHealthCheckView: View {
                         .rotationEffect(.degrees(-90))
 
                     VStack(spacing: 2) {
-                        Text("\(h.overall)")
+                        Text(h.overall, format: .number)
                             .font(.system(size: 40, weight: .bold, design: .rounded))
                             .foregroundStyle(Brand.textPrimary)
-                        Text("of 100")
+                        Text("of 100", comment: "Shown under the overall health score, e.g. 73 / of 100")
                             .font(.system(size: 11, weight: .medium, design: .rounded))
                             .foregroundStyle(Brand.textSecondary)
                     }
@@ -162,6 +164,7 @@ struct AICoachHealthCheckView: View {
                 Text(verdict(for: h.overall))
                     .font(.system(size: 14, weight: .semibold, design: .rounded))
                     .foregroundStyle(Brand.textPrimary)
+                    .multilineTextAlignment(.center)
             }
             .padding(20)
             .frame(maxWidth: .infinity)
@@ -259,7 +262,7 @@ struct AICoachHealthCheckView: View {
 
     // MARK: - Helpers
 
-    private func verdict(for score: Int) -> String {
+    private func verdict(for score: Int) -> LocalizedStringResource {
         switch score {
         case 85...: return "Thriving. Keep showing up like this."
         case 75..<85: return "Strong foundation. Minor tune-ups ahead."

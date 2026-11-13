@@ -17,6 +17,9 @@ enum AttachmentStyle: String, CaseIterable, Identifiable, Codable {
 
     var id: String { rawValue }
 
+    /// English name. MockAICoachService (the English-only offline fallback)
+    /// splices it into its own sentences, so it must not follow the user's
+    /// language. The UI uses `displayLabel`.
     var label: String {
         switch self {
         case .secure:          return "Secure"
@@ -26,12 +29,22 @@ enum AttachmentStyle: String, CaseIterable, Identifiable, Codable {
         }
     }
 
-    var shortDescription: String {
+    /// The name shown in the UI, in the user's language.
+    var displayLabel: LocalizedStringResource {
         switch self {
-        case .secure:          return "Comfortable with closeness and independence"
-        case .anxious:         return "Needs reassurance, fears distance"
-        case .avoidant:        return "Values independence, needs space under pressure"
-        case .fearfulAvoidant: return "Wants closeness but fears being hurt"
+        case .secure:          return LocalizedStringResource("Secure", comment: "Attachment style name")
+        case .anxious:         return LocalizedStringResource("Anxious", comment: "Attachment style name")
+        case .avoidant:        return LocalizedStringResource("Avoidant", comment: "Attachment style name")
+        case .fearfulAvoidant: return LocalizedStringResource("Fearful Avoidant", comment: "Attachment style name")
+        }
+    }
+
+    var shortDescription: LocalizedStringResource {
+        switch self {
+        case .secure:          return LocalizedStringResource("Comfortable with closeness and independence", comment: "Description of the 'Secure' attachment style")
+        case .anxious:         return LocalizedStringResource("Needs reassurance, fears distance", comment: "Description of the 'Anxious' attachment style")
+        case .avoidant:        return LocalizedStringResource("Values independence, needs space under pressure", comment: "Description of the 'Avoidant' attachment style")
+        case .fearfulAvoidant: return LocalizedStringResource("Wants closeness but fears being hurt", comment: "Description of the 'Fearful Avoidant' attachment style")
         }
     }
 
@@ -57,14 +70,15 @@ enum PersonalityPattern: String, CaseIterable, Identifiable, Codable {
 
     var id: String { rawValue }
 
-    var label: String {
+    /// Display only: the backend receives `rawValue`.
+    var label: LocalizedStringResource {
         switch self {
-        case .overthinker:           return "Overthinker"
-        case .emotionallyExpressive: return "Emotionally expressive"
-        case .shutsDown:             return "Shuts down during conflict"
-        case .highlySensitive:       return "Highly sensitive"
-        case .needsReassurance:      return "Needs reassurance"
-        case .avoidsConfrontation:   return "Avoids confrontation"
+        case .overthinker:           return LocalizedStringResource("Overthinker", comment: "Personality pattern")
+        case .emotionallyExpressive: return LocalizedStringResource("Emotionally expressive", comment: "Personality pattern")
+        case .shutsDown:             return LocalizedStringResource("Shuts down during conflict", comment: "Personality pattern")
+        case .highlySensitive:       return LocalizedStringResource("Highly sensitive", comment: "Personality pattern")
+        case .needsReassurance:      return LocalizedStringResource("Needs reassurance", comment: "Personality pattern")
+        case .avoidsConfrontation:   return LocalizedStringResource("Avoids confrontation", comment: "Personality pattern")
         }
     }
 }
@@ -83,6 +97,11 @@ enum CoachIssueType: String, CaseIterable, Identifiable, Codable {
 
     var id: String { rawValue }
 
+    /// English title. It is DATA: `AICoachViewModel.runGuidedFlow` stores it
+    /// as the text of the `.systemPrompt` message that opens a guided flow,
+    /// which is persisted in UserDefaults and sent to the coach backend with
+    /// the transcript. It must stay English and unchanged; the UI shows
+    /// `displayTitle`, and `matching(storedTitle:)` maps a stored message back.
     var title: String {
         switch self {
         case .fight:         return "We had a fight"
@@ -96,16 +115,36 @@ enum CoachIssueType: String, CaseIterable, Identifiable, Codable {
         }
     }
 
-    var subtitle: String {
+    /// The title shown in the UI, in the user's language.
+    var displayTitle: LocalizedStringResource {
         switch self {
-        case .fight:         return "Work through an argument"
-        case .distance:      return "Rebuild closeness"
-        case .apology:       return "Say it the right way"
-        case .reconnect:     return "Feel close again"
-        case .stress:        return "Show up when it's hard"
-        case .trust:         return "Repair after a breach"
-        case .communication: return "Be heard, understand each other"
-        case .custom:        return "Describe what's going on"
+        case .fight:         return LocalizedStringResource("We had a fight", comment: "Coach issue the user picks, in their own voice")
+        case .distance:      return LocalizedStringResource("My partner feels distant", comment: "Coach issue the user picks, in their own voice")
+        case .apology:       return LocalizedStringResource("I need help apologizing", comment: "Coach issue the user picks, in their own voice")
+        case .reconnect:     return LocalizedStringResource("I want to reconnect", comment: "Coach issue the user picks, in their own voice")
+        case .stress:        return LocalizedStringResource("Stress & emotional support", comment: "Coach issue the user picks")
+        case .trust:         return LocalizedStringResource("Trust issues", comment: "Coach issue the user picks")
+        case .communication: return LocalizedStringResource("Communication problems", comment: "Coach issue the user picks")
+        case .custom:        return LocalizedStringResource("Custom situation", comment: "Coach issue the user picks: describe your own situation")
+        }
+    }
+
+    /// The issue whose English `title` is `storedTitle`, so a persisted
+    /// `.systemPrompt` message can be shown in the user's language.
+    static func matching(storedTitle: String) -> CoachIssueType? {
+        allCases.first { $0.title == storedTitle }
+    }
+
+    var subtitle: LocalizedStringResource {
+        switch self {
+        case .fight:         return LocalizedStringResource("Work through an argument", comment: "Subtitle of a coach issue card")
+        case .distance:      return LocalizedStringResource("Rebuild closeness", comment: "Subtitle of a coach issue card")
+        case .apology:       return LocalizedStringResource("Say it the right way", comment: "Subtitle of a coach issue card")
+        case .reconnect:     return LocalizedStringResource("Feel close again", comment: "Subtitle of a coach issue card")
+        case .stress:        return LocalizedStringResource("Show up when it's hard", comment: "Subtitle of a coach issue card")
+        case .trust:         return LocalizedStringResource("Repair after a breach", comment: "Subtitle of a coach issue card: rebuild trust after it was broken")
+        case .communication: return LocalizedStringResource("Be heard, understand each other", comment: "Subtitle of a coach issue card")
+        case .custom:        return LocalizedStringResource("Describe what's going on", comment: "Subtitle of a coach issue card")
         }
     }
 
@@ -135,8 +174,8 @@ enum CoachIssueType: String, CaseIterable, Identifiable, Codable {
         }
     }
 
-    /// Smart context questions the coach asks on entry.
-    var contextQuestions: [String] {
+    /// Smart context questions the coach asks on entry. Display only.
+    var contextQuestions: [LocalizedStringResource] {
         switch self {
         case .fight:
             return [
@@ -215,6 +254,8 @@ struct CoachContext: Codable, Equatable {
     var recentMoodNote: String?
     var recurringThemes: [String]
 
+    /// The placeholder names are sent to the coach backend (and used by the
+    /// English mock) as data, so they stay English.
     static let empty = CoachContext(
         myName: "You",
         partnerName: "Partner",
@@ -302,19 +343,19 @@ struct MessageRewrite: Identifiable, Codable, Equatable {
 
         var id: String { rawValue }
 
-        var label: String {
+        var label: LocalizedStringResource {
             switch self {
-            case .soft:   return "Softer"
-            case .honest: return "Honest"
-            case .repair: return "Repair"
+            case .soft:   return LocalizedStringResource("Softer", comment: "Rewrite tone: a kinder, less defensive version of the message")
+            case .honest: return LocalizedStringResource("Honest", comment: "Rewrite tone: a direct but warm version of the message")
+            case .repair: return LocalizedStringResource("Repair", comment: "Rewrite tone (noun): a version that owns your part and makes amends")
             }
         }
 
-        var description: String {
+        var description: LocalizedStringResource {
             switch self {
-            case .soft:   return "Kinder, less defensive"
-            case .honest: return "Direct but warm"
-            case .repair: return "Owning your part"
+            case .soft:   return LocalizedStringResource("Kinder, less defensive", comment: "Description of the 'Softer' rewrite tone")
+            case .honest: return LocalizedStringResource("Direct but warm", comment: "Description of the 'Honest' rewrite tone")
+            case .repair: return LocalizedStringResource("Owning your part", comment: "Description of the 'Repair' rewrite tone: taking responsibility for your share")
             }
         }
 
@@ -368,13 +409,13 @@ extension RelationshipHealth {
     enum Pillar: CaseIterable {
         case trust, communication, emotionalIntimacy, support, consistency
 
-        var label: String {
+        var label: LocalizedStringResource {
             switch self {
-            case .trust:             return "Trust"
-            case .communication:     return "Communication"
-            case .emotionalIntimacy: return "Emotional Intimacy"
-            case .support:           return "Support"
-            case .consistency:       return "Consistency"
+            case .trust:             return LocalizedStringResource("Trust", comment: "Relationship health pillar")
+            case .communication:     return LocalizedStringResource("Communication", comment: "Relationship health pillar")
+            case .emotionalIntimacy: return LocalizedStringResource("Emotional Intimacy", comment: "Relationship health pillar")
+            case .support:           return LocalizedStringResource("Support", comment: "Relationship health pillar (noun): supporting each other")
+            case .consistency:       return LocalizedStringResource("Consistency", comment: "Relationship health pillar")
             }
         }
 
@@ -415,7 +456,12 @@ struct RecoveryPlan: Codable, Equatable, Identifiable {
 
         var id: String { rawValue }
         var dayCount: Int { self == .threeDay ? 3 : 7 }
-        var label: String { self == .threeDay ? "3-day plan" : "7-day plan" }
+        var label: LocalizedStringResource {
+            switch self {
+            case .threeDay: return LocalizedStringResource("3-day plan", comment: "Recovery plan length option")
+            case .sevenDay: return LocalizedStringResource("7-day plan", comment: "Recovery plan length option")
+            }
+        }
     }
 
     struct Day: Codable, Equatable, Identifiable {

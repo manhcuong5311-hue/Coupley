@@ -151,7 +151,8 @@ struct JourneyTimelineCapsuleRow: View {
                     symbolName: "lock.fill",
                     tint: FutureLetterStyle.gold,
                     title: title,
-                    detail: "Capsule · opens \(FutureLetterClock.shortDate(unlockDate, now: now))",
+                    detail: String(localized: "Capsule · opens \(FutureLetterClock.shortDate(unlockDate, now: now))",
+                                   comment: "Sealed memory capsule row. %@ is a short date such as 'Jan 26'."),
                     trailing: countdown
                 )
             }
@@ -169,7 +170,9 @@ struct JourneyTimelineCapsuleRow: View {
 
     private var title: String {
         let trimmed = memory.title.trimmingCharacters(in: .whitespacesAndNewlines)
-        return trimmed.isEmpty ? "A moment for you both" : trimmed
+        return trimmed.isEmpty
+            ? String(localized: "A moment for you both", comment: "Title of a memory capsule that has no title")
+            : trimmed
     }
 
     /// "12 days", "5 hr", "42 min", or "Now" in the minute before the view
@@ -180,11 +183,13 @@ struct JourneyTimelineCapsuleRow: View {
 
     private var spokenLabel: String {
         let day = unlockDate.formatted(date: .long, time: .omitted)
-        return [
-            JourneyTimelineSpeech.sentence("Memory capsule, \(title)"),
-            "Opens \(day), for both of you.",
-            JourneyTimelineSpeech.sentence(countdown)
-        ].joined(separator: " ")
+        return JourneyTimelineSpeech.sentences([
+            String(localized: "Memory capsule, \(title)",
+                   comment: "VoiceOver: a sealed memory capsule. %@ is the capsule's title."),
+            String(localized: "Opens \(day), for both of you.",
+                   comment: "VoiceOver: when a memory capsule opens. %@ is a date such as 'January 26, 2027'."),
+            countdown
+        ])
     }
 }
 
@@ -256,11 +261,13 @@ struct JourneyTimelineChipContent: View {
                     .foregroundStyle(Brand.textPrimary)
                     .lineLimit(isLarge ? 3 : 1)
                     .minimumScaleFactor(isLarge ? 1 : 0.85)
+                // Up to two lines below xLarge: a translated "Capsule · opens
+                // …" can run 30-50% longer than the English, which fits one.
                 Text(detail)
                     .font(JourneyFont.meta)
                     .foregroundStyle(Brand.textSecondary)
-                    .lineLimit(isLarge ? 3 : 1)
-                    .minimumScaleFactor(isLarge ? 1 : 0.85)
+                    .lineLimit(isLarge ? 3 : 2)
+                    .minimumScaleFactor(isLarge ? 1 : 0.8)
                 if isLarge, let trailing {
                     trailingText(trailing)
                 }
@@ -296,11 +303,26 @@ struct JourneyTimelineChipContent: View {
 
 // MARK: - Speech
 
+/// VoiceOver labels on Journey are built from phrases (each already in the
+/// user's language) read as sentences. The full stop is localized too, so a
+/// language with its own sentence ending (。, ।) can use it.
 enum JourneyTimelineSpeech {
+    /// Endings that already close a sentence, in the scripts we ship.
+    nonisolated private static let enders: [String] = [".", "!", "?", "…", "。", "！", "？", "।"]
+
     /// Ends `text` with a full stop unless it already ends a sentence, so a
     /// title like "Our trip!" is not read as "Our trip!.".
-    static func sentence(_ text: String) -> String {
-        let enders: [String] = [".", "!", "?", "…"]
-        return enders.contains(where: { text.hasSuffix($0) }) ? text : text + "."
+    nonisolated static func sentence(_ text: String) -> String {
+        guard !text.isEmpty, !enders.contains(where: { text.hasSuffix($0) }) else { return text }
+        return String(localized: "\(text).",
+                      comment: "VoiceOver: a phrase read as a sentence. Keep %@ and end it with your language's full stop.")
+    }
+
+    /// The phrases in order, each read as a sentence, as one label.
+    nonisolated static func sentences(_ phrases: [String]) -> String {
+        phrases
+            .filter { !$0.isEmpty }
+            .map { sentence($0) }
+            .joined(separator: " ")
     }
 }

@@ -23,7 +23,9 @@ enum WidgetRelativeTime {
     /// Returns "Just now" within 60s, otherwise the localized short form.
     static func string(for date: Date, now: Date = Date()) -> String {
         let elapsed = now.timeIntervalSince(date)
-        if elapsed < 60 { return "Just now" }
+        if elapsed < 60 {
+            return String(localized: "Just now", comment: "Widget: the partner's mood was shared less than a minute ago")
+        }
         return formatter.localizedString(for: date, relativeTo: now)
     }
 }

@@ -171,8 +171,12 @@ enum TimeTreeStorageError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .encodingFailed: return "Could not encode the image."
-        case .noDownloadURL:  return "Upload succeeded but no download URL was returned."
+        case .encodingFailed:
+            return String(localized: "Could not encode the image.",
+                          comment: "Error: a memory photo could not be converted for upload")
+        case .noDownloadURL:
+            return String(localized: "Upload succeeded but no download URL was returned.",
+                          comment: "Error: a memory photo uploaded but its link could not be read")
         }
     }
 }

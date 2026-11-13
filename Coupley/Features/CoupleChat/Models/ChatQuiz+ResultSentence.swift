@@ -18,8 +18,9 @@
 //  every older card is frozen in one language for good — nothing deletes these
 //  documents and no backfill is possible.
 //
-//  There are exactly three frames. When the catalog lands these are the three
-//  strings to translate.
+//  There are exactly three frames, and each exists twice: `sentence` draws it
+//  in the reader's language, `baseSentence` writes the frozen English copy
+//  that builds without `kind` still read.
 //
 
 import Foundation
@@ -27,18 +28,51 @@ import Foundation
 /// The three sentences a finished quiz can produce.
 enum QuizResultCopy {
 
-    /// `optionLabel` is a runtime parameter, not a key: for a custom quiz it
-    /// is the author's own words.
+    /// The sentence to DRAW, in the reader's language.
     ///
-    /// The `.lowercased()` below is correct for the English base copy and will
-    /// not be for every language — German does not lowercase its nouns, and
-    /// Turkish needs the locale-aware overload. It stays here only until these
-    /// frames become catalog entries, at which point each translation owns its
-    /// own casing and this call goes away.
+    /// `optionLabel` and `topicLabel` must be display text (`label(forOptionId:)`,
+    /// `QuizTopic.label`). `optionLabel` is a runtime parameter, not a key: for
+    /// a custom quiz it is the author's own words.
+    ///
+    /// Nothing is lowercased here, unlike `baseSentence`: a translation cannot
+    /// recase an interpolated label, German does not lowercase its nouns, and
+    /// lowercasing a label that is a whole sentence ("I drop hints…") breaks
+    /// it in English too. The option is quoted instead, as the result card's
+    /// other frames already do ("What “…” means", "You guessed “…”").
     static func sentence(kind: QuizResultKind,
                          optionLabel: String?,
                          emoji: String,
                          topicLabel: String) -> String {
+        switch kind {
+        case .matchShared:
+            guard let optionLabel else { return samePage(emoji) }
+            return String(localized: "You both value \u{201C}\(optionLabel)\u{201D} \(emoji)",
+                          comment: "Quiz result when both partners picked the same answer. The first placeholder is that answer, the second the quiz topic's emoji.")
+        case .matchGeneric:
+            return samePage(emoji)
+        case .mismatch:
+            return String(localized: "You see \(topicLabel) a little differently — might be worth a chat.",
+                          comment: "Quiz result when the partners answered differently. The placeholder is the quiz topic, e.g. “Finance” or “Love & Emotion”.")
+        }
+    }
+
+    private static func samePage(_ emoji: String) -> String {
+        String(localized: "You're on the same page here \(emoji)",
+               comment: "Quiz result when both partners agree. The placeholder is the quiz topic's emoji.")
+    }
+
+    /// The sentence to STORE, in `ChatQuizResult.summary`: BASE LANGUAGE,
+    /// never localized, and worded exactly as every build has written it.
+    ///
+    /// It exists only for builds that cannot render `kind`, which print it
+    /// as-is to both partners, so it must not take the writing device's
+    /// language. Takes base-language labels (`baseLabel(forOptionId:)`,
+    /// `QuizTopic.baseLabel`); the `.lowercased()` is right for this English
+    /// copy only.
+    static func baseSentence(kind: QuizResultKind,
+                             optionLabel: String?,
+                             emoji: String,
+                             topicLabel: String) -> String {
         switch kind {
         case .matchShared:
             guard let optionLabel else {

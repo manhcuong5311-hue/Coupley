@@ -229,7 +229,8 @@ final class PremiumStore: ObservableObject {
     func purchaseRemoveAds() async {
         if removeAdsProduct == nil { await loadProducts() }
         guard let product = removeAdsProduct else {
-            lastError = "Product not available. Check your connection and try again."
+            lastError = String(localized: "Product not available. Check your connection and try again.",
+                               comment: "Purchase error: the Remove Ads product could not be loaded.")
             return
         }
 
@@ -270,7 +271,8 @@ final class PremiumStore: ObservableObject {
             }
             await scanPurchaseHistory()
             if !isAdFree {
-                lastError = "No previous purchase was found for this Apple ID."
+                lastError = String(localized: "No previous purchase was found for this Apple ID.",
+                                   comment: "Restore Purchases found nothing to restore.")
             }
         } catch {
             lastError = error.localizedDescription

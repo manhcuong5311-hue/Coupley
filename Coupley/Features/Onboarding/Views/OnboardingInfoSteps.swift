@@ -61,7 +61,7 @@ struct BenefitsStepView: View {
 
     @ObservedObject var viewModel: OnboardingViewModel
 
-    private let tiles: [(icon: String, tint: Color, title: String, copy: String)] = [
+    private let tiles: [(icon: String, tint: Color, title: LocalizedStringResource, copy: LocalizedStringResource)] = [
         ("heart.fill",
          Color(red: 1.0, green: 0.42, blue: 0.55),
          "Closer, every day",
@@ -93,7 +93,7 @@ struct BenefitsStepView: View {
                 LazyVGrid(columns: [GridItem(.flexible(), spacing: 12),
                                     GridItem(.flexible(), spacing: 12)],
                           spacing: 12) {
-                    ForEach(tiles, id: \.title) { tile in
+                    ForEach(tiles, id: \.icon) { tile in
                         BenefitTile(icon: tile.icon, tint: tile.tint, title: tile.title, copy: tile.copy)
                     }
                 }
@@ -259,10 +259,10 @@ struct PartnerExpectationStepView: View {
 private func infoLayout(
     icon: String,
     tint: Color,
-    eyebrow: String,
-    title: String,
-    subtitle: String,
-    bullets: [String]
+    eyebrow: LocalizedStringResource,
+    title: LocalizedStringResource,
+    subtitle: LocalizedStringResource,
+    bullets: [LocalizedStringResource]
 ) -> some View {
     VStack(alignment: .leading, spacing: 24) {
         HStack {
@@ -279,13 +279,14 @@ private func infoLayout(
         )
 
         VStack(alignment: .leading, spacing: 12) {
-            ForEach(bullets, id: \.self) { line in
+            // A fixed list: the position is a stable identity.
+            ForEach(bullets.indices, id: \.self) { index in
                 HStack(alignment: .top, spacing: 12) {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundStyle(tint)
                         .frame(width: 22, height: 22)
-                    Text(line)
+                    Text(bullets[index])
                         .font(.system(size: 15, weight: .regular, design: .rounded))
                         .foregroundStyle(Brand.textPrimary)
                         .fixedSize(horizontal: false, vertical: true)

@@ -60,8 +60,8 @@ struct FutureLetterReaderView: View {
 
     private static let titleFont = Font.system(size: 22, weight: .bold, design: .rounded)
     private static let unsendRed = Color(red: 1.0, green: 0.45, blue: 0.45)
-    private static let goneTitle = "This letter is no longer available."
-    private static let goneMessage = "It may have been unsent."
+    private static let goneTitle: LocalizedStringResource = "This letter is no longer available."
+    private static let goneMessage: LocalizedStringResource = "It may have been unsent."
 
     // MARK: - The letter
 
@@ -104,7 +104,7 @@ struct FutureLetterReaderView: View {
             .animation(.easeInOut(duration: 0.3), value: crossfadeKey)
         }
         .background(Brand.bgGradient.ignoresSafeArea())
-        .navigationTitle("Letter")
+        .navigationTitle(Text("Letter", comment: "Title of the screen showing one future letter."))
         .navigationBarTitleDisplayMode(.inline)
         .task(id: TaskKey(phase: live.map { viewModel.phase(of: $0) }, attempt: attempt)) {
             await respondToPhase()
@@ -160,7 +160,8 @@ struct FutureLetterReaderView: View {
                 TimelineView(.periodic(from: .now, by: 1)) { context in
                     VStack(spacing: 8) {
                         countdown(to: letter.opensAt, now: context.date)
-                        Text("Opens \(FutureLetterClock.moment(letter.opensAt, now: context.date))")
+                        Text("Opens \(FutureLetterClock.moment(letter.opensAt, now: context.date))",
+                             comment: "%@ is a moment, such as 'today at 9:00 AM'.")
                             .font(BrandType.body)
                             .foregroundStyle(Brand.textSecondary)
                             .multilineTextAlignment(.center)
@@ -249,7 +250,7 @@ struct FutureLetterReaderView: View {
         }
     }
 
-    private func notice(_ text: String, icon: String) -> some View {
+    private func notice(_ text: LocalizedStringResource, icon: String) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: 8) {
             Image(systemName: icon)
                 .font(.system(size: 13, weight: .semibold))
@@ -279,7 +280,9 @@ struct FutureLetterReaderView: View {
             }
             .transition(.opacity)
 
-            paper(letterBody.text, signOff: "— \(partnerName)")
+            paper(letterBody.text,
+                  signOff: String(localized: "— \(partnerName)",
+                                  comment: "Sign-off under a letter: a dash and the sender's name."))
                 .transition(paperRise)
 
             BrandCTA(title: "Reply in Chat", icon: "bubble.left.and.bubble.right.fill",
@@ -319,7 +322,8 @@ struct FutureLetterReaderView: View {
         // Nil only between the reveal and the listener echoing back the stamp
         // that very read wrote, so the moment is now.
         let opened = FutureLetterClock.moment(letter.openedAt ?? Date(), now: now)
-        return "Sealed \(sealed) · Opened \(opened)"
+        return String(localized: "Sealed \(sealed) · Opened \(opened)",
+                      comment: "The first %@ is a date, such as 'Nov 13'; the second a moment, such as 'today at 9:14 AM'.")
     }
 
     /// On the first reveal the paper rises into place. With Reduce Motion it
@@ -335,19 +339,21 @@ struct FutureLetterReaderView: View {
 
     private func failurePanel(_ error: FutureLetterOpenError) -> some View {
         let copy = Self.failureCopy(error)
-        if error == .unavailable {
-            return panel(title: copy.title, message: copy.message,
-                         buttonTitle: "Done", buttonIcon: nil) {
-                dismiss()
+        return panel(title: copy.title, message: copy.message) {
+            if error == .unavailable {
+                BrandCTA(title: "Done", tier: .card, accent: FutureLetterStyle.accent) {
+                    dismiss()
+                }
+            } else {
+                BrandCTA(title: "Try again", icon: "arrow.clockwise", tier: .card,
+                         accent: FutureLetterStyle.accent) {
+                    retry()
+                }
             }
-        }
-        return panel(title: copy.title, message: copy.message,
-                     buttonTitle: "Try again", buttonIcon: "arrow.clockwise") {
-            retry()
         }
     }
 
-    private static func failureCopy(_ error: FutureLetterOpenError) -> (title: String, message: String) {
+    private static func failureCopy(_ error: FutureLetterOpenError) -> (title: LocalizedStringResource, message: LocalizedStringResource) {
         switch error {
         case .notYet:
             return ("Not quite yet",
@@ -440,13 +446,18 @@ struct FutureLetterReaderView: View {
             .fixedSize(horizontal: false, vertical: true)
     }
 
+    private var sendingText: String {
+        String(localized: "Sending…", comment: "A sealed letter not yet acknowledged by the server.")
+    }
+
     /// "Opens Thu, Dec 25 at 9:00 AM · 12 days", or "Sending…" while the seal
     /// is still a local, unacknowledged write.
     private func sealedStatus(_ letter: FutureLetter, now: Date) -> String {
-        if viewModel.isPending(letter) { return "Sending…" }
+        if viewModel.isPending(letter) { return sendingText }
         let when = FutureLetterClock.moment(letter.opensAt, now: now)
         let left = FutureLetterClock.shortCountdown(to: letter.opensAt, now: now)
-        return "Opens \(when) · \(left)"
+        return String(localized: "Opens \(when) · \(left)",
+                      comment: "The first %@ is a moment, such as 'Thu, Dec 25 at 9:00 AM'; the second the time left, such as '12 days'.")
     }
 
     /// "Sam opened it today at 9:14 AM." once opened, otherwise
@@ -454,13 +465,16 @@ struct FutureLetterReaderView: View {
     private func sentStatus(_ letter: FutureLetter, phase: FutureLetterPhase) -> String {
         let now = viewModel.now
         if phase == .openedByPartner, let openedAt = letter.openedAt {
-            return "\(partnerName) opened it \(FutureLetterClock.moment(openedAt, now: now))."
+            let when = FutureLetterClock.moment(openedAt, now: now)
+            return String(localized: "\(partnerName) opened it \(when).",
+                          comment: "The first %@ is the partner's name; the second a moment, such as 'today at 9:14 AM'.")
         }
         // Due by this phone's clock, but the seal itself has not reached the
         // server yet (queued offline): it is not ready for anyone.
-        if viewModel.isPending(letter) { return "Sending…" }
+        if viewModel.isPending(letter) { return sendingText }
         let ready = FutureLetterClock.moment(letter.opensAt, now: now)
-        return "Ready since \(ready) · \(partnerName) hasn't opened it yet."
+        return String(localized: "Ready since \(ready) · \(partnerName) hasn't opened it yet.",
+                      comment: "The first %@ is a moment, such as 'today at 9:00 AM'; the second the partner's name.")
     }
 
     private func unsendButton(_ letter: FutureLetter) -> some View {
@@ -518,9 +532,11 @@ struct FutureLetterReaderView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    /// C's inline panel, and H.
-    private func panel(title: String, message: String, buttonTitle: String,
-                       buttonIcon: String?, action: @escaping () -> Void) -> some View {
+    /// C's inline panel, and H. `button` is a BrandCTA given a literal title,
+    /// so the title is localized whatever type BrandCTA takes.
+    private func panel<CTA: View>(title: LocalizedStringResource,
+                                  message: LocalizedStringResource,
+                                  @ViewBuilder button: () -> CTA) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
@@ -534,8 +550,7 @@ struct FutureLetterReaderView: View {
             }
             .accessibilityElement(children: .combine)
 
-            BrandCTA(title: buttonTitle, icon: buttonIcon, tier: .card,
-                     accent: FutureLetterStyle.accent, action: action)
+            button()
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -548,9 +563,10 @@ struct FutureLetterReaderView: View {
     // MARK: - H. Removed
 
     private var gonePanel: some View {
-        panel(title: Self.goneTitle, message: Self.goneMessage,
-              buttonTitle: "Done", buttonIcon: nil) {
-            dismiss()
+        panel(title: Self.goneTitle, message: Self.goneMessage) {
+            BrandCTA(title: "Done", tier: .card, accent: FutureLetterStyle.accent) {
+                dismiss()
+            }
         }
     }
 

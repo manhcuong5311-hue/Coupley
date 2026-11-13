@@ -126,6 +126,14 @@ final class AdsManager: NSObject, ObservableObject {
     /// Connects the purchase state. Ads run only while `isAdFree` emits `false`;
     /// buying "Remove Ads" removes every ad immediately.
     func bind<P: Publisher>(isAdFree: P) where P.Output == Bool, P.Failure == Never {
+        #if DEBUG
+        // Clean screenshots (localization mockups): no banner, no consent form
+        // and no ATT prompt. Debug builds only.
+        if ProcessInfo.processInfo.arguments.contains("-coupleyNoAds") {
+            setAdsEnabled(false)
+            return
+        }
+        #endif
         adFreeSubscription = isAdFree
             .removeDuplicates()
             .receive(on: DispatchQueue.main)

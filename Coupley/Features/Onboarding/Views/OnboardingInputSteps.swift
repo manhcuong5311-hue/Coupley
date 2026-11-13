@@ -418,10 +418,11 @@ struct DailyHabitStepView: View {
 
     // MARK: Helpers
 
-    private func sectionLabel(_ text: String) -> some View {
-        Text(text.uppercased())
+    private func sectionLabel(_ text: LocalizedStringResource) -> some View {
+        Text(text)
+            .textCase(.uppercase)
             .font(.system(size: 11, weight: .bold, design: .rounded))
-            .tracking(1.2)
+            .scriptAwareTracking(1.2)
             .foregroundStyle(Brand.textSecondary)
     }
 
@@ -516,7 +517,7 @@ struct NotificationsStepView: View {
         }
     }
 
-    private func notifRow(icon: String, text: String) -> some View {
+    private func notifRow(icon: String, text: LocalizedStringResource) -> some View {
         HStack(spacing: 12) {
             Image(systemName: icon)
                 .font(.system(size: 14, weight: .semibold))
@@ -625,15 +626,17 @@ struct WidgetStepView: View {
                             startPoint: .topLeading, endPoint: .bottomTrailing))
                         .frame(width: 28, height: 28)
                         .overlay(
-                            Text("M")
+                            // A sample partner's name and initial: verbatim,
+                            // so the two always match.
+                            Text(verbatim: "M")
                                 .font(.system(size: 14, weight: .bold, design: .rounded))
                                 .foregroundStyle(.white)
                         )
                     VStack(alignment: .leading, spacing: 0) {
-                        Text("Maya")
+                        Text(verbatim: "Maya")
                             .font(.system(size: 13, weight: .semibold, design: .rounded))
                             .foregroundStyle(Brand.textPrimary)
-                        Text("just now")
+                        Text("just now", comment: "Sample widget preview: when the partner's mood was updated")
                             .font(.system(size: 10, design: .rounded))
                             .foregroundStyle(Brand.textTertiary)
                     }
@@ -644,12 +647,18 @@ struct WidgetStepView: View {
                     Text("🥰")
                         .font(.system(size: 30))
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("Feeling loved")
+                        // Fixed 170pt tile: longer translations wrap once,
+                        // then shrink, instead of spilling out of it.
+                        Text("Feeling loved", comment: "Sample widget preview: the partner's mood")
                             .font(.system(size: 13, weight: .semibold, design: .rounded))
                             .foregroundStyle(Brand.textPrimary)
-                        Text("Thinking about you")
+                            .lineLimit(2)
+                            .minimumScaleFactor(0.8)
+                        Text("Thinking about you", comment: "Sample widget preview: the partner's mood note")
                             .font(.system(size: 11, design: .rounded))
                             .foregroundStyle(Brand.textSecondary)
+                            .lineLimit(2)
+                            .minimumScaleFactor(0.8)
                     }
                     Spacer()
                 }

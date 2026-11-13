@@ -64,7 +64,12 @@ final class FutureLetterNotificationScheduler: FutureLetterNotificationSchedulin
             let interval = letter.opensAt.timeIntervalSinceNow
             guard interval > 1 else { continue }
 
-            let body = "Sealed on \(FutureLetterClock.shortDate(letter.sealedMoment, now: letter.opensAt)). Open it on Home."
+            // Notifications stay English whatever the app's language, so the
+            // date is English too (formatted as it was before the app shipped
+            // other languages), not the app language's "13 thg 11".
+            let sealedOn = FutureLetterClock.shortDate(letter.sealedMoment, now: letter.opensAt,
+                                                       locale: Self.notificationLocale)
+            let body = "Sealed on \(sealedOn). Open it on Home."
             let content = UNMutableNotificationContent()
             content.title = "A letter for you is ready 💌"
             content.body = body
@@ -102,5 +107,14 @@ final class FutureLetterNotificationScheduler: FutureLetterNotificationSchedulin
 
     func clearDelivered(letterId: String) {
         center.removeDeliveredNotifications(withIdentifiers: [Self.prefix + letterId])
+    }
+
+    /// English with the user's own region and calendar ("en_GB", "en_VN"):
+    /// what `Locale.current` was while the app shipped only English.
+    private static var notificationLocale: Locale {
+        var components = Locale.Components(locale: .current)
+        components.languageComponents = Locale.Language.Components(languageCode: .english,
+                                                                   region: Locale.current.region)
+        return Locale(components: components)
     }
 }

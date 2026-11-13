@@ -31,17 +31,24 @@ enum GoalCategory: String, Codable, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
-    var label: String {
+    /// Display name only. Storage and comparisons use `rawValue`.
+    var label: LocalizedStringResource {
         switch self {
-        case .travel:    return "Travel"
-        case .savings:   return "Savings"
-        case .wedding:   return "Wedding"
-        case .home:      return "Home"
-        case .lifestyle: return "Lifestyle"
-        case .health:    return "Health"
-        case .gratitude: return "Gratitude"
-        case .learning:  return "Learning"
-        case .other:     return "Other"
+        case .travel:    return LocalizedStringResource("Travel", comment: "Together tab: category of a shared goal, challenge or dream")
+        case .savings:   return LocalizedStringResource("Savings", comment: "Together tab: category of a shared goal, challenge or dream")
+        case .wedding:   return LocalizedStringResource("Wedding", comment: "Together tab: category of a shared goal, challenge or dream")
+        case .home:
+            // Own key: a plain "Home" key is the Home tab.
+            return LocalizedStringResource(
+                "together.category.home",
+                defaultValue: "Home",
+                comment: "Together tab: category of a shared goal or dream about a home or house (not the Home tab)"
+            )
+        case .lifestyle: return LocalizedStringResource("Lifestyle", comment: "Together tab: category of a shared goal, challenge or dream")
+        case .health:    return LocalizedStringResource("Health", comment: "Together tab: category of a shared goal, challenge or dream")
+        case .gratitude: return LocalizedStringResource("Gratitude", comment: "Together tab: category of a shared goal, challenge or dream")
+        case .learning:  return LocalizedStringResource("Learning", comment: "Together tab: category of a shared goal, challenge or dream")
+        case .other:     return LocalizedStringResource("Other", comment: "Together tab: category of a shared goal, challenge or dream")
         }
     }
 
@@ -95,6 +102,8 @@ enum GoalTrackingMode: String, Codable, CaseIterable {
     case count
     case currency
 
+    /// Not localized: no screen shows it. Make it a `LocalizedStringResource`
+    /// (and never splice it after a number) before putting it on screen.
     var unitsLabel: String {
         switch self {
         case .count:    return "steps"
@@ -180,7 +189,16 @@ struct TogetherGoal: Identifiable, Codable, Equatable {
     }
 
     var progressLabel: String {
-        "\(formatAmount(contribution.total)) / \(formatAmount(target))"
+        "\(isolatedAmount(contribution.total)) / \(isolatedAmount(target))"
+    }
+
+    /// `formatAmount(_:)` in a left-to-right isolate (U+2066 ... U+2069), for
+    /// amounts placed inside other text: in Arabic or Hebrew "US$" then stays
+    /// "US$" instead of being reordered into "$US". (A first-strong isolate is
+    /// not enough: the Arabic formatter starts its output with a right-to-left
+    /// mark.)
+    func isolatedAmount(_ value: Double) -> String {
+        "\u{2066}\(formatAmount(value))\u{2069}"
     }
 
     /// Estimated completion based on contribution velocity. Returns `nil` when
@@ -204,6 +222,9 @@ struct TogetherGoal: Identifiable, Codable, Equatable {
 /// never want to type a goal name from scratch — having one tap pre-fill the
 /// editor with a known-good shape is the difference between empty-state and
 /// engagement.
+///
+/// Content bank: `title` is base (English) text. The UI shows it through
+/// `ContentL10n.text`, and a picked title is saved in the user's language.
 struct GoalSuggestion: Identifiable {
     let id = UUID()
     let title: String
@@ -224,6 +245,15 @@ struct GoalSuggestion: Identifiable {
         GoalSuggestion(title: "Reading Challenge",   category: .learning,  trackingMode: .count,    target: 6,     emoji: "📚")
     ]
 }
+
+#if DEBUG
+extension GoalSuggestion {
+    /// Every base string the UI shows through ContentL10n (to build the Content catalog).
+    static var l10nContentStrings: [String] {
+        library.map(\.title)
+    }
+}
+#endif
 
 // MARK: - Free tier caps
 

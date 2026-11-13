@@ -98,11 +98,14 @@ enum FutureLetterSchedule {
     #if DEBUG
     /// Short in Debug so a letter's flip can be watched on two simulators.
     static let minimumLead: TimeInterval = 2 * 60
-    static let minimumLeadDescription = "2 minutes"
     #else
     static let minimumLead: TimeInterval = 60 * 60
-    static let minimumLeadDescription = "1 hour"
     #endif
+    /// "1 hour" ("2 minutes" in Debug), worded and pluralized by Foundation
+    /// in the user's language.
+    static var minimumLeadDescription: String {
+        Duration.seconds(minimumLead).formatted(.units(allowed: [.hours, .minutes], width: .wide))
+    }
     /// Ten years. The rules allow 3,700 days, a little more than this.
     static let maximumLead: TimeInterval = 3650 * 86_400
     /// Same hour the Memory Capsule reminders use.
@@ -143,29 +146,44 @@ enum FutureLetterSchedule {
 
 // MARK: - Formatting
 
-/// Pure formatting in the viewer's own calendar and time zone.
+/// Pure formatting in the viewer's own calendar and time zone, in the
+/// viewer's language. Every result is display text: never store or compare it.
 enum FutureLetterClock {
 
     /// "today at 9:00 AM", "tomorrow at 9:00 AM", "yesterday at 9:14 AM",
     /// "Thu, Dec 25 at 9:00 AM", or "Thu, Dec 25, 2027 at 9:00 AM" when the
-    /// year differs.
+    /// year differs. Callers put it after "Opens", "Opened", "Unsealed" or
+    /// "Ready since".
     static func moment(_ date: Date, now: Date, calendar: Calendar = .current) -> String {
         let time = date.formatted(date: .omitted, time: .shortened)
-        if calendar.isDate(date, inSameDayAs: now) { return "today at \(time)" }
+        if calendar.isDate(date, inSameDayAs: now) {
+            return String(localized: "today at \(time)",
+                          comment: "A moment, as in 'Opens today at 9:00 AM'. %@ is a time.")
+        }
         if let next = calendar.date(byAdding: .day, value: 1, to: now),
-           calendar.isDate(date, inSameDayAs: next) { return "tomorrow at \(time)" }
+           calendar.isDate(date, inSameDayAs: next) {
+            return String(localized: "tomorrow at \(time)",
+                          comment: "A moment, as in 'Opens tomorrow at 9:00 AM'. %@ is a time.")
+        }
         if let previous = calendar.date(byAdding: .day, value: -1, to: now),
-           calendar.isDate(date, inSameDayAs: previous) { return "yesterday at \(time)" }
+           calendar.isDate(date, inSameDayAs: previous) {
+            return String(localized: "yesterday at \(time)",
+                          comment: "A moment, as in 'Opened yesterday at 9:14 AM'. %@ is a time.")
+        }
         var style = Date.FormatStyle.dateTime.weekday(.abbreviated).month(.abbreviated).day()
         if calendar.component(.year, from: date) != calendar.component(.year, from: now) {
             style = style.year()
         }
-        return "\(date.formatted(style)) at \(time)"
+        let day = date.formatted(style)
+        return String(localized: "\(day) at \(time)",
+                      comment: "A moment: a date, then a time, as in 'Thu, Dec 25 at 9:00 AM'.")
     }
 
-    /// "Nov 13", or "Nov 13, 2025" when the year differs.
-    static func shortDate(_ date: Date, now: Date, calendar: Calendar = .current) -> String {
-        var style = Date.FormatStyle.dateTime.month(.abbreviated).day()
+    /// "Nov 13", or "Nov 13, 2025" when the year differs. `locale` is only
+    /// for the letter reminder, whose copy stays English.
+    static func shortDate(_ date: Date, now: Date, calendar: Calendar = .current,
+                          locale: Locale = .autoupdatingCurrent) -> String {
+        var style = Date.FormatStyle.dateTime.month(.abbreviated).day().locale(locale)
         if calendar.component(.year, from: date) != calendar.component(.year, from: now) {
             style = style.year()
         }
@@ -174,21 +192,35 @@ enum FutureLetterClock {
 
     /// "today", "yesterday" or "on Nov 13", as in "Sam sealed it today".
     static func sealedPhrase(_ date: Date, now: Date, calendar: Calendar = .current) -> String {
-        if calendar.isDate(date, inSameDayAs: now) { return "today" }
+        if calendar.isDate(date, inSameDayAs: now) {
+            return String(localized: "today", comment: "When a letter was sealed, as in 'Sam sealed it today'.")
+        }
         if let previous = calendar.date(byAdding: .day, value: -1, to: now),
-           calendar.isDate(date, inSameDayAs: previous) { return "yesterday" }
-        return "on \(shortDate(date, now: now, calendar: calendar))"
+           calendar.isDate(date, inSameDayAs: previous) {
+            return String(localized: "yesterday", comment: "When a letter was sealed, as in 'Sam sealed it yesterday'.")
+        }
+        let day = shortDate(date, now: now, calendar: calendar)
+        return String(localized: "on \(day)",
+                      comment: "When a letter was sealed, as in 'Sam sealed it on Nov 13'. %@ is a date.")
     }
 
     /// "Now", "1 min" … "59 min" (rounded up), "1 hr" … "23 hr" (rounded
     /// down), then "1 day" / "12 days" counted in calendar days.
     static func shortCountdown(to opensAt: Date, now: Date, calendar: Calendar = .current) -> String {
         let remaining = opensAt.timeIntervalSince(now)
-        if remaining <= 0 { return "Now" }
-        if let minutes = minutesLeft(remaining) { return "\(minutes) min" }
-        if let hours = hoursLeft(remaining, opensAt: opensAt, now: now, calendar: calendar) { return "\(hours) hr" }
+        if remaining <= 0 {
+            return String(localized: "Now", comment: "Countdown chip on a sealed letter: it opens now.")
+        }
+        if let minutes = minutesLeft(remaining) {
+            return String(localized: "\(minutes) min", comment: "Countdown chip on a sealed letter: minutes left, abbreviated.")
+        }
+        if let hours = hoursLeft(remaining, opensAt: opensAt, now: now, calendar: calendar) {
+            return String(localized: "\(hours) hr", comment: "Countdown chip on a sealed letter: hours left, abbreviated.")
+        }
         let days = calendarDays(from: now, to: opensAt, calendar: calendar)
-        return days == 1 ? "1 day" : "\(days) days"
+        return days == 1
+            ? String(localized: "1 day", comment: "Countdown chip on a sealed letter: one day left.")
+            : String(localized: "\(days) days", comment: "Countdown chip on a sealed letter: days left.")
     }
 
     /// Same buckets as `shortCountdown`, split for a big number and its unit:
@@ -196,14 +228,56 @@ enum FutureLetterClock {
     static func bigCountdown(to opensAt: Date, now: Date, calendar: Calendar = .current) -> (value: Int, unit: String) {
         let remaining = max(0, opensAt.timeIntervalSince(now))
         if let minutes = minutesLeft(max(remaining, 1)) {
-            return (minutes, minutes == 1 ? "minute until it opens" : "minutes until it opens")
+            return (minutes, untilItOpens(.minutes, count: minutes))
         }
         if let hours = hoursLeft(remaining, opensAt: opensAt, now: now, calendar: calendar) {
-            return (hours, hours == 1 ? "hour until it opens" : "hours until it opens")
+            return (hours, untilItOpens(.hours, count: hours))
         }
         let days = calendarDays(from: now, to: opensAt, calendar: calendar)
-        return (days, days == 1 ? "day until it opens" : "days until it opens")
+        return (days, untilItOpens(.days, count: days))
     }
+
+    private enum CountdownUnit { case minutes, hours, days }
+
+    /// The words under the big countdown number, "days until it opens".
+    ///
+    /// The number is on screen already, so no language repeats it here, but
+    /// most languages need it to choose a plural form (Russian has three for
+    /// "days"). The string catalog only accepts plural forms that reference
+    /// the number, so each translation keeps it and
+    /// `CountedCaption.removingCount(from:)` takes it out again. English, the
+    /// source language, has only "1" and "not 1": it keeps two plain phrases,
+    /// which read right with or without a catalog.
+    private static func untilItOpens(_ unit: CountdownUnit, count: Int) -> String {
+        if appRunsInEnglish {
+            switch unit {
+            case .minutes: return count == 1 ? "minute until it opens" : "minutes until it opens"
+            case .hours:   return count == 1 ? "hour until it opens" : "hours until it opens"
+            case .days:    return count == 1 ? "day until it opens" : "days until it opens"
+            }
+        }
+        let phrase: String
+        switch unit {
+        case .minutes:
+            phrase = String(localized: "\(count) minutes until it opens",
+                            comment: "Under a big countdown number shown above it. Keep the number: the app removes it before showing the text, so write it to read naturally without the number ('%lld days until it opens' shows as 'days until it opens').")
+        case .hours:
+            phrase = String(localized: "\(count) hours until it opens",
+                            comment: "Under a big countdown number shown above it. Keep the number: the app removes it before showing the text, so write it to read naturally without the number ('%lld days until it opens' shows as 'days until it opens').")
+        case .days:
+            phrase = String(localized: "\(count) days until it opens",
+                            comment: "Under a big countdown number shown above it. Keep the number: the app removes it before showing the text, so write it to read naturally without the number ('%lld days until it opens' shows as 'days until it opens').")
+        }
+        return CountedCaption.removingCount(from: phrase)
+    }
+
+    /// Whether the localization the app resolved for this launch is English,
+    /// as it is for any language the app does not ship. A language change
+    /// relaunches the app, so this is read once.
+    private static let appRunsInEnglish: Bool = {
+        guard let resolved = Bundle.main.preferredLocalizations.first, resolved != "Base" else { return true }
+        return Locale(identifier: resolved).language.languageCode == .english
+    }()
 
     /// Whole minutes, rounded up, while under an hour. Rounding up the last
     /// seconds of the hour gives 60, which is "1 hr", not "60 min".

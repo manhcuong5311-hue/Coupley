@@ -130,6 +130,7 @@ private struct AIDataConsentCard: View {
     private func row(_ text: LocalizedStringKey) -> some View {
         HStack(alignment: .top, spacing: 10) {
             Image(systemName: "arrow.up.right.circle.fill")
+                .flipsForRightToLeftLayoutDirection(true)
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundStyle(Brand.accentStart)
                 .padding(.top, 2)

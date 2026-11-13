@@ -35,14 +35,30 @@ struct Nudge: Identifiable, Codable {
         return rk.emoji
     }
 
-    var displayLabel: String {
-        if kind == .ping { return "is thinking of you" }
-        guard let raw = reactionKind, let rk = ReactionKind(rawValue: raw) else { return "sent a reaction" }
+    /// The line under the partner's name in the nudge popup. A predicate: its
+    /// subject is that name, drawn on the line above.
+    var displayLabel: LocalizedStringResource {
+        if kind == .ping {
+            return LocalizedStringResource("is thinking of you",
+                                           comment: "Nudge popup, under the partner's name (the subject): they pinged you")
+        }
+        guard let raw = reactionKind, let rk = ReactionKind(rawValue: raw) else {
+            return LocalizedStringResource("sent a reaction",
+                                           comment: "Nudge popup, under the partner's name (the subject)")
+        }
         switch rk {
-        case .heart:  return "sent you love"
-        case .hug:    return "sent you a hug"
-        case .callMe: return "wants to call you"
-        case .coffee: return "wants coffee with you"
+        case .heart:
+            return LocalizedStringResource("sent you love",
+                                           comment: "Nudge popup, under the partner's name (the subject)")
+        case .hug:
+            return LocalizedStringResource("sent you a hug",
+                                           comment: "Nudge popup, under the partner's name (the subject)")
+        case .callMe:
+            return LocalizedStringResource("wants to call you",
+                                           comment: "Nudge popup, under the partner's name (the subject)")
+        case .coffee:
+            return LocalizedStringResource("wants coffee with you",
+                                           comment: "Nudge popup, under the partner's name (the subject)")
         }
     }
 }

@@ -103,7 +103,7 @@ struct GoalEditorSheet: View {
             }
             .alert("Free plan includes 2 active goals",
                    isPresented: $showLimitAlert) {
-                Button("Upgrade", role: .none) {
+                Button(LocalizedStringResource("Upgrade", comment: "Alert button: opens the Premium plans"), role: .none) {
                     dismiss()
                     NotificationCenter.default.post(name: .togetherShowPaywall, object: nil)
                 }
@@ -120,9 +120,9 @@ struct GoalEditorSheet: View {
 
     private var suggestionTray: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Quick Start")
+            Text("Quick Start", comment: "Section header above tappable ready-made suggestions")
                 .font(.system(size: 12, weight: .semibold, design: .rounded))
-                .kerning(0.6)
+                .scriptAwareKerning(0.6)
                 .textCase(.uppercase)
                 .foregroundStyle(Brand.textSecondary)
 
@@ -135,7 +135,7 @@ struct GoalEditorSheet: View {
                             HStack(spacing: 8) {
                                 Text(suggestion.emoji)
                                     .font(.system(size: 18))
-                                Text(suggestion.title)
+                                Text(ContentL10n.text(suggestion.title))
                                     .font(.system(size: 13, weight: .semibold, design: .rounded))
                                     .foregroundStyle(Brand.textPrimary)
                             }
@@ -156,7 +156,7 @@ struct GoalEditorSheet: View {
 
     private var titleField: some View {
         VStack(alignment: .leading, spacing: 8) {
-            sectionLabel("Title")
+            sectionLabel(LocalizedStringResource("Title", comment: "Form section label: the name of the item"))
             TextField("e.g. Japan Trip Fund", text: $title)
                 .focused($focusedField, equals: .title)
                 .font(.system(size: 16, weight: .medium, design: .rounded))
@@ -177,7 +177,7 @@ struct GoalEditorSheet: View {
 
     private var categoryPicker: some View {
         VStack(alignment: .leading, spacing: 10) {
-            sectionLabel("Category")
+            sectionLabel(LocalizedStringResource("Category", comment: "Form section label"))
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
                     ForEach(GoalCategory.allCases) { cat in
@@ -197,7 +197,7 @@ struct GoalEditorSheet: View {
 
     private var colorwayPicker: some View {
         VStack(alignment: .leading, spacing: 10) {
-            sectionLabel("Colorway")
+            sectionLabel(LocalizedStringResource("Colorway", comment: "Form section label: pick the card's color theme"))
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 10) {
                     ForEach(TogetherColorway.allCases) { c in
@@ -228,7 +228,7 @@ struct GoalEditorSheet: View {
 
     private var trackingPicker: some View {
         VStack(alignment: .leading, spacing: 10) {
-            sectionLabel("Track as")
+            sectionLabel(LocalizedStringResource("Track as", comment: "Form section label: track the goal as money or as steps"))
             HStack(spacing: 0) {
                 ForEach(GoalTrackingMode.allCases, id: \.self) { mode in
                     trackingSegment(for: mode)
@@ -274,16 +274,16 @@ struct GoalEditorSheet: View {
             )
     }
 
-    private func label(for mode: GoalTrackingMode) -> String {
+    private func label(for mode: GoalTrackingMode) -> LocalizedStringResource {
         switch mode {
-        case .currency: return "Money"
-        case .count:    return "Steps"
+        case .currency: return LocalizedStringResource("Money", comment: "Goal tracking option: track an amount of money")
+        case .count:    return LocalizedStringResource("Steps", comment: "Goal tracking option: track a count of steps or sessions")
         }
     }
 
     private var currencyField: some View {
         VStack(alignment: .leading, spacing: 8) {
-            sectionLabel("Currency")
+            sectionLabel(LocalizedStringResource("Currency", comment: "Form section label: the goal's currency"))
             Button {
                 showCurrencyPicker = true
             } label: {
@@ -292,10 +292,10 @@ struct GoalEditorSheet: View {
                     Text(info.flag)
                         .font(.system(size: 22))
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(info.name)
+                        Text(CurrencyPickerSheet.displayName(for: info))
                             .font(.system(size: 15, weight: .semibold, design: .rounded))
                             .foregroundStyle(Brand.textPrimary)
-                        Text("\(info.code) · \(info.symbol)")
+                        Text(verbatim: "\(info.code) · \(info.symbol)")
                             .font(.system(size: 12, design: .rounded))
                             .foregroundStyle(Brand.textSecondary)
                     }
@@ -368,7 +368,7 @@ struct GoalEditorSheet: View {
                 if hasDueDate {
                     Divider().opacity(0.4)
                     DatePicker(
-                        "By",
+                        LocalizedStringResource("By", comment: "Date picker label: the goal's target date ('By <date>')"),
                         selection: $dueDate,
                         displayedComponents: .date
                     )
@@ -472,7 +472,8 @@ struct GoalEditorSheet: View {
     }
 
     private func applySuggestion(_ suggestion: GoalSuggestion) {
-        title        = suggestion.title
+        // Saved as the couple's own title, so it goes in the user's language.
+        title        = ContentL10n.text(suggestion.title)
         category     = suggestion.category
         colorway     = TogetherColorway.suggested(for: suggestion.category)
         trackingMode = suggestion.trackingMode
@@ -483,15 +484,15 @@ struct GoalEditorSheet: View {
         UIImpactFeedbackGenerator(style: .light).impactOccurred()
     }
 
-    private func sectionLabel(_ text: String) -> some View {
+    private func sectionLabel(_ text: LocalizedStringResource) -> some View {
         Text(text)
             .font(.system(size: 12, weight: .semibold, design: .rounded))
-            .kerning(0.6)
+            .scriptAwareKerning(0.6)
             .textCase(.uppercase)
             .foregroundStyle(Brand.textSecondary)
     }
 
-    private func chip(label: String, icon: String, selected: Bool, onTap: @escaping () -> Void) -> some View {
+    private func chip(label: LocalizedStringResource, icon: String, selected: Bool, onTap: @escaping () -> Void) -> some View {
         Button(action: {
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
             onTap()

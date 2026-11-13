@@ -29,6 +29,9 @@ final class MicroActionReminderScheduler: MicroActionReminderScheduling {
         // the next minute — too jarring.
         guard date.timeIntervalSinceNow > 60 else { return }
 
+        // Notification copy stays English by product decision, so this is
+        // deliberately not localized: `action.text` is the English base
+        // string, not the translated text the card shows.
         let content = UNMutableNotificationContent()
         content.title = "A small thing you were going to do"
         content.body  = action.text

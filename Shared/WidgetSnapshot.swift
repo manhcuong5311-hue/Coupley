@@ -103,18 +103,20 @@ enum WidgetMoodKind: String, Codable, CaseIterable {
         }
     }
 
+    /// Display name, in the language of the process drawing it. Never
+    /// stored: the snapshot carries `rawValue`.
     var label: String {
         switch self {
-        case .happy:      return "Happy"
-        case .neutral:    return "Okay"
-        case .sad:        return "Down"
-        case .stressed:   return "Stressed"
-        case .loved:      return "In Love"
-        case .missingYou: return "Missing You"
-        case .excited:    return "Excited"
-        case .tired:      return "Tired"
-        case .calm:       return "Calm"
-        case .unspecified: return "Thinking"
+        case .happy:      return String(localized: "Happy", comment: "Widget: partner's mood")
+        case .neutral:    return String(localized: "Okay", comment: "Widget: partner's mood (neutral, fine)")
+        case .sad:        return String(localized: "Down", comment: "Widget: partner's mood (sad, low)")
+        case .stressed:   return String(localized: "Stressed", comment: "Widget: partner's mood")
+        case .loved:      return String(localized: "In Love", comment: "Widget: partner's mood")
+        case .missingYou: return String(localized: "Missing You", comment: "Widget: partner's mood (they miss you)")
+        case .excited:    return String(localized: "Excited", comment: "Widget: partner's mood")
+        case .tired:      return String(localized: "Tired", comment: "Widget: partner's mood")
+        case .calm:       return String(localized: "Calm", comment: "Widget: partner's mood")
+        case .unspecified: return String(localized: "Thinking", comment: "Widget: partner's mood when it has no name (thoughtful)")
         }
     }
 

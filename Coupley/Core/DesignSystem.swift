@@ -113,16 +113,24 @@ enum BrandType {
 /// Home used to carry six of these, identically styled, so the small-caps
 /// signal carried no information at all. Keep them scarce: when the eye catches
 /// tracked small caps it should already know what it has found.
+///
+/// A literal (`Eyebrow("Today")`) is app copy and is extracted for
+/// translation. A `String` is shown verbatim: use it only for text that is
+/// already in the user's language (a formatted date, `String(localized:)`).
 struct Eyebrow: View {
-    let text: String
-    init(_ text: String) { self.text = text }
+    private let text: Text
+
+    init(_ text: LocalizedStringResource) { self.text = Text(text) }
+
+    @_disfavoredOverload
+    init(_ text: String) { self.text = Text(verbatim: text) }
 
     var body: some View {
-        Text(text)
+        text
             .font(BrandType.label)
             .foregroundStyle(Brand.textSecondary)
             .textCase(.uppercase)
-            .tracking(1.2)
+            .scriptAwareTracking(1.2)
     }
 }
 
@@ -140,11 +148,35 @@ struct BouncyButtonStyle: ButtonStyle {
 
 // MARK: - Primary Gradient Button
 
+/// A literal title (`PrimaryButton(title: "Save")`) is app copy and is
+/// extracted for translation. A `String` title is shown verbatim: pass one
+/// only when it is already in the user's language (`String(localized:)`).
 struct PrimaryButton: View {
-    let title: String
+    private let title: Text
     var isLoading: Bool = false
     var isEnabled: Bool = true
     let action: () -> Void
+
+    init(title: LocalizedStringResource,
+         isLoading: Bool = false,
+         isEnabled: Bool = true,
+         action: @escaping () -> Void) {
+        self.title = Text(title)
+        self.isLoading = isLoading
+        self.isEnabled = isEnabled
+        self.action = action
+    }
+
+    @_disfavoredOverload
+    init(title: String,
+         isLoading: Bool = false,
+         isEnabled: Bool = true,
+         action: @escaping () -> Void) {
+        self.title = Text(verbatim: title)
+        self.isLoading = isLoading
+        self.isEnabled = isEnabled
+        self.action = action
+    }
 
     var body: some View {
         let radius = Brand.buttonCornerRadius
@@ -158,9 +190,15 @@ struct PrimaryButton: View {
                 if isLoading {
                     ProgressView().tint(.white)
                 } else {
-                    Text(title)
+                    // Translations run 30-50% longer than English: wrap to a
+                    // second line, then shrink, rather than truncate.
+                    title
                         .font(.system(size: 17, weight: .semibold, design: .rounded))
                         .foregroundStyle(.white)
+                        .multilineTextAlignment(.center)
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.8)
+                        .padding(.horizontal, 12)
                 }
             }
             .frame(maxWidth: .infinity)
@@ -190,8 +228,10 @@ struct PrimaryButton: View {
 
 // MARK: - Ghost Button
 
+/// Every caller passes a literal, so the title is always extracted for
+/// translation.
 struct GhostButton: View {
-    let title: String
+    let title: LocalizedStringResource
     let action: () -> Void
 
     var body: some View {
@@ -201,6 +241,10 @@ struct GhostButton: View {
             Text(title)
                 .font(.system(size: 16, weight: .medium, design: .rounded))
                 .foregroundStyle(Brand.textSecondary)
+                .multilineTextAlignment(.center)
+                .lineLimit(2)
+                .minimumScaleFactor(0.8)
+                .padding(.horizontal, 12)
                 .frame(maxWidth: .infinity)
                 .frame(height: 52)
                 .background(Brand.surfaceLight)
@@ -445,14 +489,57 @@ extension View {
 /// this makes "one filled accent per screen" structural rather than something
 /// each screen has to count by hand — the fill is a function of the tier, so
 /// a demoted card cannot keep a saturated button by accident.
+///
+/// A literal title is app copy and is extracted for translation. A `String`
+/// title is shown verbatim: pass one only when it is already in the user's
+/// language (`String(localized:)`).
 struct BrandCTA: View {
-    let title: String
+    private let title: Text
     var icon: String? = nil
     var tier: SurfaceTier = .card
     var accent: Color? = nil
     var isEnabled: Bool = true
     var isBusy: Bool = false
     let action: () -> Void
+
+    init(title: LocalizedStringResource,
+         icon: String? = nil,
+         tier: SurfaceTier = .card,
+         accent: Color? = nil,
+         isEnabled: Bool = true,
+         isBusy: Bool = false,
+         action: @escaping () -> Void) {
+        self.init(label: Text(title), icon: icon, tier: tier, accent: accent,
+                  isEnabled: isEnabled, isBusy: isBusy, action: action)
+    }
+
+    @_disfavoredOverload
+    init(title: String,
+         icon: String? = nil,
+         tier: SurfaceTier = .card,
+         accent: Color? = nil,
+         isEnabled: Bool = true,
+         isBusy: Bool = false,
+         action: @escaping () -> Void) {
+        self.init(label: Text(verbatim: title), icon: icon, tier: tier, accent: accent,
+                  isEnabled: isEnabled, isBusy: isBusy, action: action)
+    }
+
+    private init(label: Text,
+                 icon: String?,
+                 tier: SurfaceTier,
+                 accent: Color?,
+                 isEnabled: Bool,
+                 isBusy: Bool,
+                 action: @escaping () -> Void) {
+        self.title = label
+        self.icon = icon
+        self.tier = tier
+        self.accent = accent
+        self.isEnabled = isEnabled
+        self.isBusy = isBusy
+        self.action = action
+    }
 
     private var tint: Color { accent ?? Brand.accentStart }
     private var isFilled: Bool { tier == .hero }
@@ -471,8 +558,13 @@ struct BrandCTA: View {
                     Image(systemName: icon)
                         .font(.system(size: 14, weight: .semibold))
                 }
-                Text(title).font(BrandType.cta)
+                title
+                    .font(BrandType.cta)
+                    .multilineTextAlignment(.center)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.8)
             }
+            .padding(.horizontal, 12)
             .foregroundStyle(isFilled ? Color.white : tint)
             .frame(maxWidth: .infinity)
             .frame(height: isFilled ? 52 : 44)

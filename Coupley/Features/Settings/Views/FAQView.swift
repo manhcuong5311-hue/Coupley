@@ -9,11 +9,15 @@ import SwiftUI
 
 struct FAQView: View {
 
+    /// The expanded item's `id`.
     @State private var expandedFAQ: String? = nil
 
-    private struct FAQItem {
-        let question: String
-        let answer: String
+    private struct FAQItem: Identifiable {
+        let question: LocalizedStringResource
+        let answer: LocalizedStringResource
+
+        /// The question's catalog key: stable whatever the language.
+        var id: String { question.key }
     }
 
     private let faqItems: [FAQItem] = [
@@ -141,7 +145,7 @@ struct FAQView: View {
 
             List {
                 Section {
-                    ForEach(faqItems, id: \.question) { item in
+                    ForEach(faqItems) { item in
                         faqRow(item)
                     }
                 } header: {
@@ -162,10 +166,10 @@ struct FAQView: View {
     }
 
     private func faqRow(_ item: FAQItem) -> some View {
-        let isExpanded = expandedFAQ == item.question
+        let isExpanded = expandedFAQ == item.id
         return Button {
             withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
-                expandedFAQ = isExpanded ? nil : item.question
+                expandedFAQ = isExpanded ? nil : item.id
             }
         } label: {
             VStack(alignment: .leading, spacing: isExpanded ? 10 : 0) {

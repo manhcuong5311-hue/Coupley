@@ -89,7 +89,7 @@ struct CoupleProfileView: View {
         )
     }
 
-    private var confidenceCaption: String {
+    private var confidenceCaption: LocalizedStringResource {
         let score = viewModel.profile.confidenceScore
         switch score {
         case 0:        return "Answer a few quizzes together to start building your profile."
@@ -104,13 +104,13 @@ struct CoupleProfileView: View {
         let score = max(0, min(100, viewModel.profile.confidenceScore))
         return VStack(alignment: .leading, spacing: 6) {
             HStack {
-                Text("Confidence")
+                Text("Confidence", comment: "Couple Profile: label of the bar showing how well the app knows the couple")
                     .font(.system(size: 12, weight: .semibold, design: .rounded))
                     .foregroundStyle(Brand.textSecondary)
                     .textCase(.uppercase)
-                    .kerning(0.5)
+                    .scriptAwareKerning(0.5)
                 Spacer()
-                Text("\(score)%")
+                Text("\(score)%", comment: "Couple Profile confidence, as a percentage")
                     .font(.system(size: 13, weight: .bold, design: .rounded))
                     .foregroundStyle(Brand.accentStart)
             }
@@ -178,7 +178,9 @@ private struct TopicCard: View {
                     .font(.system(size: 17, weight: .semibold, design: .rounded))
                     .foregroundStyle(Brand.textPrimary)
                 if let c = insight?.answeredCount, c > 0 {
-                    Text("\(c) \(c == 1 ? "quiz" : "quizzes") answered")
+                    // One key per phrase, never the noun interpolated: the
+                    // catalog adds the plural forms each language needs.
+                    Text(c == 1 ? "1 quiz answered" : "\(c) quizzes answered")
                         .font(.caption)
                         .foregroundStyle(Brand.textSecondary)
                 }
@@ -197,10 +199,10 @@ private struct TopicCard: View {
     private func filled(_ insight: CoupleInsightProfile.TopicInsight) -> some View {
         // Partners
         HStack(alignment: .top, spacing: 12) {
-            partnerColumn(title: "You",
+            partnerColumn(title: LocalizedStringResource("You", comment: "Couple Profile column header: the viewer's answers"),
                           trait: traitFor(viewerId, in: insight))
             Divider().overlay(Brand.divider)
-            partnerColumn(title: "Partner",
+            partnerColumn(title: LocalizedStringResource("Partner", comment: "Couple Profile column header: the partner's answers"),
                           trait: traitFor(partnerId, in: insight))
         }
 
@@ -234,18 +236,27 @@ private struct TopicCard: View {
     ///
     /// Deduped by the base label a ref resolves to, so a concept that is in
     /// both arrays appears once.
+    ///
+    /// Legacy entries are base-language option text, so they are drawn
+    /// through the Content catalog too; one it cannot match (a custom quiz's
+    /// own words, a since-reworded option) is drawn as stored. Also deduped
+    /// by what is drawn: two base labels can share a translation, and the
+    /// chips are a `ForEach` keyed by their text.
     private func merged(refs: [String]?, legacy: [String]) -> [String] {
-        guard let refs, !refs.isEmpty else { return legacy }
         var seenBase = Set<String>()
+        var seenShown = Set<String>()
         var items: [String] = []
-        for ref in refs {
-            let base = QuizOptionRef.baseLabel(ref) ?? ref
-            guard seenBase.insert(base).inserted else { continue }
-            items.append(QuizOptionRef.label(ref) ?? base)
+        func add(base: String, shown: String) {
+            guard seenBase.insert(base).inserted,
+                  seenShown.insert(shown).inserted else { return }
+            items.append(shown)
         }
-        for entry in legacy where !seenBase.contains(entry) {
-            seenBase.insert(entry)
-            items.append(entry)
+        for ref in refs ?? [] {
+            let base = QuizOptionRef.baseLabel(ref) ?? ref
+            add(base: base, shown: QuizOptionRef.label(ref) ?? base)
+        }
+        for entry in legacy {
+            add(base: entry, shown: ContentL10n.text(entry))
         }
         return items
     }
@@ -265,9 +276,14 @@ private struct TopicCard: View {
         guard let trait else { return "—" }
         if let refs = trait.summaryRefs, !refs.isEmpty {
             let labels = refs.compactMap { QuizOptionRef.label($0) }
-            if !labels.isEmpty { return labels.joined(separator: ", ") }
+            // Listed the way the reader's language lists things; identical
+            // to ", " joining in English.
+            if !labels.isEmpty { return labels.formatted(.list(type: .and, width: .narrow)) }
         }
-        return trait.summary
+        // An older profile stored the English option text itself: shown in
+        // the reader's language when the Content catalog knows it, as typed
+        // otherwise.
+        return ContentL10n.text(trait.summary)
     }
 
     private func traitFor(_ userId: String,
@@ -278,14 +294,14 @@ private struct TopicCard: View {
         return nil
     }
 
-    private func partnerColumn(title: String,
+    private func partnerColumn(title: LocalizedStringResource,
                                trait: CoupleInsightProfile.PartnerTrait?) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(title)
                 .font(.system(size: 11, weight: .semibold, design: .rounded))
                 .foregroundStyle(Brand.textTertiary)
                 .textCase(.uppercase)
-                .kerning(0.5)
+                .scriptAwareKerning(0.5)
             Text(traitSummary(trait))
                 .font(.system(size: 15, weight: .medium, design: .rounded))
                 .foregroundStyle(Brand.textPrimary)
@@ -299,13 +315,13 @@ private struct TopicCard: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    private func chipsBlock(title: String, items: [String], tint: Color) -> some View {
+    private func chipsBlock(title: LocalizedStringResource, items: [String], tint: Color) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(title)
                 .font(.system(size: 11, weight: .semibold, design: .rounded))
                 .foregroundStyle(Brand.textTertiary)
                 .textCase(.uppercase)
-                .kerning(0.5)
+                .scriptAwareKerning(0.5)
             TraitFlowLayout(spacing: 6) {
                 ForEach(items, id: \.self) { item in
                     Text(item)

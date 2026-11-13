@@ -115,16 +115,7 @@ struct CoupleStatsView: View {
                     }
 
                     // Big number
-                    HStack(alignment: .firstTextBaseline, spacing: 4) {
-                        Text("\(viewModel.streak.currentStreak)")
-                            .font(.system(size: 56, weight: .bold, design: .rounded))
-                            .foregroundStyle(Brand.textPrimary)
-
-                        Text(viewModel.streak.currentStreak == 1 ? "day" : "days")
-                            .font(.title3)
-                            .fontWeight(.medium)
-                            .foregroundStyle(Brand.textSecondary)
-                    }
+                    streakDaysText(viewModel.streak.currentStreak)
 
                     // Encouragement
                     if viewModel.streak.currentStreak > 0 {
@@ -155,6 +146,32 @@ struct CoupleStatsView: View {
                 }
             }
         }
+    }
+
+    /// "12 days" as one plural-aware key, with the number drawn large.
+    ///
+    /// Was a 56pt number beside `count == 1 ? "day" : "days"`: two keys with
+    /// no number in them, so a translator could not choose between the forms
+    /// Polish or Russian use for 2 and for 5. Now the count is the key's own
+    /// argument and the catalog can vary it by plural; the run that holds the
+    /// number (replacement index 1, the first argument) gets the display font
+    /// wherever the translation puts it. A translation that drops the number
+    /// simply renders at the unit's size.
+    private func streakDaysText(_ count: Int) -> Text {
+        var text = count == 1
+            ? AttributedString(localized: "\(count) day",
+                               options: .applyReplacementIndexAttribute,
+                               comment: "Stats: a check-in streak of exactly one day; the number is drawn large")
+            : AttributedString(localized: "\(count) days",
+                               options: .applyReplacementIndexAttribute,
+                               comment: "Stats: current check-in streak length; the number is drawn large")
+        text.font = .title3.weight(.medium)
+        text.foregroundColor = Brand.textSecondary
+        for (index, range) in text.runs[\.replacementIndex] where index == 1 {
+            text[range].font = .system(size: 56, weight: .bold, design: .rounded)
+            text[range].foregroundColor = Brand.textPrimary
+        }
+        return Text(text)
     }
 
     private var streakEncouragement: some View {
@@ -229,7 +246,7 @@ struct CoupleStatsView: View {
                     Spacer()
 
                     if let score = viewModel.todaySyncScore {
-                        Text("Today")
+                        Text("Today", comment: "Stats sync score header: the emoji beside it rates today's score")
                             .font(.caption2)
                             .foregroundStyle(Brand.textTertiary)
                             .padding(.trailing, 2)
@@ -268,7 +285,7 @@ struct CoupleStatsView: View {
                     Text("\(score.score)")
                         .font(.system(size: 32, weight: .bold, design: .rounded))
                         .foregroundStyle(Brand.textPrimary)
-                    Text("%")
+                    Text("%", comment: "Percent sign on its own line under the sync score number")
                         .font(.caption)
                         .foregroundStyle(Brand.textSecondary)
                 }
@@ -287,7 +304,7 @@ struct CoupleStatsView: View {
             // Mood comparison
             HStack(spacing: 24) {
                 VStack(spacing: 4) {
-                    Text("You")
+                    Text("You", comment: "Stats mood comparison: label above your own mood emoji")
                         .font(.caption2)
                         .foregroundStyle(Brand.textTertiary)
                     Text(Mood(rawValue: score.userAMood)?.emoji ?? "?")
@@ -306,7 +323,7 @@ struct CoupleStatsView: View {
                     )
 
                 VStack(spacing: 4) {
-                    Text("Partner")
+                    Text("Partner", comment: "Stats mood comparison: label above your partner's mood emoji")
                         .font(.caption2)
                         .foregroundStyle(Brand.textTertiary)
                     Text(Mood(rawValue: score.userBMood)?.emoji ?? "?")
@@ -322,7 +339,8 @@ struct CoupleStatsView: View {
                 .font(.system(size: 36))
                 .foregroundStyle(Brand.textSecondary)
 
-            Text("Both partners need to check in\nto see today's sync score")
+            // No hardcoded "\n": it would be welded into the catalog key.
+            Text("Both partners need to check in to see today's sync score")
                 .font(.subheadline)
                 .foregroundStyle(Brand.textSecondary)
                 .multilineTextAlignment(.center)
@@ -355,7 +373,7 @@ struct CoupleStatsView: View {
                             .font(.system(size: 36, weight: .bold, design: .rounded))
                             .foregroundStyle(Brand.textPrimary)
 
-                        Text("% avg")
+                        Text("% avg", comment: "After the weekly average number: percent, averaged over the week")
                             .font(.subheadline)
                             .foregroundStyle(Brand.textSecondary)
 
@@ -399,6 +417,10 @@ struct CoupleStatsView: View {
                     Text(dayLabel(for: score.date))
                         .font(.system(size: 10))
                         .foregroundStyle(Brand.textTertiary)
+                        // One line under each bar: a second line would lift
+                        // that bar off the shared baseline.
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.6)
                 }
                 .frame(maxWidth: .infinity)
             }
@@ -431,14 +453,18 @@ struct CoupleStatsView: View {
         return syncGradient(for: level)
     }
 
+    /// Stays a `String`: its usual result is a formatted weekday, already in
+    /// the user's language, which must be drawn verbatim.
     private func dayLabel(for dateString: String) -> String {
         guard let date = DayKey.date(from: dateString) else { return "?" }
 
-        if Calendar.current.isDateInToday(date) { return "Today" }
+        if Calendar.current.isDateInToday(date) {
+            return String(localized: "Today", comment: "Weekly sync chart: label under today's bar")
+        }
 
-        let outputFormatter = DateFormatter()
-        outputFormatter.dateFormat = "EEE"
-        return outputFormatter.string(from: date)
+        // The abbreviated weekday for the locale, as the "EEE" pattern gave,
+        // without allocating a formatter per bar per render.
+        return date.formatted(.dateTime.weekday(.abbreviated))
     }
 }
 

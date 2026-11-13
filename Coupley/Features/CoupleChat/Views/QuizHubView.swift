@@ -145,24 +145,24 @@ struct QuizHubView: View {
             VStack(alignment: .leading, spacing: 10) {
                 Text("Quizzes")
                     .font(.system(size: 12, weight: .semibold, design: .rounded))
-                    .kerning(1.4)
+                    .scriptAwareKerning(1.4)
                     .textCase(.uppercase)
                     .foregroundStyle(.white.opacity(0.85))
-                Text("Discover\neach other")
+                Text("Discover\neach other", comment: "Quiz Hub headline, set on two lines")
                     .font(.system(size: 32, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
                     .lineSpacing(2)
                 if let score = quizProgress?.knowledgeScore,
                    let made = quizProgress?.guessesMade {
                     HStack(spacing: 8) {
-                        Text("\(score)%")
+                        Text("\(score)%", comment: "Share of correct guesses about the partner, as a percentage")
                             .font(.system(size: 22, weight: .heavy, design: .rounded))
                             .foregroundStyle(.white)
                         VStack(alignment: .leading, spacing: 0) {
-                            Text("You know them")
+                            Text("You know them", comment: "Quiz Hub: label beside the percentage of right guesses about the partner")
                                 .font(.system(size: 12, weight: .semibold, design: .rounded))
                                 .foregroundStyle(.white)
-                            Text("from \(made) guesses")
+                            Text("from \(made) guesses", comment: "Quiz Hub: under “You know them”, how many guesses that percentage is based on")
                                 .font(.system(size: 10, design: .rounded))
                                 .foregroundStyle(.white.opacity(0.8))
                         }
@@ -218,7 +218,7 @@ struct QuizHubView: View {
                     action: { showCustomBuilder = true }
                 )
                 entryCard(
-                    title: "History",
+                    title: LocalizedStringResource("History", comment: "Quiz Hub card that opens your past quizzes (noun)"),
                     subtitle: "Your past quizzes & results",
                     icon: "clock.fill",
                     accent: Color(red: 0.40, green: 0.76, blue: 0.55),
@@ -229,8 +229,8 @@ struct QuizHubView: View {
     }
 
     private func entryCard(
-        title: String,
-        subtitle: String,
+        title: LocalizedStringResource,
+        subtitle: LocalizedStringResource,
         icon: String,
         accent: Color,
         action: @escaping () -> Void
@@ -256,6 +256,8 @@ struct QuizHubView: View {
                     Text(title)
                         .font(.system(size: 17, weight: .bold, design: .rounded))
                         .foregroundStyle(Brand.textPrimary)
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.8)
                     Text(subtitle)
                         .font(.system(size: 12, weight: .regular, design: .rounded))
                         .foregroundStyle(Brand.textSecondary)
@@ -425,18 +427,19 @@ struct AISuggestionConfirmationSheet: View {
                         HStack(spacing: 6) {
                             Image(systemName: "wand.and.stars")
                                 .font(.system(size: 12, weight: .semibold))
-                            Text(current.topic.label.uppercased())
+                            Text(current.topic.label)
                                 .font(.system(size: 12, weight: .semibold, design: .rounded))
-                                .kerning(0.5)
+                                .textCase(.uppercase)
+                                .scriptAwareKerning(0.5)
                         }
                         .foregroundStyle(Brand.accentStart)
 
-                        Text(current.question)
+                        Text(current.displayQuestion)
                             .font(.system(size: 22, weight: .bold, design: .rounded))
                             .foregroundStyle(Brand.textPrimary)
                             .fixedSize(horizontal: false, vertical: true)
 
-                        Text(current.subtitle)
+                        Text(current.displaySubtitle)
                             .font(.system(size: 14, design: .rounded))
                             .foregroundStyle(Brand.textSecondary)
                             .lineSpacing(2)
@@ -554,10 +557,12 @@ struct QuizHistorySheet: View {
             HStack {
                 HStack(spacing: 6) {
                     Text(quiz.isCustom ? "❤️" : quiz.topic.emoji)
-                    Text(quiz.isCustom ? "Custom" : quiz.topic.label)
+                    Text(quiz.isCustom
+                         ? String(localized: "Custom", comment: "Quiz history: in place of a topic, for a quiz one partner wrote themselves")
+                         : quiz.topic.label)
                         .font(BrandType.meta)
                         .foregroundStyle(Brand.textSecondary)
-                        .kerning(0.5)
+                        .scriptAwareKerning(0.5)
                 }
                 Spacer()
                 statusChip(for: quiz)
@@ -598,17 +603,17 @@ struct QuizHistorySheet: View {
     }
 
     private func statusChip(for quiz: ChatQuiz) -> some View {
-        let label: String
+        let label: LocalizedStringResource
         let color: Color
         switch quiz.status {
         case .pending:
-            label = "Waiting"
+            label = LocalizedStringResource("Waiting", comment: "Quiz status chip: nobody has answered yet")
             color = Brand.textTertiary
         case .partial:
-            label = "1 of 2"
+            label = LocalizedStringResource("1 of 2", comment: "Quiz status chip: one of the two partners has answered")
             color = Color(red: 0.95, green: 0.55, blue: 0.30)
         case .complete:
-            label = "Complete"
+            label = LocalizedStringResource("Complete", comment: "Quiz status: both partners have answered")
             color = Color(red: 0.30, green: 0.78, blue: 0.50)
         }
         return Text(label)
@@ -643,13 +648,13 @@ private extension ChatQuiz {
     /// Short row-status used by the recent-quiz tile and the history list.
     func statusLabel(viewerId: String, partnerId: String) -> String {
         switch status {
-        case .pending:
-            return hasAnswered(viewerId) ? "Waiting on partner" : "Your turn"
-        case .partial:
-            return hasAnswered(viewerId) ? "Waiting on partner" : "Your turn"
+        case .pending, .partial:
+            return hasAnswered(viewerId)
+                ? String(localized: "Waiting on partner")
+                : String(localized: "Your turn", comment: "Quiz status: you have not answered yet")
         case .complete:
             if let sentence = resultSentence { return sentence }
-            return "Complete"
+            return String(localized: "Complete", comment: "Quiz status: both partners have answered")
         }
     }
 }

@@ -113,7 +113,8 @@ final class AnniversaryViewModel: ObservableObject {
                     anniversaryId: anniversaryId
                 )
             } catch {
-                errorMessage = "Couldn't upload the cover photo: \(error.localizedDescription)"
+                errorMessage = String(localized: "Couldn't upload the cover photo: \(error.localizedDescription)",
+                                      comment: "The placeholder is the reason, an error message")
             }
             isUploadingImage = false
             if let urlString = imageURL, let url = URL(string: urlString) {
@@ -162,7 +163,8 @@ final class AnniversaryViewModel: ObservableObject {
                 // Keep whatever cover the anniversary already had. Letting this
                 // fall through as nil silently deleted the existing photo.
                 updated.imageURL = anniversary.imageURL
-                errorMessage = "Couldn't upload the cover photo: \(error.localizedDescription)"
+                errorMessage = String(localized: "Couldn't upload the cover photo: \(error.localizedDescription)",
+                                      comment: "The placeholder is the reason, an error message")
             }
             isUploadingImage = false
             if let urlString = updated.imageURL, let url = URL(string: urlString) {

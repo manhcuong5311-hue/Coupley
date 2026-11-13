@@ -56,6 +56,9 @@ final class LocalProfileService: ProfileService {
         case .color:
             profile.preferences.favoriteColor = values.first ?? ""
 
+        // `values` hold the options' English base text, and `label` is the
+        // English name (not `displayLabel`), so this matching does not depend
+        // on the user's language.
         case .loveLanguage:
             if let raw = values.first,
                let language = LoveLanguage.allCases.first(where: { raw.contains($0.label) }) {

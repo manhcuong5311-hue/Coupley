@@ -125,7 +125,7 @@ struct FutureLetterRowContent: View {
                     .animation(.snappy, value: countdownText)
                     .fixedSize()
             } else if phase == .readyForMe {
-                Text("Open")
+                Text("Open", comment: "Trailing label on a letter row: the letter can be opened now.")
                     .font(BrandType.label)
                     .foregroundStyle(FutureLetterStyle.accent)
                     .fixedSize()
@@ -162,10 +162,14 @@ struct FutureLetterRowContent: View {
 
     private var titleText: String {
         switch phase {
-        case .sealedForMe:                    return "Sealed letter from \(partnerName)"
-        case .readyForMe, .openedByMe:        return "Letter from \(partnerName)"
-        case .sealedByMe, .waitingForPartner: return "Your letter to \(partnerName)"
-        case .openedByPartner:                return "\(partnerName) opened your letter"
+        case .sealedForMe:
+            return String(localized: "Sealed letter from \(partnerName)")
+        case .readyForMe, .openedByMe:
+            return String(localized: "Letter from \(partnerName)")
+        case .sealedByMe, .waitingForPartner:
+            return String(localized: "Your letter to \(partnerName)")
+        case .openedByPartner:
+            return String(localized: "\(partnerName) opened your letter")
         }
     }
 
@@ -175,28 +179,36 @@ struct FutureLetterRowContent: View {
             return opensText
         case .sealedByMe:
             // Queued offline, or not yet acknowledged.
-            return isPending ? "Sending…" : opensText
+            return isPending ? sendingText : opensText
         case .readyForMe:
-            return "Ready to open"
+            return String(localized: "Ready to open", comment: "A letter that has reached its moment.")
         case .waitingForPartner:
             // Due by this phone's clock, but the seal is still queued here:
             // it has not reached the server, so it is not ready for anyone.
-            return isPending ? "Sending…" : "Ready — \(partnerName) hasn't opened it yet"
+            return isPending ? sendingText : String(localized: "Ready — \(partnerName) hasn't opened it yet")
         case .openedByMe, .openedByPartner:
             return openedText
         }
     }
 
+    private var sendingText: String {
+        String(localized: "Sending…", comment: "A sealed letter not yet acknowledged by the server.")
+    }
+
     /// "Opens Thu, Dec 25 at 9:00 AM", "Opens today at 9:00 AM".
     private var opensText: String {
-        "Opens \(FutureLetterClock.moment(letter.opensAt, now: now))"
+        let when = FutureLetterClock.moment(letter.opensAt, now: now)
+        return String(localized: "Opens \(when)", comment: "%@ is a moment, such as 'today at 9:00 AM'.")
     }
 
     /// "Opened today at 9:14 AM". Both opened phases imply `openedAt`; the
     /// bare word only covers a malformed document.
     private var openedText: String {
-        guard let openedAt = letter.openedAt else { return "Opened" }
-        return "Opened \(FutureLetterClock.moment(openedAt, now: now))"
+        guard let openedAt = letter.openedAt else {
+            return String(localized: "Opened", comment: "A letter that has been opened.")
+        }
+        let when = FutureLetterClock.moment(openedAt, now: now)
+        return String(localized: "Opened \(when)", comment: "%@ is a moment, such as 'today at 9:14 AM'.")
     }
 
     /// "12 days", "1 day", "5 hr", "42 min", "1 min" or "Now", for the two
@@ -219,15 +231,19 @@ struct FutureLetterRowContent: View {
         var parts = [titleText, detailText]
         if let countdownText { parts.append(countdownText) }
         if extraCount > 0 {
-            parts.append(extraCount == 1 ? "1 more letter" : "\(extraCount) more letters")
+            parts.append(extraCount == 1
+                         ? String(localized: "1 more letter", comment: "VoiceOver: other pinned letters besides this one.")
+                         : String(localized: "\(extraCount) more letters", comment: "VoiceOver: other pinned letters besides this one."))
         }
-        return parts
-            .map { $0.hasSuffix(".") || $0.hasSuffix("…") ? $0 : $0 + "." }
-            .joined(separator: " ")
+        // Journey's sentence rules: the full stop is localized (。, ।) rather
+        // than an English "." glued onto translated text.
+        return JourneyTimelineSpeech.sentences(parts)
     }
 
     private var spokenHint: String {
-        extraCount > 0 ? "Shows all your letters." : "Shows the letter."
+        extraCount > 0
+            ? String(localized: "Shows all your letters.", comment: "VoiceOver hint on the pinned letter row.")
+            : String(localized: "Shows the letter.", comment: "VoiceOver hint on a letter row.")
     }
 }
 
@@ -313,7 +329,8 @@ struct FutureLetterHeroCard: View {
                 .minimumScaleFactor(0.8)
                 .accessibilityAddTraits(.isHeader)
 
-            Text("Unsealed \(FutureLetterClock.moment(letter.opensAt, now: now))")
+            Text("Unsealed \(FutureLetterClock.moment(letter.opensAt, now: now))",
+                 comment: "%@ is a moment, such as 'today at 9:00 AM'.")
                 .font(BrandType.body)
                 .foregroundStyle(Brand.textSecondary)
 
@@ -340,7 +357,9 @@ struct FutureLetterHeroCard: View {
     /// "1 more letter is ready", "2 more letters are ready". Shown with a
     /// leading "+", which VoiceOver is spared.
     private var moreReadyText: String {
-        moreReady == 1 ? "1 more letter is ready" : "\(moreReady) more letters are ready"
+        moreReady == 1
+            ? String(localized: "1 more letter is ready", comment: "Under the Home hero: other letters ready to open.")
+            : String(localized: "\(moreReady) more letters are ready", comment: "Under the Home hero: other letters ready to open.")
     }
 }
 

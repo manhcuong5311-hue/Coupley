@@ -55,16 +55,17 @@ enum TreeGrowthStage: Int, CaseIterable, Comparable {
 
     // MARK: - Display
 
+    /// Display only (localized); nothing stores or compares it.
     var displayName: String {
         switch self {
-        case .seed:      return "Seed"
-        case .sprout:    return "Sprout"
-        case .sapling:   return "Sapling"
-        case .young:     return "Young Tree"
-        case .blooming:  return "Blooming"
-        case .fruiting:  return "Fruiting"
-        case .mature:    return "Mature"
-        case .ancient:   return "Ancient"
+        case .seed:      return String(localized: "Seed", comment: "Journey tree growth stage name (days 0-6)")
+        case .sprout:    return String(localized: "Sprout", comment: "Journey tree growth stage name (from day 7)")
+        case .sapling:   return String(localized: "Sapling", comment: "Journey tree growth stage name (from day 30)")
+        case .young:     return String(localized: "Young Tree", comment: "Journey tree growth stage name (from day 90)")
+        case .blooming:  return String(localized: "Blooming", comment: "Journey tree growth stage name (from day 180)")
+        case .fruiting:  return String(localized: "Fruiting", comment: "Journey tree growth stage name (from 1 year)")
+        case .mature:    return String(localized: "Mature", comment: "Journey tree growth stage name (from 2 years)")
+        case .ancient:   return String(localized: "Ancient", comment: "Journey tree growth stage name (from 4 years)")
         }
     }
 
@@ -72,14 +73,22 @@ enum TreeGrowthStage: Int, CaseIterable, Comparable {
     /// `displayName`, so no caption repeats its stage's name.
     var poeticCaption: String {
         switch self {
-        case .seed:      return "Just planted. Tender beginnings."
-        case .sprout:    return "First green, reaching for light."
-        case .sapling:   return "Steady growth, finding its shape."
-        case .young:     return "Branches stretching outward."
-        case .blooming:  return "First flowers on the branches."
-        case .fruiting:  return "Golden fruit. A year of you."
-        case .mature:    return "Strong roots, a wide canopy."
-        case .ancient:   return "An old tree. Remarkable, rare."
+        case .seed:
+            return String(localized: "Just planted. Tender beginnings.", comment: "Journey hero caption for the Seed tree stage")
+        case .sprout:
+            return String(localized: "First green, reaching for light.", comment: "Journey hero caption for the Sprout tree stage")
+        case .sapling:
+            return String(localized: "Steady growth, finding its shape.", comment: "Journey hero caption for the Sapling tree stage")
+        case .young:
+            return String(localized: "Branches stretching outward.", comment: "Journey hero caption for the Young Tree stage")
+        case .blooming:
+            return String(localized: "First flowers on the branches.", comment: "Journey hero caption for the Blooming tree stage")
+        case .fruiting:
+            return String(localized: "Golden fruit. A year of you.", comment: "Journey hero caption for the Fruiting tree stage (1 year together)")
+        case .mature:
+            return String(localized: "Strong roots, a wide canopy.", comment: "Journey hero caption for the Mature tree stage")
+        case .ancient:
+            return String(localized: "An old tree. Remarkable, rare.", comment: "Journey hero caption for the Ancient tree stage")
         }
     }
 
@@ -212,10 +221,10 @@ enum TreeSeason {
 
     var displayName: String {
         switch self {
-        case .spring: return "Spring"
-        case .summer: return "Summer"
-        case .autumn: return "Autumn"
-        case .winter: return "Winter"
+        case .spring: return String(localized: "Spring", comment: "Season name")
+        case .summer: return String(localized: "Summer", comment: "Season name")
+        case .autumn: return String(localized: "Autumn", comment: "Season name")
+        case .winter: return String(localized: "Winter", comment: "Season name")
         }
     }
 

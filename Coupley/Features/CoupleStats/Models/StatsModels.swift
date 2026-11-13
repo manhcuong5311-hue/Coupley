@@ -39,14 +39,15 @@ enum StreakMilestone: Int, CaseIterable {
 
     var threshold: Int { rawValue }
 
-    var label: String {
+    /// Display only; the milestone's identity is its `rawValue` threshold.
+    var label: LocalizedStringResource {
         switch self {
-        case .spark: return "Spark"
-        case .flame: return "Flame"
-        case .fire: return "On Fire"
-        case .blaze: return "Blaze"
-        case .inferno: return "Inferno"
-        case .eternal: return "Eternal"
+        case .spark:   return LocalizedStringResource("Spark", comment: "Streak milestone name (3 days in a row)")
+        case .flame:   return LocalizedStringResource("Flame", comment: "Streak milestone name (7 days in a row)")
+        case .fire:    return LocalizedStringResource("On Fire", comment: "Streak milestone name (14 days in a row)")
+        case .blaze:   return LocalizedStringResource("Blaze", comment: "Streak milestone name (30 days in a row)")
+        case .inferno: return LocalizedStringResource("Inferno", comment: "Streak milestone name (60 days in a row)")
+        case .eternal: return LocalizedStringResource("Eternal", comment: "Streak milestone name (100 days in a row)")
         }
     }
 
@@ -127,12 +128,13 @@ enum SyncLevel: String {
         }
     }
 
-    var label: String {
+    /// Display only; storage and comparisons use the score and `rawValue`.
+    var label: LocalizedStringResource {
         switch self {
-        case .highlyInSync: return "Highly in sync"
-        case .inSync: return "In sync"
-        case .slightlyOff: return "Slightly off"
-        case .outOfSync: return "Out of sync"
+        case .highlyInSync: return LocalizedStringResource("Highly in sync", comment: "Sync score level: 85-100%")
+        case .inSync:       return LocalizedStringResource("In sync", comment: "Sync score level: 65-84%")
+        case .slightlyOff:  return LocalizedStringResource("Slightly off", comment: "Sync score level: 45-64%")
+        case .outOfSync:    return LocalizedStringResource("Out of sync", comment: "Sync score level: below 45%")
         }
     }
 
@@ -145,12 +147,12 @@ enum SyncLevel: String {
         }
     }
 
-    var encouragement: String {
+    var encouragement: LocalizedStringResource {
         switch self {
         case .highlyInSync: return "You two are vibing together!"
-        case .inSync: return "Great connection today"
-        case .slightlyOff: return "A little check-in could help"
-        case .outOfSync: return "Different days, still a team"
+        case .inSync:       return "Great connection today"
+        case .slightlyOff:  return "A little check-in could help"
+        case .outOfSync:    return "Different days, still a team"
         }
     }
 }
@@ -162,11 +164,17 @@ enum SyncTrend: Equatable {
     case down(Int)
     case stable
 
-    var label: String {
+    var label: LocalizedStringResource {
         switch self {
-        case .up(let pts): return "+\(pts)% this week"
-        case .down(let pts): return "-\(pts)% this week"
-        case .stable: return "Steady this week"
+        case .up(let pts):
+            return LocalizedStringResource("+\(pts)% this week",
+                                           comment: "Weekly sync trend badge: the sync score rose by this many points")
+        case .down(let pts):
+            return LocalizedStringResource("-\(pts)% this week",
+                                           comment: "Weekly sync trend badge: the sync score fell by this many points")
+        case .stable:
+            return LocalizedStringResource("Steady this week",
+                                           comment: "Weekly sync trend badge: no change")
         }
     }
 

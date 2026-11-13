@@ -51,11 +51,23 @@ struct DeleteAccountView: View {
     @State private var errorMessage: String?
 
     // Status copy shown during the .deleting phase
-    @State private var deletingStatus = "Removing your account…"
+    @State private var deletingStatus: LocalizedStringResource = "Removing your account…"
 
     @FocusState private var focusedField: ConfirmField?
 
-    private let requiredPhrase = "DELETE"
+    /// The word typed to confirm, in the user's language. Only compared with
+    /// what they type on this screen; never stored or sent anywhere.
+    private var requiredPhrase: String {
+        String(localized: "DELETE",
+               comment: "The word the user must type to confirm deleting their account. One word, in capitals if your script has them.")
+    }
+
+    /// Case-insensitive, so a translated phrase still matches whatever the
+    /// keyboard's auto-capitalization makes of it.
+    private var hasTypedPhrase: Bool {
+        typedConfirmation.trimmingCharacters(in: .whitespacesAndNewlines)
+            .compare(requiredPhrase, options: [.caseInsensitive, .widthInsensitive], locale: .current) == .orderedSame
+    }
 
     private enum ConfirmField: Hashable { case typed, password }
 
@@ -192,7 +204,7 @@ struct DeleteAccountView: View {
         )
     }
 
-    private func summaryRow(icon: String, title: String, detail: String) -> some View {
+    private func summaryRow(icon: String, title: LocalizedStringResource, detail: LocalizedStringResource) -> some View {
         HStack(alignment: .top, spacing: 12) {
             Image(systemName: icon)
                 .font(.system(size: 15, weight: .semibold))
@@ -221,8 +233,8 @@ struct DeleteAccountView: View {
                 Text("Active subscription")
                     .font(.system(size: 13, weight: .semibold, design: .rounded))
                     .foregroundStyle(Brand.textPrimary)
-                Text("Deleting your account will not cancel your subscription. " +
-                     "Cancel separately in Settings → Apple ID → Subscriptions to stop billing.")
+                Text("Deleting your account will not cancel your subscription. Cancel separately in Settings → Apple ID → Subscriptions to stop billing.",
+                     comment: "The arrows name iOS Settings screens: use the names iOS shows in your language.")
                     .font(.system(size: 12, design: .rounded))
                     .foregroundStyle(Brand.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -284,7 +296,8 @@ struct DeleteAccountView: View {
                     Text("Final confirmation")
                         .font(.system(size: 22, weight: .bold, design: .rounded))
                         .foregroundStyle(Brand.textPrimary)
-                    Text("Type \(requiredPhrase) below to permanently delete your account.")
+                    Text("Type \(requiredPhrase) below to permanently delete your account.",
+                         comment: "%@ is the confirmation word, DELETE.")
                         .font(.system(size: 14, design: .rounded))
                         .foregroundStyle(Brand.textSecondary)
                         .multilineTextAlignment(.center)
@@ -338,7 +351,7 @@ struct DeleteAccountView: View {
 
     private var typeConfirmField: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("Type \(requiredPhrase)")
+            Text("Type \(requiredPhrase)", comment: "Field label. %@ is the confirmation word, DELETE.")
                 .font(.system(size: 12, weight: .semibold, design: .rounded))
                 .foregroundStyle(Brand.textTertiary)
                 .textCase(.uppercase)
@@ -349,7 +362,7 @@ struct DeleteAccountView: View {
                     .font(.system(size: 17, weight: .semibold, design: .rounded))
                     .foregroundStyle(Brand.textPrimary)
                     .focused($focusedField, equals: .typed)
-                if typedConfirmation == requiredPhrase {
+                if hasTypedPhrase {
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundStyle(Color(red: 0.30, green: 0.78, blue: 0.50))
                 }
@@ -361,7 +374,7 @@ struct DeleteAccountView: View {
                     .overlay(
                         RoundedRectangle(cornerRadius: 14)
                             .strokeBorder(
-                                typedConfirmation == requiredPhrase
+                                hasTypedPhrase
                                     ? Color(red: 0.30, green: 0.78, blue: 0.50).opacity(0.5)
                                     : Brand.divider,
                                 lineWidth: 1
@@ -403,7 +416,7 @@ struct DeleteAccountView: View {
 
     private var providerHintCard: some View {
         let provider = deletionService.currentProvider
-        let label: String
+        let label: LocalizedStringResource
         let icon: String
         switch provider {
         case .apple:
@@ -505,8 +518,7 @@ struct DeleteAccountView: View {
                 Text("Account deleted")
                     .font(.system(size: 22, weight: .bold, design: .rounded))
                     .foregroundStyle(Brand.textPrimary)
-                Text("Your account and all your data have been removed. " +
-                     "You'll be signed out automatically.")
+                Text("Your account and all your data have been removed. You'll be signed out automatically.")
                     .font(.system(size: 14, design: .rounded))
                     .foregroundStyle(Brand.textSecondary)
                     .multilineTextAlignment(.center)
@@ -514,19 +526,22 @@ struct DeleteAccountView: View {
             }
 
             if premiumStore.hasActiveSubscription {
-                Text("Remember to cancel your subscription in Settings → Apple ID → Subscriptions if you no longer want to be charged.")
+                Text("Remember to cancel your subscription in Settings → Apple ID → Subscriptions if you no longer want to be charged.",
+                     comment: "The arrows name iOS Settings screens: use the names iOS shows in your language.")
                     .font(.system(size: 12, design: .rounded))
                     .foregroundStyle(Brand.textTertiary)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 28)
             }
 
-            Button("Done") {
+            Button {
                 // The auth-state listener has already routed RootView →
                 // WelcomeView. This dismiss is a safety net for the brief
                 // moment between user.delete() and the listener firing.
                 sessionStore.signOut()
                 dismiss()
+            } label: {
+                Text("Done", comment: "Button on the 'Account deleted' screen.")
             }
             .font(.system(size: 16, weight: .semibold, design: .rounded))
             .foregroundStyle(.white)
@@ -546,7 +561,7 @@ struct DeleteAccountView: View {
     // MARK: - Run deletion pipeline
 
     private var canConfirmDelete: Bool {
-        guard typedConfirmation == requiredPhrase else { return false }
+        guard hasTypedPhrase else { return false }
         if isPasswordRequired { return !password.isEmpty }
         return true
     }

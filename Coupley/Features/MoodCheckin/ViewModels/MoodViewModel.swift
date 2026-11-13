@@ -94,7 +94,8 @@ final class MoodViewModel: ObservableObject {
                 // The server refused it. Not "saved", not "will sync": the
                 // branch below is only for solo users with no couple to write to.
                 submissionState = .error(
-                    MoodWriteError.rejected.errorDescription ?? "Failed to save. Please try again."
+                    MoodWriteError.rejected.errorDescription
+                        ?? String(localized: "Failed to save. Please try again.")
                 )
                 return
             } catch is MoodWriteError {
@@ -108,7 +109,7 @@ final class MoodViewModel: ObservableObject {
                 todayCheckinCount += 1
                 submissionState = .success
             } catch {
-                submissionState = .error("Failed to save. Please try again.")
+                submissionState = .error(String(localized: "Failed to save. Please try again."))
                 return
             }
 

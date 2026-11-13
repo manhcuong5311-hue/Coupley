@@ -13,11 +13,11 @@ import SwiftUI
 // MARK: - Section Title
 
 struct TogetherSectionTitle: View {
-    let title: String
-    let subtitle: String?
+    let title: LocalizedStringResource
+    let subtitle: LocalizedStringResource?
     var trailing: AnyView?
 
-    init(_ title: String, subtitle: String? = nil, trailing: (() -> AnyView)? = nil) {
+    init(_ title: LocalizedStringResource, subtitle: LocalizedStringResource? = nil, trailing: (() -> AnyView)? = nil) {
         self.title = title
         self.subtitle = subtitle
         self.trailing = trailing?()
@@ -145,7 +145,7 @@ struct StreakPill: View {
         HStack(spacing: 5) {
             Image(systemName: "flame.fill")
                 .font(.system(size: 11, weight: .semibold))
-            Text("\(streak)d")
+            Text("\(streak)d", comment: "Streak length in days, abbreviated (e.g. '12d')")
                 .font(.system(size: 12, weight: .semibold, design: .rounded))
         }
         .foregroundStyle(Color(red: 1.0, green: 0.55, blue: 0.30))
@@ -170,9 +170,9 @@ struct PremiumBadge: View {
             Image(systemName: "crown.fill")
                 .font(.system(size: compact ? 9 : 11, weight: .semibold))
             if !compact {
-                Text("Premium")
+                Text("Premium", comment: "Badge on content that needs the Premium plan")
                     .font(.system(size: 11, weight: .bold, design: .rounded))
-                    .kerning(0.3)
+                    .scriptAwareKerning(0.3)
             }
         }
         .foregroundStyle(.white)
@@ -200,8 +200,8 @@ struct PremiumBadge: View {
 /// Frosted overlay that locks a card. Shimmer animates so locked cards feel
 /// premium-coded rather than disabled.
 struct PremiumLockOverlay: View {
-    let title: String
-    let subtitle: String
+    let title: LocalizedStringResource
+    let subtitle: LocalizedStringResource
     let onTap: () -> Void
 
     @State private var shimmerPhase: CGFloat = -1
@@ -324,8 +324,8 @@ struct PressableContainer<Content: View>: View {
 /// enough affordance to read as interactive without competing with real
 /// goals on the page.
 struct TogetherEmptySlot: View {
-    let title: String
-    let subtitle: String
+    let title: LocalizedStringResource
+    let subtitle: LocalizedStringResource
     var icon: String = "plus"
     let onTap: () -> Void
 

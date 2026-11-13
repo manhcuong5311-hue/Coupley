@@ -29,12 +29,18 @@ enum ReactionKind: String, CaseIterable, Identifiable, Codable {
         }
     }
 
-    var label: String {
+    /// Caption under the emoji on the Home mood card's reaction buttons.
+    /// Display only: Firestore and the push function use `rawValue`.
+    var label: LocalizedStringResource {
         switch self {
-        case .heart:  return "Love"
-        case .hug:    return "Hug"
-        case .callMe: return "Call me"
-        case .coffee: return "Coffee"
+        case .heart:
+            return LocalizedStringResource("Love", comment: "Reaction button caption (noun): send your partner love")
+        case .hug:
+            return LocalizedStringResource("Hug", comment: "Reaction button caption (noun): send your partner a hug")
+        case .callMe:
+            return LocalizedStringResource("Call me", comment: "Reaction button caption: ask your partner to call you")
+        case .coffee:
+            return LocalizedStringResource("Coffee", comment: "Reaction button caption: invite your partner for coffee")
         }
     }
 }

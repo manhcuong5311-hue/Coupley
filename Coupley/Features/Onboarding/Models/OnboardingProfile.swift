@@ -29,16 +29,18 @@ enum OnboardingCommunicationStyle: String, CaseIterable, Identifiable, Codable {
 
     var id: String { rawValue }
 
-    var label: String {
+    // Display only: the choice is stored as `rawValue` (OnboardingService),
+    // so these labels are plain localized copy, not a content bank.
+    var label: LocalizedStringResource {
         switch self {
-        case .affectionate: return "Warm & affectionate"
-        case .playful:      return "Playful & teasing"
-        case .direct:       return "Honest & direct"
-        case .thoughtful:   return "Thoughtful & deep"
+        case .affectionate: return LocalizedStringResource("Warm & affectionate", comment: "Onboarding: the tone the user wants Coupley to use")
+        case .playful:      return LocalizedStringResource("Playful & teasing", comment: "Onboarding: the tone the user wants Coupley to use")
+        case .direct:       return LocalizedStringResource("Honest & direct", comment: "Onboarding: the tone the user wants Coupley to use")
+        case .thoughtful:   return LocalizedStringResource("Thoughtful & deep", comment: "Onboarding: the tone the user wants Coupley to use")
         }
     }
 
-    var blurb: String {
+    var blurb: LocalizedStringResource {
         switch self {
         case .affectionate: return "Lots of \"I love you\" — sweet check-ins."
         case .playful:      return "Inside jokes and silly nudges."
@@ -69,7 +71,8 @@ enum RelationshipGoal: String, CaseIterable, Identifiable, Codable {
 
     var id: String { rawValue }
 
-    var label: String {
+    /// Display only: goals are stored as `rawValue`.
+    var label: LocalizedStringResource {
         switch self {
         case .feelCloser:        return "Feel closer every day"
         case .communicateBetter: return "Communicate better"
@@ -102,12 +105,13 @@ enum ReminderCadence: String, CaseIterable, Identifiable, Codable {
 
     var id: String { rawValue }
 
-    var label: String {
+    /// Display only: the cadence is stored as `rawValue`.
+    var label: LocalizedStringResource {
         switch self {
-        case .off:      return "Off"
-        case .daily:    return "Every day"
-        case .weekdays: return "Weekdays"
-        case .weekly:   return "Weekly"
+        case .off:      return LocalizedStringResource("Off", comment: "Reminder frequency option: no reminders")
+        case .daily:    return LocalizedStringResource("Every day", comment: "Reminder frequency option")
+        case .weekdays: return LocalizedStringResource("Weekdays", comment: "Reminder frequency option: Monday to Friday")
+        case .weekly:   return LocalizedStringResource("Weekly", comment: "Reminder frequency option: once a week")
         }
     }
 }
@@ -121,15 +125,16 @@ enum MoodCheckCadence: String, CaseIterable, Identifiable, Codable {
 
     var id: String { rawValue }
 
-    var label: String {
+    /// Display only: the cadence is stored as `rawValue`.
+    var label: LocalizedStringResource {
         switch self {
         case .off:   return "I'll log when I want to"
-        case .once:  return "Once a day"
-        case .twice: return "Twice a day"
+        case .once:  return LocalizedStringResource("Once a day", comment: "Mood check-in reminder option")
+        case .twice: return LocalizedStringResource("Twice a day", comment: "Mood check-in reminder option")
         }
     }
 
-    var blurb: String {
+    var blurb: LocalizedStringResource {
         switch self {
         case .off:   return "No nudges. You're in control."
         case .once:  return "A gentle ping each evening."
