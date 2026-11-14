@@ -187,7 +187,14 @@ final class ChatViewModel: ObservableObject {
     }
 
     private func rebuildMessageList() {
-        messages = messagesById.values.sorted { $0.createdAt < $1.createdAt }
+        let sorted = messagesById.values.sorted { $0.createdAt < $1.createdAt }
+        #if DEBUG
+        if let demo = DemoContent.current {
+            messages = demo.chat(replacingTextIn: sorted, me: session.userId, partner: session.partnerId)
+            return
+        }
+        #endif
+        messages = sorted
     }
 
     func loadOlder() {

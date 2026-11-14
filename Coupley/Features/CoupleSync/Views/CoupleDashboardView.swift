@@ -728,19 +728,21 @@ struct CoupleDashboardView: View {
     }
 
     private var statsPreviewCompact: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        let streak = shownStats.streak
+        let checkIns = shownStats.checkIns
+        return VStack(alignment: .leading, spacing: 8) {
             statsLine(
                 icon: "flame.fill",
                 iconColor: Color(red: 1.0, green: 0.55, blue: 0.20),
-                value: statsViewModel.streak.currentStreak.formatted(),
-                label: Text(verbatim: Self.streakCaption(statsViewModel.streak.currentStreak))
+                value: streak.formatted(),
+                label: Text(verbatim: Self.streakCaption(streak))
             )
             Divider().opacity(0.6)
             statsLine(
                 icon: "arrow.triangle.2.circlepath",
                 iconColor: Brand.accentStart,
-                value: statsViewModel.todaySyncScore.map {
-                    String(localized: "\($0.score)%", comment: "Home stats chip: today's mood sync score as a percentage, e.g. 72%")
+                value: shownStats.syncScore.map {
+                    String(localized: "\($0)%", comment: "Home stats chip: today's mood sync score as a percentage, e.g. 72%")
                 } ?? "--",
                 label: Text("sync",
                             comment: "Home stats chip caption beside a percentage: how in sync your moods are today")
@@ -749,8 +751,8 @@ struct CoupleDashboardView: View {
             statsLine(
                 icon: "calendar",
                 iconColor: Color(red: 0.40, green: 0.70, blue: 1.0),
-                value: viewModel.weeklyHistory.count.formatted(),
-                label: Text(verbatim: Self.checkInsCaption(viewModel.weeklyHistory.count))
+                value: checkIns.formatted(),
+                label: Text(verbatim: Self.checkInsCaption(checkIns))
             )
         }
         .padding(10)
@@ -769,6 +771,17 @@ struct CoupleDashboardView: View {
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
             showStatsSheet = true
         }
+    }
+
+    /// The three numbers in the stats chip. Screenshot builds
+    /// (`-coupleyDemoData`, Debug) show a lived-in couple instead of zeros.
+    private var shownStats: (streak: Int, syncScore: Int?, checkIns: Int) {
+        #if DEBUG
+        if DemoContent.current != nil { return (12, 86, 5) }
+        #endif
+        return (statsViewModel.streak.currentStreak,
+                statsViewModel.todaySyncScore?.score,
+                viewModel.weeklyHistory.count)
     }
 
     /// "streak" in a form that agrees with the count of days drawn before it.

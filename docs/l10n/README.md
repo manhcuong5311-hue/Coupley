@@ -65,6 +65,10 @@ InfoPlist catalog, and write its glossary first so the terms stay consistent.
 - `-coupleyOpen coach|letters|compose` opens that screen from Home.
 - `-coupleyNoAds` hides ads and skips the consent and tracking prompts, for
   clean screenshots.
+- `-coupleyDemoData` draws a localized demo couple instead of the signed-in
+  test couple's own data: two first names, a short chat, goal and challenge
+  titles and the Home stats (`Coupley/Core/Debug/DemoContent.swift`). Display
+  only; nothing is written to Firestore or the local caches.
 - `-coupleyDumpContentStrings` prints every content-bank base string as JSON,
   the source for `Content.xcstrings`.
 - `-NSAccentuateLocalizedStrings YES` (Apple's pseudo-localization) accents

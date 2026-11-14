@@ -94,7 +94,11 @@ final class TogetherViewModel: ObservableObject {
             coupleId: session.coupleId,
             onUpdate: { [weak self] items in
                 Task { @MainActor in
+                    #if DEBUG
+                    self?.goals = DemoContent.current?.goals(items) ?? items
+                    #else
                     self?.goals = items
+                    #endif
                     self?.recompute()
                 }
             },
@@ -422,7 +426,11 @@ final class TogetherViewModel: ObservableObject {
             }
         }
 
+        #if DEBUG
+        challenges = DemoContent.current?.challenges(items) ?? items
+        #else
         challenges = items
+        #endif
         recompute()
     }
 
