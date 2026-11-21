@@ -198,7 +198,7 @@ struct AICoachRewriteView: View {
                 Text(r.rewritten)
                     .font(.system(size: 14, design: .rounded))
                     .foregroundStyle(Brand.textPrimary)
-                    .lineSpacing(4)
+                    .scriptAwareLineSpacing(4)
                     .fixedSize(horizontal: false, vertical: true)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }

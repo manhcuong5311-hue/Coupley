@@ -10,8 +10,9 @@ import Foundation
 
 enum CountedCaption {
 
-    /// `phrase` without its first run of digits (in whatever digits the
-    /// language writes) and the space that set it apart.
+    /// `phrase` without its first number (in whatever digits the language
+    /// writes, grouping separators included: "1,234", "1 234", "١٬٢٣٤") and
+    /// the space that set it apart.
     ///
     /// A caption still has to agree with its number: Russian says "1 день",
     /// "2 дня", "5 дней". So the caption is localized as a plural key that
@@ -22,8 +23,17 @@ enum CountedCaption {
     nonisolated static func removingCount(from phrase: String) -> String {
         guard let start = phrase.firstIndex(where: isDecimalDigit) else { return phrase }
         var end = start
-        while end < phrase.endIndex, isDecimalDigit(phrase[end]) {
-            end = phrase.index(after: end)
+        while end < phrase.endIndex {
+            if isDecimalDigit(phrase[end]) {
+                end = phrase.index(after: end)
+                continue
+            }
+            // A grouping separator inside the number: without this, 1,234
+            // days leaves ",234 days together" under the big "1,234".
+            let next = phrase.index(after: end)
+            guard groupingSeparators.contains(phrase[end]),
+                  next < phrase.endIndex, isDecimalDigit(phrase[next]) else { break }
+            end = next
         }
         var head = String(phrase[..<start])
         var tail = String(phrase[end...])
@@ -41,4 +51,9 @@ enum CountedCaption {
     private nonisolated static func isDecimalDigit(_ character: Character) -> Bool {
         character.unicodeScalars.allSatisfy { $0.properties.numericType == .decimal }
     }
+
+    /// What locales put between groups of digits. Not the plain space: no
+    /// locale groups with it, and it would swallow a second number.
+    private nonisolated static let groupingSeparators: Set<Character> =
+        [",", ".", "\u{066C}", "'", "\u{2019}", "\u{00A0}", "\u{202F}", "\u{2009}"]
 }

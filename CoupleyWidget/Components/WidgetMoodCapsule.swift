@@ -30,7 +30,7 @@ struct WidgetMoodCapsule: View {
                         .minimumScaleFactor(0.8)
 
                     if !compact {
-                        Text(verbatim: "·")
+                        Text(verbatim: ScriptSpacing.factMark)
                             .font(WidgetType.caption(11))
                             .foregroundStyle(WidgetPalette.textTertiary)
 

@@ -153,7 +153,7 @@ struct AnniversaryListView: View {
                     .font(.system(size: 14, weight: .regular, design: .rounded))
                     .foregroundStyle(Brand.textSecondary)
                     .multilineTextAlignment(.center)
-                    .lineSpacing(3)
+                    .scriptAwareLineSpacing(3)
             }
 
             Button {
@@ -197,7 +197,7 @@ struct AnniversaryListView: View {
                 .font(.system(size: 13, weight: .regular, design: .rounded))
                 .foregroundStyle(Brand.textSecondary)
                 .multilineTextAlignment(.center)
-                .lineSpacing(2)
+                .scriptAwareLineSpacing(2)
         }
         .padding(20)
         .frame(maxWidth: .infinity)

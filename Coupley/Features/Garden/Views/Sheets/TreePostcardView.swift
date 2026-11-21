@@ -284,10 +284,15 @@ private struct TreePostcardContent: View {
         }
     }
 
-    /// "12 March 2024 · 2 years ago".
+    /// "12 March 2024 · 2 years ago". The day alone for today's moment (a
+    /// day has no hour: it would read "14 hours ago") and in a language iOS
+    /// has no relative wording for.
     private func momentText(_ stored: Date) -> String {
         let local = JourneyCalendarDay.localDay(ofStored: stored)
-        let ago = local.formatted(.relative(presentation: .named, unitsStyle: .wide))
+        guard local < Calendar.current.startOfDay(for: Date()),
+              let ago = RelativeTimeWording.namedPhrase(for: local) else {
+            return GardenDayText.long(local: local)
+        }
         return String(localized: "\(GardenDayText.long(local: local)) · \(ago)",
                       comment: "Postcard: the moment's day, then how long ago, as in '12 March 2024 · 2 years ago'")
     }

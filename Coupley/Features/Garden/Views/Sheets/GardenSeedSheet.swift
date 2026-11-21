@@ -1007,6 +1007,7 @@ struct GardenHoldToPlantButton: View {
                     .trim(from: 0, to: progress)
                     .stroke(Color.white, style: StrokeStyle(lineWidth: 3, lineCap: .round))
                     .rotationEffect(.degrees(-90))
+                    .ringStartsAtTop()
                 if isBusy {
                     ProgressView()
                         .tint(.white)

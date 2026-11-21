@@ -279,6 +279,7 @@ struct CoupleStatsView: View {
                     )
                     .frame(width: 120, height: 120)
                     .rotationEffect(.degrees(-90))
+                    .ringStartsAtTop()
                     .animation(.spring(response: 0.8), value: score.score)
 
                 VStack(spacing: 2) {

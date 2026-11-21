@@ -277,7 +277,7 @@ struct QuizCardBubble: View {
                 .font(.system(size: 14, weight: .medium, design: .rounded))
                 .foregroundStyle(Brand.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
-                .lineSpacing(2)
+                .scriptAwareLineSpacing(2)
             Spacer(minLength: 0)
         }
         .padding(12)

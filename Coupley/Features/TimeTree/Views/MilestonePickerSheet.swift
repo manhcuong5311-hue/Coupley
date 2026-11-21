@@ -67,7 +67,7 @@ struct MilestonePickerSheet: View {
                         Text("Pick one of these milestones, or capture something only you two would understand.")
                             .font(JourneyFont.body)
                             .foregroundStyle(Brand.textSecondary)
-                            .lineSpacing(2)
+                            .scriptAwareLineSpacing(2)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                     .padding(.horizontal, 4)

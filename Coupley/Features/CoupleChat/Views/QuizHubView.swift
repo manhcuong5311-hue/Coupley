@@ -151,7 +151,7 @@ struct QuizHubView: View {
                 Text("Discover\neach other", comment: "Quiz Hub headline, set on two lines")
                     .font(.system(size: 32, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
-                    .lineSpacing(2)
+                    .scriptAwareLineSpacing(2)
                 if let score = quizProgress?.knowledgeScore,
                    let made = quizProgress?.guessesMade {
                     HStack(spacing: 8) {
@@ -175,7 +175,7 @@ struct QuizHubView: View {
                 Text("A few well-asked questions can move a relationship forward more than a hundred small talks.")
                     .font(.system(size: 13, design: .rounded))
                     .foregroundStyle(.white.opacity(0.85))
-                    .lineSpacing(2)
+                    .scriptAwareLineSpacing(2)
                     .fixedSize(horizontal: false, vertical: true)
             }
             .padding(20)
@@ -442,7 +442,7 @@ struct AISuggestionConfirmationSheet: View {
                         Text(current.displaySubtitle)
                             .font(.system(size: 14, design: .rounded))
                             .foregroundStyle(Brand.textSecondary)
-                            .lineSpacing(2)
+                            .scriptAwareLineSpacing(2)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                     .padding(20)
@@ -586,7 +586,8 @@ struct QuizHistorySheet: View {
                 .padding(.top, 2)
             }
 
-            Text(quiz.createdAt.formatted(.relative(presentation: .named)))
+            Text(RelativeTimeWording.namedPhrase(for: quiz.createdAt)
+                 ?? RelativeTimeWording.dateText(for: quiz.createdAt))
                 .font(.system(size: 11, design: .rounded))
                 .foregroundStyle(Brand.textTertiary)
         }
@@ -637,7 +638,7 @@ struct QuizHistorySheet: View {
                 .foregroundStyle(Brand.textSecondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 36)
-                .lineSpacing(2)
+                .scriptAwareLineSpacing(2)
         }
     }
 }

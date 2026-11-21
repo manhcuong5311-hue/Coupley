@@ -12,6 +12,13 @@ import WidgetKit
 
 @main
 struct CoupleyWidgetBundle: WidgetBundle {
+
+    init() {
+        // The widget is its own process with its own preferences: the same
+        // override as the app, before anything formats a date or a number.
+        FormattingLocale.applyOverride()
+    }
+
     var body: some Widget {
         CoupleyHomeWidget()
     }

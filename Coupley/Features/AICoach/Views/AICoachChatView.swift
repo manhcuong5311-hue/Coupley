@@ -134,7 +134,7 @@ struct AICoachChatView: View {
                     .font(.system(size: 14, design: .rounded))
                     .foregroundStyle(Brand.textSecondary)
                     .multilineTextAlignment(.center)
-                    .lineSpacing(3)
+                    .scriptAwareLineSpacing(3)
                     .padding(.horizontal, 20)
             }
         }
@@ -165,7 +165,7 @@ struct AICoachChatView: View {
                 Text("Before I respond, tell me a bit about what's going on. A few prompts to start:")
                     .font(.system(size: 13, weight: .regular, design: .rounded))
                     .foregroundStyle(Brand.textSecondary)
-                    .lineSpacing(3)
+                    .scriptAwareLineSpacing(3)
 
                 VStack(alignment: .leading, spacing: 8) {
                     // Indexed: LocalizedStringResource is not Hashable.
@@ -219,7 +219,7 @@ struct AICoachChatView: View {
                     Text(message.text)
                         .font(.system(size: 14.5, design: .rounded))
                         .foregroundStyle(Brand.textPrimary)
-                        .lineSpacing(4)
+                        .scriptAwareLineSpacing(4)
                         .padding(.horizontal, 14)
                         .padding(.vertical, 11)
                         .background(
@@ -343,7 +343,7 @@ struct AICoachChatView: View {
             Text(body)
                 .font(.system(size: 14, design: .rounded))
                 .foregroundStyle(Brand.textPrimary)
-                .lineSpacing(4)
+                .scriptAwareLineSpacing(4)
                 .fixedSize(horizontal: false, vertical: true)
         }
     }
@@ -383,7 +383,7 @@ struct AICoachChatView: View {
                 .font(.system(size: 14, design: .rounded))
                 .foregroundStyle(Brand.textPrimary)
                 .italic()
-                .lineSpacing(4)
+                .scriptAwareLineSpacing(4)
                 .padding(14)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(

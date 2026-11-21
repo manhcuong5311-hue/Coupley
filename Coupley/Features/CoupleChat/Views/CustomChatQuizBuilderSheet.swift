@@ -100,7 +100,7 @@ struct CustomChatQuizBuilderSheet: View {
             Text("It'll show up in your chat as a beautiful card. They tap, they answer, you both see how aligned you are.")
                 .font(.system(size: 13, design: .rounded))
                 .foregroundStyle(Brand.textSecondary)
-                .lineSpacing(2)
+                .scriptAwareLineSpacing(2)
                 .fixedSize(horizontal: false, vertical: true)
         }
     }
@@ -133,7 +133,7 @@ struct CustomChatQuizBuilderSheet: View {
                     Text(trimmedNote)
                         .font(.system(size: 14, weight: .medium, design: .rounded))
                         .foregroundStyle(Brand.textPrimary)
-                        .lineSpacing(2)
+                        .scriptAwareLineSpacing(2)
                     Spacer(minLength: 0)
                 }
                 .padding(12)
@@ -292,7 +292,7 @@ struct CustomChatQuizBuilderSheet: View {
                     .font(.system(size: 13, design: .rounded))
                     .foregroundStyle(Brand.textTertiary)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .lineSpacing(2)
+                    .scriptAwareLineSpacing(2)
             } else {
                 VStack(alignment: .leading, spacing: 8) {
                     ForEach(valid, id: \.self) { option in

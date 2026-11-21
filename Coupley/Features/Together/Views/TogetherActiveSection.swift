@@ -156,9 +156,12 @@ struct GoalProgressCard: View {
 
                     // Bottom row — split + estimated completion
                     HStack(alignment: .center, spacing: 10) {
+                        // The split is the row's point: in a long language
+                        // the estimate gives way first.
                         contributionSplit
+                            .layoutPriority(1)
 
-                        Spacer()
+                        Spacer(minLength: 0)
 
                         if let estimate = goal.estimatedCompletion(),
                            !goal.isComplete {
@@ -168,6 +171,8 @@ struct GoalProgressCard: View {
                                 Text("Est. \(estimate.formatted(.dateTime.month(.abbreviated).year()))",
                                      comment: "Estimated completion month of a goal, e.g. 'Est. Jun 2026'")
                                     .font(.system(size: 11, weight: .semibold, design: .rounded))
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.8)
                             }
                             .foregroundStyle(Brand.textTertiary)
                         }
@@ -368,7 +373,7 @@ struct ChallengeProgressCard: View {
                                     .font(.system(size: 11, weight: .medium, design: .rounded))
                                     .foregroundStyle(Brand.textSecondary)
                                 if challenge.streak.current > 0 {
-                                    Text(verbatim: "·")
+                                    Text(verbatim: ScriptSpacing.factMark)
                                         .foregroundStyle(Brand.textTertiary)
                                     StreakPill(streak: challenge.streak.current)
                                 }

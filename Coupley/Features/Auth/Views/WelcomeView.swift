@@ -137,7 +137,7 @@ struct WelcomeView: View {
             HStack(spacing: 4) {
                 legalLink(LocalizedStringResource("Terms (EULA)", comment: "Link to the terms of use (Apple's standard EULA)"),
                           url: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")
-                Text("·").foregroundStyle(Brand.textTertiary)
+                Text(verbatim: ScriptSpacing.factMark).foregroundStyle(Brand.textTertiary)
                 legalLink(LocalizedStringResource("Privacy Policy", comment: "Link to the privacy policy"),
                           url: "https://manhcuong5311-hue.github.io/Coupley/")
             }

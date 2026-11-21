@@ -202,7 +202,7 @@ struct CoupleCoachSection: View {
                         .font(.system(size: 13, weight: .regular, design: .rounded))
                         .foregroundStyle(Brand.textSecondary)
                         .multilineTextAlignment(.center)
-                        .lineSpacing(2)
+                        .scriptAwareLineSpacing(2)
                         .padding(.horizontal, 24)
                 }
 
@@ -319,7 +319,7 @@ struct InsightCard: View {
                         Text(detail)
                             .font(.system(size: 12, weight: .regular, design: .rounded))
                             .foregroundStyle(Brand.textSecondary)
-                            .lineSpacing(2)
+                            .scriptAwareLineSpacing(2)
                             .fixedSize(horizontal: false, vertical: true)
                     }
 

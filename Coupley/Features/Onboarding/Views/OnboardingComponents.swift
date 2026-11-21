@@ -188,7 +188,7 @@ struct StepHeader: View {
                 .font(.system(size: 30, weight: .bold, design: .rounded))
                 .foregroundStyle(Brand.textPrimary)
                 .multilineTextAlignment(textAlignment(for: alignment))
-                .lineSpacing(4)
+                .scriptAwareLineSpacing(4)
                 .fixedSize(horizontal: false, vertical: true)
 
             if let subtitle {
@@ -196,7 +196,7 @@ struct StepHeader: View {
                     .font(.system(size: 16, weight: .regular, design: .rounded))
                     .foregroundStyle(Brand.textSecondary)
                     .multilineTextAlignment(textAlignment(for: alignment))
-                    .lineSpacing(3)
+                    .scriptAwareLineSpacing(3)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
@@ -348,7 +348,7 @@ struct BenefitTile: View {
             Text(copy)
                 .font(.system(size: 12, design: .rounded))
                 .foregroundStyle(Brand.textSecondary)
-                .lineSpacing(2)
+                .scriptAwareLineSpacing(2)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity, alignment: .leading)

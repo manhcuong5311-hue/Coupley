@@ -204,6 +204,7 @@ struct TogetherTodayHero: View {
                 .trim(from: 0, to: ringProgress)
                 .stroke(.white, style: StrokeStyle(lineWidth: 10, lineCap: .round))
                 .rotationEffect(.degrees(-90))
+                .ringStartsAtTop()
 
             VStack(spacing: 0) {
                 Text("\(Int(ringProgress * 100))%")
@@ -254,12 +255,17 @@ struct TogetherTodayHero: View {
                 }
                 VStack(alignment: .leading, spacing: 1) {
                     // Often holds a user-typed title ("%@ streak"): wrap
-                    // to a second line before shrinking or cutting it.
+                    // to a second line before shrinking or cutting it. The
+                    // fixed height keeps both lines when the title is still
+                    // too long ("Sequência de 30 Days Without Fighting");
+                    // without it the tile falls back to one cut line.
                     titleText
                         .font(.system(size: 12, weight: .semibold, design: .rounded))
                         .foregroundStyle(.white.opacity(0.78))
+                        .multilineTextAlignment(.leading)
                         .lineLimit(2)
                         .minimumScaleFactor(0.85)
+                        .fixedSize(horizontal: false, vertical: true)
                     Text(value)
                         .font(.system(size: 16, weight: .bold, design: .rounded))
                         .foregroundStyle(accent)
@@ -304,13 +310,13 @@ struct TogetherEmptyHero: View {
                 Text("What are you building together?")
                     .font(.system(size: 28, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
-                    .lineSpacing(2)
+                    .scriptAwareLineSpacing(2)
                     .fixedSize(horizontal: false, vertical: true)
 
                 Text("Start with one thing — a dream you share, or a goal you both want.")
                     .font(.system(size: 14, weight: .regular, design: .rounded))
                     .foregroundStyle(.white.opacity(0.85))
-                    .lineSpacing(2)
+                    .scriptAwareLineSpacing(2)
 
                 HStack(spacing: 10) {
                     Button(action: onAddGoal) {

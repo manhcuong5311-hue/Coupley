@@ -133,7 +133,7 @@ struct MonthlyMoodInsightView: View {
                     Text("Mood entries you save will appear here automatically.")
                         .font(.system(size: 13, design: .rounded))
                         .foregroundStyle(.white.opacity(0.85))
-                        .lineSpacing(2)
+                        .scriptAwareLineSpacing(2)
                 } else if let dominant {
                     HStack(spacing: 12) {
                         Text(dominant.emoji)
@@ -143,7 +143,7 @@ struct MonthlyMoodInsightView: View {
                             Text(headline(for: dominant, count: entries.count))
                                 .font(.system(size: 22, weight: .bold, design: .rounded))
                                 .foregroundStyle(.white)
-                                .lineSpacing(1)
+                                .scriptAwareLineSpacing(1)
                             // Whole phrase per key; translators add plural forms.
                             Text(entries.count == 1
                                  ? "1 check-in this month"
@@ -404,7 +404,7 @@ struct MonthlyMoodInsightView: View {
                     .font(.system(size: 13, design: .rounded))
                     .foregroundStyle(Brand.textSecondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .lineSpacing(2)
+                    .scriptAwareLineSpacing(2)
             } else {
                 LazyVStack(spacing: 10) {
                     ForEach(noted) { entry in
@@ -440,7 +440,7 @@ struct MonthlyMoodInsightView: View {
                     Text(entry.mood.label)
                         .font(.system(size: 12, weight: .semibold, design: .rounded))
                         .foregroundStyle(entry.mood.color)
-                    Text(verbatim: "·")
+                    Text(verbatim: ScriptSpacing.factMark)
                         .foregroundStyle(Brand.textTertiary)
                     Text(noteDateFormatter.string(from: entry.timestamp))
                         .font(.system(size: 12, weight: .medium, design: .rounded))
@@ -449,7 +449,7 @@ struct MonthlyMoodInsightView: View {
                 Text(entry.note ?? "")
                     .font(.system(size: 14, design: .rounded))
                     .foregroundStyle(Brand.textPrimary)
-                    .lineSpacing(2)
+                    .scriptAwareLineSpacing(2)
                     .fixedSize(horizontal: false, vertical: true)
             }
 

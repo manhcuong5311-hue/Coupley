@@ -679,9 +679,16 @@ struct TimeTreeView: View {
         // Letters not loaded yet may be all there is: say nothing rather
         // than "Add your first memory" for a moment.
         if parts.isEmpty && letters.isAvailable && !letters.hasLoaded { return nil }
-        return parts.isEmpty
-            ? String(localized: "Add your first memory", comment: "Journey masthead subtitle: nothing added yet")
-            : parts.joined(separator: " · ")
+        guard let first = parts.first else {
+            return String(localized: "Add your first memory", comment: "Journey masthead subtitle: nothing added yet")
+        }
+        // Joined through the catalog rather than with a literal " · ": beside
+        // Arabic and Persian digits a middle dot reads as a zero ("1 ·" as
+        // 10), and those languages use a dash.
+        return parts.dropFirst().reduce(first) { tally, part in
+            String(localized: "\(tally) · \(part)",
+                   comment: "Journey masthead tally: two counts side by side, such as '3 memories · 1 letter'")
+        }
     }
 
     /// Before the start date in garden mode (B1).

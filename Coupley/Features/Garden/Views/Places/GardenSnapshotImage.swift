@@ -93,7 +93,7 @@ struct GardenMapAttribution: View {
         HStack(spacing: 4) {
             Text("Apple Maps", comment: "Attribution on map images: Apple's map service. Use Apple's own name for Apple Maps in your language.")
             if !isCompact {
-                Text(verbatim: "·")
+                Text(verbatim: ScriptSpacing.factMark)
                     .accessibilityHidden(true)
                 Link(destination: Self.legalURL) {
                     Text("Legal", comment: "Link on map images to Apple Maps' legal notices")

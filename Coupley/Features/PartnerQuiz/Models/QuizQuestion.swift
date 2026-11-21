@@ -125,6 +125,46 @@ struct QuizAnswer: Equatable {
     }
 }
 
+// MARK: - Quiz List Text
+
+/// A free-text answer holds several items in one field, separated by commas.
+enum QuizListText {
+
+    /// Every comma the field splits on: Latin, Arabic (also Persian, Urdu and
+    /// Pashto), ideographic and fullwidth (Japanese, Chinese), Ethiopic
+    /// (Amharic, Tigrinya) and Burmese. The hint under the field says
+    /// "commas", and each of these keyboards types its own.
+    static let separators = CharacterSet(charactersIn: ",\u{060C}\u{3001}\u{FF0C}\u{1363}\u{104A}")
+
+    /// What the field writes between two items: the comma the app language's
+    /// keyboard types, so the text is not rewritten while it is typed.
+    static let separator: String = {
+        let resolved = Bundle.main.preferredLocalizations.first ?? "en"
+        return separator(forLanguage: Locale(identifier: resolved).language.languageCode?.identifier)
+    }()
+
+    static func separator(forLanguage code: String?) -> String {
+        switch code {
+        case "ar", "fa", "ur", "ps": "\u{060C} "
+        case "ja", "zh": "\u{3001}"
+        case "am", "ti": "\u{1363} "
+        case "my": "\u{104A} "
+        default: ", "
+        }
+    }
+
+    /// The items typed in the field; an empty last one while a comma was just typed.
+    static func items(in text: String) -> [String] {
+        text.components(separatedBy: separators)
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+    }
+
+    /// The field's text for stored items.
+    static func text(for items: [String]) -> String {
+        items.joined(separator: separator)
+    }
+}
+
 // MARK: - Question Bank
 
 enum QuizBank {

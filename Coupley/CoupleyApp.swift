@@ -111,9 +111,16 @@ struct CoupleyApp: App {
     @StateObject private var premiumStore         = PremiumStore()
     @Environment(\.scenePhase) private var scenePhase
 
+    init() {
+        // Before anything formats a date or a number: the current locale is
+        // read once per process.
+        FormattingLocale.applyOverride()
+    }
+
     var body: some Scene {
         WindowGroup {
             RootView()
+                .lineSpacing(ScriptSpacing.extraLineSpacing)
                 .environmentObject(sessionStore)
                 .environmentObject(notificationViewModel)
                 .environmentObject(themeManager)

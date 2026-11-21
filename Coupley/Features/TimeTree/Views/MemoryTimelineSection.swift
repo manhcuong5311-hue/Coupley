@@ -325,7 +325,7 @@ struct MemoryTimelineSection: View {
                     Text("Every memory you add becomes a star around your tree. Your partner sees it instantly.")
                         .font(JourneyFont.body)
                         .foregroundStyle(Brand.textSecondary)
-                        .lineSpacing(2)
+                        .scriptAwareLineSpacing(2)
                 }
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)

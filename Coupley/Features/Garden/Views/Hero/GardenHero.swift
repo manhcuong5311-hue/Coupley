@@ -984,7 +984,7 @@ struct GardenHero: View {
     /// on its own line (as TimeTreeHeader does).
     private func metaLabel(_ text: Text, link: Text) -> some View {
         ViewThatFits(in: .horizontal) {
-            (text + Text(verbatim: " · ") + link)
+            (text + Text(verbatim: ScriptSpacing.factSeparator) + link)
                 .lineLimit(1)
             VStack(alignment: .leading, spacing: 2) {
                 text.fixedSize(horizontal: false, vertical: true)

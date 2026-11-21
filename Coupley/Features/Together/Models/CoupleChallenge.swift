@@ -225,9 +225,7 @@ struct CoupleChallenge: Identifiable, Codable, Equatable {
             return LocalizedStringResource("Completed 🎉", comment: "Challenge status: the challenge is finished")
         }
         if !hasStarted {
-            let formatter = RelativeDateTimeFormatter()
-            formatter.unitsStyle = RelativeDateTimeFormatter.compactUnitsStyle
-            let relative = formatter.localizedString(for: startDate, relativeTo: Date())
+            let relative = RelativeDateTimeFormatter.compactString(for: startDate)
             return LocalizedStringResource(
                 "Starts \(relative)",
                 comment: "Challenge that has not begun yet. %@ is a relative time ('in 3 days') or a date ('Nov 20')"

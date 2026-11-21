@@ -132,7 +132,7 @@ struct DreamDetailSheet: View {
                 Text(live.title)
                     .font(.system(size: 30, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
-                    .lineSpacing(1)
+                    .scriptAwareLineSpacing(1)
             }
             .padding(22)
         }
@@ -156,7 +156,7 @@ struct DreamDetailSheet: View {
                 Text(text)
                     .font(.system(size: 18, weight: .semibold, design: .rounded))
                     .foregroundStyle(Brand.textPrimary)
-                    .lineSpacing(4)
+                    .scriptAwareLineSpacing(4)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
@@ -173,7 +173,7 @@ struct DreamDetailSheet: View {
                 Text(text)
                     .font(.system(size: 15, design: .rounded))
                     .foregroundStyle(Brand.textPrimary)
-                    .lineSpacing(4)
+                    .scriptAwareLineSpacing(4)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
@@ -195,7 +195,7 @@ struct DreamDetailSheet: View {
                 Text(text)
                     .font(.system(size: 15, weight: .medium, design: .rounded))
                     .foregroundStyle(Brand.textPrimary)
-                    .lineSpacing(3)
+                    .scriptAwareLineSpacing(3)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }

@@ -164,7 +164,7 @@ struct AICoachHomeView: View {
                     .font(.system(size: 24, weight: .bold, design: .rounded))
                     .foregroundStyle(Brand.textPrimary)
                     .multilineTextAlignment(.center)
-                    .lineSpacing(2)
+                    .scriptAwareLineSpacing(2)
 
                 Text("Real support for real relationship problems.")
                     .font(.system(size: 14, weight: .regular, design: .rounded))
@@ -410,7 +410,7 @@ struct AICoachHomeView: View {
                 .font(.system(size: 11, design: .rounded))
                 .foregroundStyle(Brand.textTertiary)
                 .multilineTextAlignment(.center)
-                .lineSpacing(2)
+                .scriptAwareLineSpacing(2)
         }
     }
 

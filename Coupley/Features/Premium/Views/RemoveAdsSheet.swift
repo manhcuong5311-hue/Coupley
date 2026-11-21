@@ -238,7 +238,7 @@ struct RemoveAdsSheet: View {
                 if let url = URL(string: "https://manhcuong5311-hue.github.io/Coupley/") {
                     Link("Privacy Policy", destination: url)
                 }
-                Text(verbatim: "·").foregroundStyle(Brand.textTertiary)
+                Text(verbatim: ScriptSpacing.factMark).foregroundStyle(Brand.textTertiary)
                 if let url = URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/") {
                     Link("Terms of Use (EULA)", destination: url)
                 }

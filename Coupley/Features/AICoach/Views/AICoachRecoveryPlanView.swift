@@ -194,7 +194,7 @@ struct AICoachRecoveryPlanView: View {
                 Text(p.intro)
                     .font(.system(size: 14, design: .rounded))
                     .foregroundStyle(Brand.textSecondary)
-                    .lineSpacing(4)
+                    .scriptAwareLineSpacing(4)
                     .fixedSize(horizontal: false, vertical: true)
             }
             .padding(18)
@@ -258,7 +258,7 @@ struct AICoachRecoveryPlanView: View {
                                     Text(action)
                                         .font(.system(size: 14, design: .rounded))
                                         .foregroundStyle(Brand.textPrimary)
-                                        .lineSpacing(3)
+                                        .scriptAwareLineSpacing(3)
                                         .fixedSize(horizontal: false, vertical: true)
                                 }
                             }
@@ -308,7 +308,7 @@ struct AICoachRecoveryPlanView: View {
                 .font(.system(size: 13, design: .rounded))
                 .italic()
                 .foregroundStyle(Brand.textPrimary)
-                .lineSpacing(3)
+                .scriptAwareLineSpacing(3)
                 .padding(12)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(

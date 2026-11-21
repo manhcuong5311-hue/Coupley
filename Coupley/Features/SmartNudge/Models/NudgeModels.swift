@@ -87,9 +87,7 @@ struct NudgeRecord: Identifiable, Codable {
     }
 
     var relativeTime: String {
-        let formatter = RelativeDateTimeFormatter()
-        formatter.unitsStyle = RelativeDateTimeFormatter.compactUnitsStyle
-        return formatter.localizedString(for: timestamp, relativeTo: Date())
+        RelativeDateTimeFormatter.compactString(for: timestamp)
     }
 }
 

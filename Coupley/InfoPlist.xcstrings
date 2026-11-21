@@ -5,16 +5,76 @@
       "comment" : "App Tracking Transparency prompt shown before personalized ads.",
       "extractionState" : "manual",
       "localizations" : {
+        "af" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jou data sal gebruik word om vir jou meer relevante advertensies te wys. Jy kan dit enige tyd in Instellings verander."
+          }
+        },
+        "am" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ውሂብዎ ይበልጥ ተዛማጅ የሆኑ ማስታወቂያዎችን ለማሳየት ጥቅም ላይ ይውላል። ይህን በማንኛውም ጊዜ በቅንብሮች ውስጥ መቀየር ይችላሉ።"
+          }
+        },
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "ستُستخدم بياناتك لعرض إعلانات أكثر صلة بك. يمكنك تغيير ذلك في أي وقت من الإعدادات."
           }
         },
+        "as" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "আপোনাক অধিক প্ৰাসংগিক বিজ্ঞাপন দেখুৱাবলৈ আপোনাৰ ডেটা ব্যৱহাৰ কৰা হ'ব। আপুনি যিকোনো সময়তে ছেটিংছত ইয়াক সলনি কৰিব পাৰে।"
+          }
+        },
+        "az" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Məlumatların sənə daha uyğun reklamlar göstərmək üçün istifadə olunacaq. Bunu istənilən vaxt Ayarlarda dəyişə bilərsən."
+          }
+        },
+        "be" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Твае даныя будуць выкарыстоўвацца, каб паказваць табе больш дарэчную рэкламу. Змяніць гэта можна ў любы час у наладах."
+          }
+        },
+        "bg" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Данните ти ще се използват, за да ти показваме по-подходящи реклами. Можеш да промениш това по всяко време в Настройки."
+          }
+        },
+        "bn" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "তোমার ডেটা ব্যবহার করে তোমাকে আরও প্রাসঙ্গিক বিজ্ঞাপন দেখানো হবে। সেটিংস থেকে যেকোনো সময় এটা বদলাতে পারো।"
+          }
+        },
+        "bs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tvoji podaci koristit će se za prikaz relevantnijih reklama. Ovo možeš bilo kada promijeniti u Postavkama."
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les teves dades s'utilitzaran per mostrar-te anuncis més rellevants. Ho pots canviar quan vulguis a Configuració."
+          }
+        },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tvoje údaje použijeme k zobrazování relevantnějších reklam. Kdykoli to můžeš změnit v Nastavení."
+          }
+        },
+        "cy" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bydd dy ddata'n cael ei ddefnyddio i ddangos hysbysebion mwy perthnasol i ti. Gelli di newid hyn unrhyw bryd yn y Gosodiadau."
           }
         },
         "da" : {
@@ -47,6 +107,24 @@
             "value" : "Usaremos tus datos para mostrarte anuncios más relevantes. Puedes cambiarlo cuando quieras en Ajustes."
           }
         },
+        "et" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sinu andmeid kasutatakse sulle asjakohasemate reklaamide näitamiseks. Saad seda igal ajal seadetes muuta."
+          }
+        },
+        "eu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zure datuak iragarki interesgarriagoak erakusteko erabiliko dira. Edonoiz alda dezakezu hau Ezarpenetan."
+          }
+        },
+        "fa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "از داده‌هایت برای نمایش تبلیغ‌های مرتبط‌تر استفاده می‌شود. هر وقت خواستی می‌توانی این را در تنظیمات تغییر دهی."
+          }
+        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -65,6 +143,30 @@
             "value" : "Tes données serviront à t'afficher des publicités plus pertinentes. Tu peux changer cela à tout moment dans Réglages."
           }
         },
+        "ga" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Úsáidfear do shonraí chun fógraí níos ábhartha a thaispeáint duit. Is féidir leat é seo a athrú am ar bith sna Socruithe."
+          }
+        },
+        "gl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Os teus datos usaranse para mostrarche anuncios máis relevantes. Podes cambialo cando queiras en Axustes."
+          }
+        },
+        "gu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "તમારો ડેટા તમને વધુ સુસંગત જાહેરાતો બતાવવા માટે વપરાશે. તમે સેટિંગ્સમાં ક્યારેય પણ આ બદલી શકો છો."
+          }
+        },
+        "ha" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Za a yi amfani da bayananku don nuna muku tallace-tallace masu dacewa. Kuna iya canja wannan a kowane lokaci a Saituna."
+          }
+        },
         "he" : {
           "stringUnit" : {
             "state" : "translated",
@@ -77,16 +179,46 @@
             "value" : "आपके डेटा का इस्तेमाल आपको ज़्यादा काम के विज्ञापन दिखाने के लिए किया जाएगा। इसे कभी भी सेटिंग्स में बदला जा सकता है।"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tvoji podaci koristit će se za prikaz relevantnijih oglasa. To možeš promijeniti u bilo kojem trenutku u Postavkama."
+          }
+        },
+        "ht" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Done ou yo ap sèvi pou montre ou piblisite ki pi enteresan pou ou. Ou ka chanje sa nenpòt ki lè nan Paramèt."
+          }
+        },
         "hu" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Az adataidat arra használjuk, hogy relevánsabb reklámokat mutassunk neked. Ezt bármikor módosíthatod a Beállításokban."
           }
         },
+        "hy" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Քո տվյալները կօգտագործվեն՝ քեզ ավելի համապատասխան գովազդ ցուցադրելու համար։ Սա կարող ես փոխել ցանկացած պահի Կարգավորումներում։"
+          }
+        },
         "id" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Datamu akan digunakan untuk menampilkan iklan yang lebih relevan untukmu. Kamu bisa mengubahnya kapan saja di Pengaturan."
+          }
+        },
+        "ig" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A ga-eji data gị gosi gị mgbasa ozi kwesịrị gị karịa. Ị nwere ike ịgbanwe nke a mgbe ọ bụla na Ntọala."
+          }
+        },
+        "is" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gögnin þín verða notuð til að sýna þér auglýsingar sem eiga betur við þig. Þú getur breytt þessu hvenær sem er í Stillingum."
           }
         },
         "it" : {
@@ -101,10 +233,112 @@
             "value" : "データは、より関連性の高い広告を表示するために使用されます。この設定は「設定」からいつでも変更できます。"
           }
         },
+        "jv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Data panjenengan bakal dienggo kanggo nampilake iklan sing luwih cocog. Panjenengan bisa ngowahi iki kapan wae ing Setelan."
+          }
+        },
+        "ka" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "შენი მონაცემები გამოყენებული იქნება, რომ უფრო შესაბამისი რეკლამა გაჩვენოთ. ამის შეცვლა ნებისმიერ დროს შეგიძლია პარამეტრებში."
+          }
+        },
+        "kk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Деректерің саған қатыстырақ жарнама көрсету үшін пайдаланылады. Мұны кез келген уақытта Баптаулардан өзгерте аласың."
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ទិន្នន័យរបស់អ្នកនឹងត្រូវបានប្រើ ដើម្បីបង្ហាញពាណិជ្ជកម្មដែលពាក់ព័ន្ធនឹងអ្នកជាងមុន។ អ្នកអាចប្ដូរការកំណត់នេះបានគ្រប់ពេលនៅក្នុងការកំណត់។"
+          }
+        },
+        "kn" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ನಿಮಗೆ ಹೆಚ್ಚು ಸೂಕ್ತವಾದ ಜಾಹೀರಾತುಗಳನ್ನು ತೋರಿಸಲು ನಿಮ್ಮ ಡೇಟಾವನ್ನು ಬಳಸಲಾಗುತ್ತದೆ. ಇದನ್ನು ಸೆಟ್ಟಿಂಗ್‌ಗಳಲ್ಲಿ ಯಾವಾಗ ಬೇಕಾದರೂ ಬದಲಾಯಿಸಬಹುದು."
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "데이터는 더 관련성 높은 광고를 보여 드리는 데 사용돼요. 설정에서 언제든지 변경할 수 있어요."
+          }
+        },
+        "ku" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Daneyên te dê ji bo nîşandana reklamên ku bêtir li gorî te ne bên bikaranîn. Tu dikarî vê her dem di Mîhengan de biguherînî."
+          }
+        },
+        "ky" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Маалыматтарың сага ылайыктуураак жарнамаларды көрсөтүү үчүн колдонулат. Муну каалаган убакта Жөндөөлөрдөн өзгөртө аласың."
+          }
+        },
+        "lb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deng Donnéeë ginn benotzt, fir der méi passend Reklamm ze weisen. Du kanns dat ëmmer an den Astellungen änneren."
+          }
+        },
+        "lo" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ຂໍ້ມູນຂອງເຈົ້າຈະຖືກໃຊ້ເພື່ອສະແດງໂຄສະນາທີ່ກ່ຽວຂ້ອງກັບເຈົ້າຫຼາຍຂຶ້ນ ເຈົ້າສາມາດປ່ຽນໄດ້ທຸກເວລາໃນການຕັ້ງຄ່າ"
+          }
+        },
+        "lt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tavo duomenys bus naudojami, kad matytum tau aktualesnes reklamas. Tai bet kada gali pakeisti nustatymuose."
+          }
+        },
+        "lv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tavi dati tiks izmantoti, lai tev rādītu atbilstošākas reklāmas. To vari jebkurā laikā mainīt iestatījumos."
+          }
+        },
+        "mg" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hampiasaina ny angon-drakitrao mba hanehoana dokam-barotra mifanaraka kokoa aminao. Azonao ovaina amin'ny fotoana rehetra izany ao amin'ny Fikirana."
+          }
+        },
+        "mi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ka whakamahia ō raraunga hei whakaatu ki a koe i ngā pānui hoko e hāngai ake ana. Ka taea e koe te panoni i tēnei i ngā wā katoa i ngā Tautuhinga."
+          }
+        },
+        "mk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Твоите податоци ќе се користат за да ти прикажуваме порелевантни реклами. Ова можеш да го промениш во секое време во Поставки."
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "കൂടുതൽ പ്രസക്തമായ പരസ്യങ്ങൾ കാണിക്കാൻ നിങ്ങളുടെ ഡാറ്റ ഉപയോഗിക്കും. ക്രമീകരണങ്ങളിൽ എപ്പോൾ വേണമെങ്കിലും ഇത് മാറ്റാം."
+          }
+        },
+        "mn" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Чиний өгөгдлийг илүү хамааралтай зар харуулахад ашиглана. Үүнийг хүссэн үедээ Тохиргооноос өөрчилж болно."
+          }
+        },
+        "mr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "तुमचा डेटा तुम्हाला अधिक उपयुक्त जाहिराती दाखवण्यासाठी वापरला जाईल. तुम्ही हे सेटिंग्जमध्ये कधीही बदलू शकता."
           }
         },
         "ms" : {
@@ -113,10 +347,28 @@
             "value" : "Data anda akan digunakan untuk menunjukkan iklan yang lebih relevan kepada anda. Anda boleh menukar pilihan ini pada bila-bila masa dalam Tetapan."
           }
         },
+        "mt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Id-data tiegħek se tintuża biex nurulek reklami aktar rilevanti. Tista' tibdel dan meta trid fl-Issettjar."
+          }
+        },
+        "my" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "သင်နှင့် ပိုသက်ဆိုင်တဲ့ ကြော်ငြာများ ပြသရန် သင့်ဒေတာကို အသုံးပြုပါမယ်။ ဆက်တင်များမှာ အချိန်မရွေး ပြောင်းလဲနိုင်ပါတယ်။"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dataene dine brukes til å vise deg mer relevant reklame. Du kan endre dette når som helst i Innstillinger."
+          }
+        },
+        "ne" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "तपाईंलाई अझ सान्दर्भिक विज्ञापन देखाउन तपाईंको डेटा प्रयोग गरिनेछ। तपाईं यसलाई जुनसुकै बेला सेटिङमा गएर बदल्न सक्नुहुन्छ।"
           }
         },
         "nl" : {
@@ -125,16 +377,52 @@
             "value" : "Je gegevens worden gebruikt om je relevantere advertenties te tonen. Je kunt dit altijd wijzigen in Instellingen."
           }
         },
+        "ny" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zinthu zanu zidzagwiritsidwa ntchito kukuonetsani zotsatsa zogwirizana nanu kwambiri. Mutha kusintha izi nthawi iliyonse mu Zokonda."
+          }
+        },
+        "om" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Daataan kee beeksisa daldalaa siif caalaatti barbaachisan siif agarsiisuuf itti fayyadamama. Kana yeroo kamiyyuu Qindaa'ina keessatti jijjiiruu dandeessa."
+          }
+        },
+        "or" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ଆପଣଙ୍କୁ ଅଧିକ ପ୍ରାସଙ୍ଗିକ ବିଜ୍ଞାପନ ଦେଖାଇବା ପାଇଁ ଆପଣଙ୍କ ଡାଟା ବ୍ୟବହାର କରାଯିବ। ଆପଣ ଯେକୌଣସି ସମୟରେ ସେଟିଂସ୍‌ରେ ଏହା ବଦଳାଇପାରିବେ।"
+          }
+        },
+        "pa" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ਤੁਹਾਡੇ ਡਾਟਾ ਦੀ ਵਰਤੋਂ ਤੁਹਾਨੂੰ ਵਧੇਰੇ ਢੁੱਕਵੇਂ ਇਸ਼ਤਿਹਾਰ ਦਿਖਾਉਣ ਲਈ ਕੀਤੀ ਜਾਵੇਗੀ। ਤੁਸੀਂ ਇਸ ਨੂੰ ਕਦੇ ਵੀ ਸੈਟਿੰਗਾਂ ਵਿੱਚ ਬਦਲ ਸਕਦੇ ਹੋ।"
+          }
+        },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Twoje dane posłużą do wyświetlania reklam lepiej dopasowanych do ciebie. W każdej chwili możesz to zmienić w Ustawieniach."
           }
         },
+        "ps" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ستاسو معلومات به د دې لپاره کارول کېږي چې تاسو ته نور اړوند اعلانونه وښودل شي. تاسو کولی شئ دا هر وخت په تنظیماتو کې بدل کړئ."
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Seus dados serão usados para mostrar anúncios mais relevantes para você. Você pode mudar isso quando quiser nos Ajustes."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Os teus dados vão ser usados para te mostrar anúncios mais relevantes. Podes mudar isto a qualquer momento nas Definições."
           }
         },
         "ro" : {
@@ -149,16 +437,106 @@
             "value" : "Твои данные будут использоваться, чтобы показывать более подходящую рекламу. Это можно изменить в любой момент в Настройках."
           }
         },
+        "rw" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Amakuru yawe azakoreshwa kugira ngo werekwe amatangazo akureba kurushaho. Ushobora kubihindura igihe icyo ari cyo cyose mu Igenamiterere."
+          }
+        },
+        "si" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ඔබට වඩාත් අදාළ දැන්වීම් පෙන්වීමට ඔබේ දත්ත භාවිත කෙරේ. ඔබට ඕනෑම වේලාවක සැකසීම් තුළ මෙය වෙනස් කළ හැක."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tvoje údaje sa použijú na zobrazovanie relevantnejších reklám. Kedykoľvek to môžeš zmeniť v Nastaveniach."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tvoji podatki bodo uporabljeni za prikaz ustreznejših oglasov. To lahko kadar koli spremeniš v Nastavitvah."
+          }
+        },
+        "sn" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ruzivo rwako ruchashandiswa kukuratidza zvekushambadza zvakakodzera iwe. Unogona kuchinja izvi chero nguva muMarongero."
+          }
+        },
+        "so" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Xogtaada waxaa loo isticmaali doonaa in laguu muujiyo xayeysiisyo kuu habboon. Waxaad tan ku beddeli kartaa goor kasta Dejinta."
+          }
+        },
+        "sq" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Të dhënat e tua do të përdoren për të të shfaqur reklama më të përshtatshme. Mund ta ndryshosh këtë në çdo kohë te Cilësimet."
+          }
+        },
+        "sr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Твоји подаци ће се користити за приказ релевантнијих огласа. Ово можеш да промениш било када у Подешавањима."
+          }
+        },
+        "su" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Data anjeun bakal dianggo kanggo mintonkeun iklan anu langkung cocog. Anjeun tiasa ngarobih ieu iraha waé di Setélan."
+          }
+        },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dina data används för att visa dig mer relevanta annonser. Du kan ändra det när som helst i Inställningar."
           }
         },
+        "sw" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Data yako itatumika kukuonyesha matangazo yanayokufaa zaidi. Unaweza kubadilisha hili wakati wowote katika Mipangilio."
+          }
+        },
+        "ta" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "உங்களுக்குப் பொருத்தமான விளம்பரங்களைக் காட்ட உங்கள் தரவு பயன்படுத்தப்படும். இதை எப்போது வேண்டுமானாலும் அமைப்புகளில் மாற்றலாம்."
+          }
+        },
+        "te" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "మీకు మరింత సంబంధిత ప్రకటనలు చూపించడానికి మీ డేటా ఉపయోగించబడుతుంది. దీన్ని ఎప్పుడైనా సెట్టింగ్‌లలో మార్చవచ్చు."
+          }
+        },
+        "tg" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Маълумоти ту барои нишон додани рекламаи мувофиқтар истифода мешавад. Инро ҳар вақт дар Танзимот тағйир дода метавонӣ."
+          }
+        },
         "th" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "ข้อมูลของคุณจะถูกใช้เพื่อแสดงโฆษณาที่ตรงกับความสนใจของคุณมากขึ้น คุณเปลี่ยนการตั้งค่านี้ได้ทุกเมื่อในการตั้งค่า"
+          }
+        },
+        "ti" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ሓበሬታኹም ዝያዳ ዝምልከተኩም መወዓውዒታት ንምርኣይ ክጥቀመሉ እዩ። ኣብ ቅጥዕታት ኣብ ዝኾነ ግዜ ክትቕይርዎ ትኽእሉ ኢኹም።"
+          }
+        },
+        "tk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maglumatlaryň saňa has laýyk mahabatlary görkezmek üçin ulanylar. Muny islän wagtyň Sazlamalarda üýtgedip bilersiň."
           }
         },
         "tr" : {
@@ -173,10 +551,40 @@
             "value" : "Твої дані використовуватимуться, щоб показувати тобі релевантнішу рекламу. Це можна будь-коли змінити в Налаштуваннях."
           }
         },
+        "ur" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "آپ کا ڈیٹا آپ کو زیادہ موزوں اشتہارات دکھانے کے لیے استعمال کیا جائے گا۔ اسے کسی بھی وقت ترتیبات میں بدلا جا سکتا ہے۔"
+          }
+        },
+        "uz" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maʼlumotlaringiz sizga koʻproq mos reklamalarni koʻrsatish uchun ishlatiladi. Buni istalgan vaqtda Sozlamalarda oʻzgartirishingiz mumkin."
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dữ liệu của bạn sẽ được dùng để hiển thị quảng cáo phù hợp hơn với bạn. Bạn có thể thay đổi lựa chọn này bất cứ lúc nào trong Cài đặt."
+          }
+        },
+        "xh" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Idatha yakho iza kusetyenziswa ukukubonisa iintengiso ezikufaneleyo ngakumbi. Ungakutshintsha oku nanini na kwiiSetingi."
+          }
+        },
+        "yo" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A ó lo dátà yín láti fi ìpolówó tó bá yín mu jù hàn yín. Ẹ lè yí èyí padà nígbàkúgbà nínú Ètò."
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你的資料將用於向你顯示更相關的廣告。你可隨時在「設定」中更改。"
           }
         },
         "zh-Hans" : {
@@ -189,6 +597,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "你的資料將用於顯示與你更相關的廣告。你隨時可以在「設定」中變更此選項。"
+          }
+        },
+        "zu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Idatha yakho izosetshenziselwa ukukubonisa izikhangiso ezihambisana nawe kakhudlwana. Ungakushintsha lokhu noma nini kuZilungiselelo."
           }
         }
       }

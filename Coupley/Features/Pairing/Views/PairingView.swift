@@ -74,7 +74,7 @@ struct PairingView: View {
                     .font(.system(size: 15, weight: .regular, design: .rounded))
                     .foregroundStyle(Brand.textSecondary)
                     .multilineTextAlignment(.center)
-                    .lineSpacing(3)
+                    .scriptAwareLineSpacing(3)
                     .padding(.horizontal, 16)
             }
 
@@ -157,7 +157,7 @@ struct PairingView: View {
                         .font(.system(size: 14, weight: .regular, design: .rounded))
                         .foregroundStyle(Brand.textSecondary)
                         .multilineTextAlignment(.center)
-                        .lineSpacing(3)
+                        .scriptAwareLineSpacing(3)
                 }
 
                 // Code display

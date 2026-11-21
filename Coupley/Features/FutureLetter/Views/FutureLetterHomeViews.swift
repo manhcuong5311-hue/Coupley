@@ -105,7 +105,7 @@ struct FutureLetterRowContent: View {
             // The trailing items keep their full width: the title and the
             // detail truncate first, never "40…" for "400 days".
             if extraCount > 0 {
-                Text(verbatim: "+\(extraCount)")
+                Text(verbatim: "+\(extraCount.formatted())")
                     .font(.system(size: 10, weight: .semibold, design: .rounded))
                     .foregroundStyle(FutureLetterStyle.accent)
                     .padding(.horizontal, 7)

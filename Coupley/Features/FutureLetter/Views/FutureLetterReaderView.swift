@@ -176,7 +176,7 @@ struct FutureLetterReaderView: View {
         Text("It stays locked until then — on Coupley's servers, not just on this screen. When the moment comes, it'll be waiting for you on Home.")
             .font(BrandType.body)
             .foregroundStyle(Brand.textSecondary)
-            .lineSpacing(2)
+            .scriptAwareLineSpacing(2)
             .fixedSize(horizontal: false, vertical: true)
 
         notificationLine
@@ -527,7 +527,7 @@ struct FutureLetterReaderView: View {
         Text(text)
             .font(.system(size: 17, design: .rounded))
             .foregroundStyle(Brand.textPrimary)
-            .lineSpacing(5)
+            .scriptAwareLineSpacing(5)
             .textSelection(.enabled)
             .frame(maxWidth: .infinity, alignment: .leading)
     }

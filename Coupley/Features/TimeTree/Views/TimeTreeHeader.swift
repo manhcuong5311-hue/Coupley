@@ -197,7 +197,7 @@ struct TimeTreeHeader: View {
                 ViewThatFits(in: .horizontal) {
                     // One Text, so the spaces around the dot stay on both sides
                     // in right-to-left languages too.
-                    (sinceText + Text(verbatim: " · ") + editLinkText)
+                    (sinceText + Text(verbatim: ScriptSpacing.factSeparator) + editLinkText)
                         .lineLimit(1)
                     VStack(alignment: .leading, spacing: 2) {
                         sinceText

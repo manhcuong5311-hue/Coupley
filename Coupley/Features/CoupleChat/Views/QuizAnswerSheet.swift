@@ -269,7 +269,7 @@ struct QuizAnswerSheet: View {
                 .font(.system(size: 14, weight: .regular, design: .rounded))
                 .foregroundStyle(Brand.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
-                .lineSpacing(2)
+                .scriptAwareLineSpacing(2)
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)

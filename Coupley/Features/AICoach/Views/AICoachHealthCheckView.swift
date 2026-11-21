@@ -150,6 +150,7 @@ struct AICoachHealthCheckView: View {
                         )
                         .frame(width: 140, height: 140)
                         .rotationEffect(.degrees(-90))
+                        .ringStartsAtTop()
 
                     VStack(spacing: 2) {
                         Text(h.overall, format: .number)
@@ -200,7 +201,7 @@ struct AICoachHealthCheckView: View {
                 Text(h.summary)
                     .font(.system(size: 14, design: .rounded))
                     .foregroundStyle(Brand.textPrimary)
-                    .lineSpacing(4)
+                    .scriptAwareLineSpacing(4)
                     .fixedSize(horizontal: false, vertical: true)
             }
             .padding(18)
@@ -227,7 +228,7 @@ struct AICoachHealthCheckView: View {
                             Text(flag)
                                 .font(.system(size: 13, design: .rounded))
                                 .foregroundStyle(Brand.textPrimary)
-                                .lineSpacing(3)
+                                .scriptAwareLineSpacing(3)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                     }

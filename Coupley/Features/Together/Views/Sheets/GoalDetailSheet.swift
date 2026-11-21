@@ -309,7 +309,7 @@ struct GoalDetailSheet: View {
                 Text(note)
                     .font(.system(size: 16, weight: .medium, design: .rounded))
                     .foregroundStyle(Brand.textPrimary)
-                    .lineSpacing(4)
+                    .scriptAwareLineSpacing(4)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }

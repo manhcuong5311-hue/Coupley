@@ -219,7 +219,7 @@ struct FutureLettersView: View {
                 Text("Pick a day — an anniversary, a birthday, the end of a hard week. It's pinned on Home for both of you, and \(partnerName) can open it only when that moment comes.")
                     .font(.system(size: 14, design: .rounded))
                     .foregroundStyle(Brand.textSecondary)
-                    .lineSpacing(2)
+                    .scriptAwareLineSpacing(2)
                     .fixedSize(horizontal: false, vertical: true)
             }
             .multilineTextAlignment(.center)

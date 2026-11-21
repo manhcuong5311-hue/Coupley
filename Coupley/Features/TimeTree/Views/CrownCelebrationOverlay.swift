@@ -150,7 +150,7 @@ struct CrownCelebrationOverlay: View {
                     .font(JourneyFont.body)
                     .foregroundStyle(.white)
                     .multilineTextAlignment(.center)
-                    .lineSpacing(3)
+                    .scriptAwareLineSpacing(3)
                     .fixedSize(horizontal: false, vertical: true)
                     .padding(.horizontal, 36)
                     .padding(.top, 4)

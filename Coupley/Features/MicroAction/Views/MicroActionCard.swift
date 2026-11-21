@@ -147,7 +147,7 @@ struct MicroActionCard: View {
                 .font(isHero ? BrandType.hero : BrandType.title)
                 .foregroundStyle(Brand.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
-                .lineSpacing(2)
+                .scriptAwareLineSpacing(2)
                 .strikethrough(action.status == .done, color: Brand.textTertiary)
 
             HStack(alignment: .top, spacing: 6) {
@@ -159,7 +159,7 @@ struct MicroActionCard: View {
                     .font(.system(size: 12, weight: .regular, design: .rounded))
                     .foregroundStyle(Brand.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
-                    .lineSpacing(2)
+                    .scriptAwareLineSpacing(2)
             }
 
             if action.status == .pending || action.status == .snoozed {

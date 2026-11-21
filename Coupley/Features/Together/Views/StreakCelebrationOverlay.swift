@@ -62,7 +62,7 @@ struct StreakCelebrationOverlay: View {
                         .font(.system(size: 14, weight: .regular, design: .rounded))
                         .foregroundStyle(.white.opacity(0.78))
                         .multilineTextAlignment(.center)
-                        .lineSpacing(2)
+                        .scriptAwareLineSpacing(2)
                         .padding(.horizontal, 36)
                         .padding(.top, 4)
                 }

@@ -1098,7 +1098,7 @@ struct CoupleDashboardView: View {
                     .font(.system(size: 14, weight: .regular, design: .rounded))
                     .foregroundStyle(Brand.textSecondary)
                     .multilineTextAlignment(.center)
-                    .lineSpacing(3)
+                    .scriptAwareLineSpacing(3)
             }
         }
         .frame(maxWidth: .infinity)
@@ -1188,7 +1188,7 @@ struct CoupleDashboardView: View {
                         .foregroundStyle(Brand.textSecondary)
                         .italic()
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .lineSpacing(2)
+                        .scriptAwareLineSpacing(2)
                 }
                 .padding(14)
                 // A nested panel is always one step DOWN its own card's
@@ -1340,9 +1340,7 @@ struct CoupleDashboardView: View {
         guard let lastSeen = viewModel.partnerLastSeen else {
             return LocalizedStringResource("No recent activity", comment: "Home presence row: your partner has not been seen lately")
         }
-        let formatter = RelativeDateTimeFormatter()
-        formatter.unitsStyle = RelativeDateTimeFormatter.compactUnitsStyle
-        let relative = formatter.localizedString(for: lastSeen, relativeTo: Date())
+        let relative = RelativeDateTimeFormatter.compactString(for: lastSeen)
         // One key with the relative time as its argument. Was "Last seen " +
         // the formatter's output: an English frame around a localized phrase.
         return LocalizedStringResource("Last seen \(relative)",

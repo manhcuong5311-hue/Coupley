@@ -233,7 +233,7 @@ struct PremiumLockOverlay: View {
                         .font(.system(size: 13, weight: .regular, design: .rounded))
                         .foregroundStyle(Brand.textSecondary)
                         .multilineTextAlignment(.center)
-                        .lineSpacing(2)
+                        .scriptAwareLineSpacing(2)
                         .padding(.horizontal, 24)
                 }
                 .padding(.vertical, 24)

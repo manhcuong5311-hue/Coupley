@@ -127,7 +127,7 @@ struct MoodCheckinView: View {
                 Text("How are you feeling today?")
                     .font(BrandType.display)
                     .foregroundStyle(Brand.textPrimary)
-                    .lineSpacing(2)
+                    .scriptAwareLineSpacing(2)
                     .lineLimit(2)
                     .minimumScaleFactor(0.72)
             }
@@ -204,7 +204,7 @@ struct MoodCheckinView: View {
                 .font(BrandType.body)
                 .foregroundStyle(Brand.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
-                .lineSpacing(3)
+                .scriptAwareLineSpacing(3)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }

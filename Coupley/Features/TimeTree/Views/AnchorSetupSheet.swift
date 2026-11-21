@@ -204,7 +204,7 @@ struct AnchorSetupSheet: View {
                     .font(JourneyFont.body)
                     .foregroundStyle(Brand.textSecondary)
                     .multilineTextAlignment(.center)
-                    .lineSpacing(3)
+                    .scriptAwareLineSpacing(3)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }

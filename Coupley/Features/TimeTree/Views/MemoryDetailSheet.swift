@@ -150,7 +150,7 @@ struct MemoryDetailSheet: View {
             Text("Kept out of sight in the app until the unlock day, for both of you.")
                 .font(JourneyFont.body)
                 .foregroundStyle(Brand.textSecondary)
-                .lineSpacing(2)
+                .scriptAwareLineSpacing(2)
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.horizontal, 4)
         }
@@ -285,7 +285,7 @@ struct MemoryDetailSheet: View {
                 Text(note)
                     .font(JourneyFont.body)
                     .foregroundStyle(Brand.textPrimary)
-                    .lineSpacing(3)
+                    .scriptAwareLineSpacing(3)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .fixedSize(horizontal: false, vertical: true)
                     .textSelection(.enabled)

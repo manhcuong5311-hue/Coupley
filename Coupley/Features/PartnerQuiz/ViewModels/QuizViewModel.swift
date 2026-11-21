@@ -145,10 +145,7 @@ final class QuizViewModel: ObservableObject {
     }
 
     func updateTextInput(_ text: String) {
-        let items = text
-            .components(separatedBy: ",")
-            .map { $0.trimmingCharacters(in: .whitespaces) }
-        currentAnswer.textValues = items
+        currentAnswer.textValues = QuizListText.items(in: text)
     }
 
     // MARK: - Private

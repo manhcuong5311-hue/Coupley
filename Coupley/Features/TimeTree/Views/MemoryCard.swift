@@ -102,7 +102,7 @@ struct MemoryCard: View {
                     .foregroundStyle(Brand.textPrimary.opacity(0.92))
                     .lineLimit(4)
                     .multilineTextAlignment(.leading)
-                    .lineSpacing(2)
+                    .scriptAwareLineSpacing(2)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
 

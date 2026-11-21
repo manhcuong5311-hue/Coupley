@@ -173,6 +173,10 @@ struct GardenScenePage: View {
                     await load(keys, swiping: isSwiping)
                 }
         }
+        // The scene is a painting, not a layout: in a right-to-left language
+        // the tree's offsets would mirror while the drawn backdrop does not,
+        // and the tree would leave the end of its path.
+        .environment(\.layoutDirection, .leftToRight)
         .clipped()
         .accessibilityHidden(true)
         .task(id: playback?.id) { await waitForPlaybackEnd() }

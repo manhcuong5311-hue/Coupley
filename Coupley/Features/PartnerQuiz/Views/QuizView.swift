@@ -222,7 +222,7 @@ struct QuizView: View {
     private func freeTextInput(placeholder: String, allowsMultiple: Bool) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             TextField(placeholder, text: Binding(
-                get: { viewModel.currentAnswer.textValues.joined(separator: ", ") },
+                get: { QuizListText.text(for: viewModel.currentAnswer.textValues) },
                 set: { viewModel.updateTextInput($0) }
             ), axis: .vertical)
                 .lineLimit(2...4)
@@ -419,7 +419,10 @@ private struct SummaryRow: View {
                         .font(.caption)
                         .foregroundStyle(Brand.textSecondary)
 
-                    Text(values.filter { !$0.isEmpty }.joined(separator: ", "))
+                    // With the comma the answer field itself writes. Not
+                    // the list formatter: its narrow style runs Thai items
+                    // together with spaces and drops a space in Nepali.
+                    Text(QuizListText.text(for: values.filter { !$0.isEmpty }))
                         .font(.subheadline)
                         .fontWeight(.medium)
                         .foregroundStyle(Brand.textPrimary)

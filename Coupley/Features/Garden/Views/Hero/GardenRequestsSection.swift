@@ -265,7 +265,7 @@ struct GardenRequestsSection: View {
     /// "Text · Link" with the link tappable, wrapping as one sentence.
     private func inlineLink(_ text: String, link: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            (Text(text) + Text(verbatim: " · ") + Text(link).foregroundStyle(Brand.accentStart))
+            (Text(text) + Text(verbatim: ScriptSpacing.factSeparator) + Text(link).foregroundStyle(Brand.accentStart))
                 .font(JourneyFont.body)
                 .foregroundStyle(Brand.textSecondary)
                 .frame(maxWidth: .infinity, alignment: .leading)

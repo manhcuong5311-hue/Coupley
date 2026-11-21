@@ -37,14 +37,14 @@ struct WelcomeStepView: View {
                         .font(.system(size: 30, weight: .bold, design: .rounded))
                         .foregroundStyle(Brand.textPrimary)
                         .multilineTextAlignment(.center)
-                        .lineSpacing(4)
+                        .scriptAwareLineSpacing(4)
                         .fixedSize(horizontal: false, vertical: true)
 
                     Text("Coupley helps the two of you stay close — quietly, every day. No drama, no streaks for the sake of streaks. Just little reminders that you're loved.")
                         .font(.system(size: 16, weight: .regular, design: .rounded))
                         .foregroundStyle(Brand.textSecondary)
                         .multilineTextAlignment(.center)
-                        .lineSpacing(4)
+                        .scriptAwareLineSpacing(4)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 .padding(.horizontal, 12)
