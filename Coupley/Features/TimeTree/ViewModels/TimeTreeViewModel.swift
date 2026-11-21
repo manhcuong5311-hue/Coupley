@@ -563,11 +563,21 @@ final class TimeTreeViewModel: ObservableObject {
     }
 
     private func handleRemoteMemoriesUpdate(_ items: [TimeMemory]) {
-        if memories != items { memories = items }
+        let shown = Self.shownMemories(items)
+        if memories != shown { memories = shown }
         redactedCacheIds = []
         if !hasReceivedFirstUpdate { hasReceivedFirstUpdate = true }
         if !hasReceivedListenerUpdate { hasReceivedListenerUpdate = true }
         saveMemoriesCache(items)
+    }
+
+    /// The memories as drawn. Only screenshot builds (`-coupleyDemoData`,
+    /// Debug) retitle them; the cache always keeps the real ones.
+    private static func shownMemories(_ items: [TimeMemory]) -> [TimeMemory] {
+        #if DEBUG
+        if let demo = DemoContent.current { return demo.memories(items) }
+        #endif
+        return items
     }
 
     /// `nil` here means the server has no start date (the service never
@@ -635,7 +645,7 @@ final class TimeTreeViewModel: ObservableObject {
            let data = defaults.data(forKey: memoryCacheKey),
            let items = try? JSONDecoder().decode([MemoryDTO].self, from: data),
            !items.isEmpty {
-            memories = items.map(\.memory)
+            memories = Self.shownMemories(items.map(\.memory))
             redactedCacheIds = Set(items.filter { $0.redacted == true }.map(\.id))
             hasReceivedFirstUpdate = true
         }

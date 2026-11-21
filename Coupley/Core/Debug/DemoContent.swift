@@ -60,6 +60,16 @@ struct DemoContent {
         }
     }
 
+    /// Memories titled with their kind in the app's language ("First kiss"
+    /// becomes "Nụ hôn đầu"), so a test couple's English titles never show.
+    func memories(_ items: [TimeMemory]) -> [TimeMemory] {
+        items.map { memory in
+            var shown = memory
+            shown.title = memory.kind.displayName
+            return shown
+        }
+    }
+
     /// The thread with the couple's typed messages and photos replaced by the
     /// demo conversation, placed after the last quiz or system card.
     func chat(replacingTextIn messages: [ChatMessage], me: String, partner: String) -> [ChatMessage] {
