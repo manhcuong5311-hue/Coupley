@@ -152,6 +152,18 @@ struct NotificationSettingsView: View {
                     subtitle: "Your partner reacts to your mood",
                     isOn: preferenceBinding(\.partnerReaction)
                 )
+                if GardenFeature.isEnabled {
+                    rowDivider
+                    toggleRow(
+                        icon: "leaf.fill",
+                        iconColor: Color(red: 0.25, green: 0.72, blue: 0.42),
+                        title: LocalizedStringResource("Garden",
+                                                       comment: "Notification settings: toggle for the shared garden on Journey"),
+                        subtitle: LocalizedStringResource("Waterings, seeds and two gentle reminders",
+                                                          comment: "Notification settings: under the Garden toggle; what it covers (partner waterings, tree seeds, two local reminders to water)"),
+                        isOn: preferenceBinding(\.garden)
+                    )
+                }
             }
         }
         .background(surfaceCard)

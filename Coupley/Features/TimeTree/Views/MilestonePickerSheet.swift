@@ -3,9 +3,9 @@
 //  Coupley
 //
 //  The chooser behind Journey's + button: the preset milestone kinds, a
-//  custom moment and, when the presenter can write letters, a future letter
-//  for the partner. Picking a kind hands it back and closes; the presenter
-//  opens MemoryEditorSheet once this sheet is gone.
+//  custom moment, a future letter for the partner when the presenter can
+//  write letters, and a new tree when the garden has room. Picking hands it
+//  back and closes; the presenter opens the next sheet once this one is gone.
 //
 //  Kinds already in the timeline say when they were added, but stay
 //  tappable: a couple can have more than one first trip.
@@ -25,6 +25,9 @@ struct MilestonePickerSheet: View {
     let onPick: (MemoryKind) -> Void
     /// Offered as the first row when non-nil.
     let onWriteLetter: (() -> Void)?
+    /// Offered as the first row (above the letter) when non-nil: the garden
+    /// is ready, a start date exists and fewer than 8 trees stand.
+    let onPlantTree: (() -> Void)?
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
@@ -32,11 +35,13 @@ struct MilestonePickerSheet: View {
     init(loggedDates: [MemoryKind: Date],
          partnerName: String,
          onPick: @escaping (MemoryKind) -> Void,
-         onWriteLetter: (() -> Void)? = nil) {
+         onWriteLetter: (() -> Void)? = nil,
+         onPlantTree: (() -> Void)? = nil) {
         self.loggedDates = loggedDates
         self.partnerName = partnerName
         self.onPick = onPick
         self.onWriteLetter = onWriteLetter
+        self.onPlantTree = onPlantTree
     }
 
     /// Two columns, or one once the text is too large to share a row.
@@ -67,6 +72,10 @@ struct MilestonePickerSheet: View {
                     }
                     .padding(.horizontal, 4)
 
+                    if let onPlantTree {
+                        treeRow(onPlantTree)
+                    }
+
                     if let onWriteLetter {
                         letterRow(onWriteLetter)
                     }
@@ -93,6 +102,47 @@ struct MilestonePickerSheet: View {
                 }
             }
         }
+    }
+
+    // MARK: - Tree row
+
+    private func treeRow(_ onPlantTree: @escaping () -> Void) -> some View {
+        Button {
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            onPlantTree()
+            dismiss()
+        } label: {
+            BrandCard(tier: .chip) {
+                HStack(spacing: 12) {
+                    Image(systemName: "leaf.fill")
+                        .font(JourneyFont.title)
+                        .foregroundStyle(Brand.accentStart)
+                        .frame(width: 28)
+                        .accessibilityHidden(true)
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Plant a tree", comment: "Journey + picker: row that opens the plant sheet for a new garden tree")
+                            .font(JourneyFont.label)
+                            .foregroundStyle(Brand.textPrimary)
+                        Text("For a place that matters to you two",
+                             comment: "Journey + picker: under 'Plant a tree'")
+                            .font(JourneyFont.meta)
+                            .foregroundStyle(Brand.textSecondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .multilineTextAlignment(.leading)
+
+                    Spacer(minLength: 0)
+
+                    // `forward` mirrors in right-to-left languages.
+                    Image(systemName: "chevron.forward")
+                        .font(JourneyFont.meta)
+                        .foregroundStyle(Brand.textTertiary)
+                        .accessibilityHidden(true)
+                }
+            }
+        }
+        .buttonStyle(BouncyButtonStyle(scale: 0.98))
     }
 
     // MARK: - Letter row
@@ -124,7 +174,8 @@ struct MilestonePickerSheet: View {
 
                     Spacer(minLength: 0)
 
-                    Image(systemName: "chevron.right")
+                    // As the tree row above, so the two point the same way.
+                    Image(systemName: "chevron.forward")
                         .font(JourneyFont.meta)
                         .foregroundStyle(Brand.textTertiary)
                         .accessibilityHidden(true)

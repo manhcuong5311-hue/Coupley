@@ -197,24 +197,39 @@ final class NotificationService: NSObject, NotificationServiceProtocol {
 
     func saveFCMToken(_ token: String, userId: String) async throws {
         guard !userId.isEmpty else { return }
-        try await db.collection(FirestorePath.users).document(userId).setData([
+        var fields: [String: Any] = [
             "fcmToken":       token,
             "tokenUpdatedAt": FieldValue.serverTimestamp(),
             "platform":       "ios",
             "appVersion":     Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
-        ], merge: true)
+        ]
+        // Garden pushes go only to a device that runs a garden build: the
+        // server sends them when `gardenPushToken == fcmToken`, so both are
+        // written in this one merge. A legacy build that saves its token
+        // later replaces only `fcmToken`, and garden pushes stop reaching it.
+        // A build without the garden never sets it, and clears one an
+        // earlier garden build on this device left with the same token (a
+        // no-op for an account that never had one), so garden pushes stop.
+        if GardenFeature.isEnabled {
+            fields[GardenField.gardenPushToken] = token
+        } else {
+            fields[GardenField.gardenPushToken] = FieldValue.delete()
+        }
+        try await db.collection(FirestorePath.users).document(userId).setData(fields, merge: true)
         log(.success, category: "FCM",
             "Saved token for \(userId.prefix(8))…")
     }
 
-    /// Wipes the FCM token field on a user doc — used during sign-out so
-    /// pushes don't trail to a device that no longer holds the account.
+    /// Wipes the FCM token fields on a user doc — used during sign-out so
+    /// pushes (garden pushes included) don't trail to a device that no
+    /// longer holds the account.
     func clearFCMToken(for userId: String) async {
         guard !userId.isEmpty else { return }
         do {
             try await db.collection(FirestorePath.users).document(userId).updateData([
-                "fcmToken":       FieldValue.delete(),
-                "tokenUpdatedAt": FieldValue.serverTimestamp()
+                "fcmToken":                   FieldValue.delete(),
+                GardenField.gardenPushToken:  FieldValue.delete(),
+                "tokenUpdatedAt":             FieldValue.serverTimestamp()
             ])
             log(.info, category: "FCM",
                 "Cleared token for \(userId.prefix(8))…")

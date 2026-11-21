@@ -14,6 +14,7 @@ const { getFirestore, FieldValue, Timestamp } = require("firebase-admin/firestor
 const { getMessaging } = require("firebase-admin/messaging");
 const { getStorage } = require("firebase-admin/storage");
 const OpenAI = require("openai");
+const garden = require("./garden");
 
 initializeApp();
 
@@ -327,6 +328,10 @@ function setCors(req, res) {
  *
  * Never trusts client-provided context — always reads from Firestore using
  * the verified userId.  Returns a structured object used in all AI prompts.
+ *
+ * The garden (`couples/{c}/timeTreeMeta`: trees, their places, watering
+ * notes, seeds) must never be read here or sent to the AI: the privacy page
+ * promises places and notes stay between the two partners.
  */
 async function buildRelationshipContext(userId, coupleId) {
   // --- Tier-1 fetches (always needed) ---
@@ -818,7 +823,17 @@ async function sendNotification(userId, type, title, body, data = {}, options = 
   // Real-time channels (chat, quiz answers) bypass the per-day cap and
   // the duplicate-type gate — those gates exist to prevent spammy nudges,
   // not to throttle direct partner-to-partner messages.
-  const { skipRateLimit = false, skipDuplicateCheck = false, threadId = "coupley-nudge" } = options;
+  //
+  // `quiet`: a passive push (no sound, no badge) for the recipient's night.
+  // `contentAvailable`: the alert also wakes a suspended app's
+  // didReceiveRemoteNotification (garden waterings re-plan local reminders).
+  const {
+    skipRateLimit = false,
+    skipDuplicateCheck = false,
+    threadId = "coupley-nudge",
+    quiet = false,
+    contentAvailable = false,
+  } = options;
 
   if (!skipRateLimit && !(await canSendNotification(userId))) {
     console.log(`[Notify] Rate limit reached for ${userId}. Skipping.`);
@@ -841,6 +856,34 @@ async function sendNotification(userId, type, title, body, data = {}, options = 
     Object.entries({ type, ...data }).map(([k, v]) => [k, String(v ?? "")])
   );
 
+  // The Functions emulator (it sets FUNCTIONS_EMULATOR itself) records what
+  // would have been sent in `pushDryRun` instead of calling FCM, so the
+  // end-to-end suites can read every push. Production never takes this path.
+  if (process.env.FUNCTIONS_EMULATOR === "true") {
+    await db.collection("pushDryRun").add({
+      userId, type, title, body,
+      data: stringifiedData,
+      options: { threadId, quiet, contentAvailable },
+      at: FieldValue.serverTimestamp(),
+    });
+    if (!skipRateLimit) {
+      await recordNotification(userId, type, title, body);
+    }
+    console.log(`[Notify] Dry run ${type} to ${userId}`);
+    return true;
+  }
+
+  const aps = {
+    alert: { title, body },
+    "thread-id": threadId,
+    "interruption-level": quiet ? "passive" : "active",
+  };
+  if (!quiet) {
+    aps.sound = "default";
+    aps.badge = 1;
+  }
+  if (contentAvailable) aps["content-available"] = 1;
+
   try {
     await messaging.send({
       token,
@@ -855,19 +898,11 @@ async function sendNotification(userId, type, title, body, data = {}, options = 
           "apns-priority":  "10",
           "apns-push-type": "alert",
         },
-        payload: {
-          aps: {
-            alert: { title, body },
-            sound: "default",
-            badge: 1,
-            "thread-id":      threadId,
-            "interruption-level": "active",
-          },
-        },
+        payload: { aps },
       },
       android: {
         priority: "high",
-        notification: { sound: "default" },
+        ...(quiet ? {} : { notification: { sound: "default" } }),
       },
     });
     if (!skipRateLimit) {
@@ -1234,6 +1269,171 @@ exports.onQotDCreated = onDocumentCreated(
     );
   }
 );
+
+// =============================================================================
+// MARK: - 5e. OUR GARDEN (Firestore Trigger on timeTreeMeta)
+// =============================================================================
+//
+// One trigger for the whole garden. `garden.classify` says what a write means:
+// a watering, a new proposal or counter, or a tree agreement (pushed to its
+// proposer). Everything else — config, waterers, look changes, the proposer's
+// own edits, deletions, recordings — is silent.
+//
+// A garden push goes only to the actor's partner, only while the couple is
+// active, only when the partner's token device runs a garden build
+// (`gardenPushToken == fcmToken`) with the Garden toggle on. Each event pushes
+// at most once (`gardenPushClaims`), each recipient gets at most
+// garden.DAILY_CAP garden pushes per UTC day (`gardenPushDaily`), and pushes
+// are passive in the recipient's quiet hours. Garden pushes skip the nudge
+// budget and the duplicate gate: they are direct partner acts, like chat.
+//
+// While the admin has switched the garden off (`appConfig/garden
+// {enabled: false}`, E8) the app shows the pre-garden Journey, so nothing is
+// pushed, whatever reaches the server (an offline write queued before the
+// switch, an older garden build): one document read per garden event, before
+// any write.
+//
+// Logs carry ids and types only, never a note, a title or a place field.
+
+/** True while the admin has switched the garden off (`appConfig/garden {enabled: false}`). */
+async function gardenSwitchedOff() {
+  const config = await db.collection("appConfig").doc("garden").get();
+  return garden.isSwitchedOff(config.exists ? config.data() : null);
+}
+
+/** True the first time `key` is seen (Firestore triggers are at-least-once). */
+async function claimOnce(key) {
+  try {
+    await db.collection("gardenPushClaims").doc(key).create({ at: FieldValue.serverTimestamp() });
+    return true;
+  } catch (e) {
+    if (e.code === 6) return false;                     // ALREADY_EXISTS
+    throw e;
+  }
+}
+
+/** At most garden.DAILY_CAP garden pushes per recipient per UTC day. */
+async function takeGardenSlot(userId) {
+  const day = garden.utcDayKey();
+  const ref = db.collection("gardenPushDaily").doc(`${userId}_${day}`);
+  return db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    const count = snap.exists ? (snap.get("count") || 0) : 0;
+    if (count >= garden.DAILY_CAP) return false;
+    tx.set(ref, { count: count + 1, day, at: FieldValue.serverTimestamp() }, { merge: true });
+    return true;
+  });
+}
+
+/** The actor's partner, if the couple is active and the partner's token device can show the garden. */
+async function gardenRecipient(coupleId, actorId) {
+  const couple = await db.collection("couples").doc(coupleId).get();
+  if (!couple.exists) return null;
+  const c = couple.data() || {};
+  if (c.status === "disconnected") return null;
+  const ids = Array.isArray(c.userIds) ? c.userIds : [];
+  if (!ids.includes(actorId)) return null;
+  const to = ids.find((id) => id !== actorId);
+  if (!to) return null;
+  const user = await db.collection("users").doc(to).get();
+  const u = user.exists ? user.data() : null;
+  if (!garden.canReceiveGardenPush(u)) return null;
+  return { id: to, timezone: typeof u.timezone === "string" ? u.timezone : null };
+}
+
+async function sendGardenPush(recipient, type, copy, data, coupleId, { contentAvailable = false } = {}) {
+  if (!(await takeGardenSlot(recipient.id))) {
+    console.log(`[Garden] Daily cap reached for ${recipient.id}; ${type} dropped`);
+    return;
+  }
+  await sendNotification(recipient.id, type, copy.title, copy.body,
+    { coupleId, navigateTo: "journey", ...data },
+    { skipRateLimit: true, skipDuplicateCheck: true, threadId: `coupley-garden-${coupleId}`,
+      quiet: garden.isQuietHour(recipient.timezone), contentAvailable });
+}
+
+exports.onTimeTreeMetaWritten = onDocumentWritten(
+  "couples/{coupleId}/timeTreeMeta/{docId}",
+  async (event) => {
+    const { coupleId, docId } = event.params;
+    const before = event.data?.before?.exists ? event.data.before.data() : null;
+    const after = event.data?.after?.exists ? event.data.after.data() : null;
+    const ev = garden.classify(docId, before, after);
+    if (!ev) return;
+    if (await gardenSwitchedOff()) {
+      console.log(`[Garden] switched off; ${ev.kind} in ${coupleId} not pushed`);
+      return;
+    }
+    if (ev.kind === "watered") return handleWatering(coupleId, ev);
+    if (ev.kind === "proposal") return handleProposal(coupleId, ev);
+    return handleAgreement(coupleId, ev);
+  }
+);
+
+async function handleWatering(coupleId, ev) {
+  if (!(await claimOnce(`w_${coupleId}_${ev.wateringId}`))) return;
+  const recipient = await gardenRecipient(coupleId, ev.by);
+  if (!recipient) return;
+  console.log(`[Garden] watered ${coupleId}/${ev.wateringId}`);
+
+  // "together" / "first" / "returned" come from server times only, never
+  // from anything the watering document claims (GardenMoment.of).
+  const meta = db.collection(`couples/${coupleId}/timeTreeMeta`);
+  const atMs = ev.at.toMillis();
+  const [recent, previous, trees] = await Promise.all([
+    meta.where("wateredAt", ">=", Timestamp.fromMillis(atMs - garden.TOGETHER_MS)).where("wateredAt", "<", ev.at).get(),
+    meta.where("wateredAt", "<", ev.at).orderBy("wateredAt", "desc").limit(1).get(),
+    meta.where("docType", "==", "tree").get(),
+  ]);
+  const partnerLast = recent.docs.filter((d) => d.get("by") === recipient.id)
+    .map((d) => d.get("wateredAt").toMillis()).sort((a, b) => b - a)[0] ?? null;
+  const previousAny = previous.empty ? null : previous.docs[0].get("wateredAt").toMillis();
+  const moment = garden.wateringMoment({ atMs, partnerLastBeforeMs: partnerLast, previousAnyMs: previousAny });
+  const copy = garden.wateringCopy({
+    name: await getDisplayName(ev.by), note: ev.note, moment,
+    treeCount: Math.max(1, trees.size), msAfterPartner: partnerLast == null ? 0 : atMs - partnerLast,
+  });
+  await sendGardenPush(recipient, garden.PUSH.watered, copy,
+    { gardenFocus: "watering", wateringId: ev.wateringId, moment, wateredAtMs: String(atMs) },
+    coupleId, { contentAvailable: true });
+}
+
+async function handleProposal(coupleId, ev) {
+  if (!(await claimOnce(`p_${coupleId}_${ev.proposalId}_${ev.atMs}`))) return;
+  const recipient = await gardenRecipient(coupleId, ev.by);
+  if (!recipient) return;
+  console.log(`[Garden] proposal ${coupleId}/${ev.proposalId} (${ev.proposal.kind}${ev.isCounter ? ", counter" : ""})`);
+
+  // A rest request carries no title: name the tree it is about.
+  let treeTitle = null;
+  const slot = ev.proposal.slot;
+  if (!ev.proposal.title && ev.proposal.kind === "rest" && typeof slot === "string" && /^p[1-7]$/.test(slot)) {
+    const tree = await db.doc(`couples/${coupleId}/timeTreeMeta/tree_${slot}`).get();
+    treeTitle = tree.exists ? tree.get("title") : null;
+  }
+  const copy = garden.proposalCopy({
+    name: await getDisplayName(ev.by), proposal: ev.proposal,
+    isCounter: ev.isCounter, treeTitle, timeZone: recipient.timezone,
+  });
+  await sendGardenPush(recipient, garden.PUSH.proposal, copy,
+    { gardenFocus: "proposal", proposalId: ev.proposalId, kind: ev.proposal.kind }, coupleId);
+}
+
+async function handleAgreement(coupleId, ev) {
+  if (!(await claimOnce(`a_${coupleId}_${ev.slot}_${ev.agreementAtMs}`))) return;
+  // The agreement goes to its proposer, and only when the proposer is the
+  // accepter's partner in this couple.
+  const recipient = await gardenRecipient(coupleId, ev.accepterId);
+  if (!recipient || recipient.id !== ev.proposerId) return;
+  const copy = garden.agreementCopy({
+    name: await getDisplayName(ev.accepterId), kind: ev.tree.agreementKind,
+    slot: ev.slot, title: ev.tree.title, agreedStartDay: ev.tree.agreedStartDay, timeZone: recipient.timezone,
+  });
+  if (!copy) return;
+  console.log(`[Garden] agreed ${coupleId}/tree_${ev.slot} (${ev.tree.agreementKind})`);
+  await sendGardenPush(recipient, garden.PUSH.agreed, copy,
+    { gardenFocus: "tree", treeSlot: ev.slot, kind: ev.tree.agreementKind }, coupleId);
+}
 
 // =============================================================================
 // MARK: - 6. AI MOOD SUGGESTION (Refactored — fully secured)
@@ -1699,8 +1899,10 @@ exports.onCoupleCreated = onDocumentCreated(
   async (event) => {
     const snap    = event.data;
     if (!snap) return;
-    const couple  = snap.data();
-    const userIds = couple.userIds || [];
+    // data() can be undefined (seen in the emulator when a test wipes the
+    // database while the trigger is in flight); never throw on it.
+    const couple  = snap.data() || {};
+    const userIds = Array.isArray(couple.userIds) ? couple.userIds : [];
     if (userIds.length < 2) return;
 
     const userDocs = await Promise.all(userIds.map((uid) => db.collection("users").doc(uid).get()));
@@ -1734,6 +1936,22 @@ const PAIRING_CODE_MAX_AGE_HOURS  = 24;    // expire unused codes after 1 day
 const NOTIFICATION_MAX_AGE_DAYS    = 7;    // notification records for rate-limit tracking
 const CHAT_MESSAGE_MAX_AGE_DAYS    = 90;   // old chat messages (adjust per privacy policy)
 const OLD_PING_MAX_AGE_DAYS        = 30;   // old pings
+const GARDEN_PUSH_RECORD_MAX_AGE_DAYS = 7; // garden push claims and daily counters
+const CLEANUP_PAGE_SIZE            = 300;  // documents per batched delete
+
+/** Deletes every document of `collection` whose `field` is before `cutoff`, a page at a time. */
+async function deleteOlderThan(collection, field, cutoff) {
+  let total = 0;
+  for (;;) {
+    const snap = await db.collection(collection).where(field, "<", cutoff).limit(CLEANUP_PAGE_SIZE).get();
+    if (snap.empty) return total;
+    const batch = db.batch();
+    snap.docs.forEach((doc) => batch.delete(doc.ref));
+    await batch.commit();
+    total += snap.size;
+    if (snap.size < CLEANUP_PAGE_SIZE) return total;
+  }
+}
 
 exports.cleanupOldData = onSchedule("0 2 * * *", async () => {
   const now = Date.now();
@@ -1803,6 +2021,16 @@ exports.cleanupOldData = onSchedule("0 2 * * *", async () => {
   }
   console.log(`[Cleanup] Deleted ${pingCount} old pings`);
 
+  // 5. Garden push bookkeeping: claims (exactly-once) and daily counters
+  //    matter for a day at most and are kept a week; `pushDryRun` exists
+  //    only on the emulator.
+  console.log("[Cleanup] Starting garden push record cleanup...");
+  const gardenCutoff = Timestamp.fromMillis(now - GARDEN_PUSH_RECORD_MAX_AGE_DAYS * 24 * 60 * 60 * 1_000);
+  for (const collection of ["gardenPushClaims", "gardenPushDaily", "pushDryRun"]) {
+    const count = await deleteOlderThan(collection, "at", gardenCutoff);
+    console.log(`[Cleanup] Deleted ${count} old ${collection} documents`);
+  }
+
   console.log("[Cleanup] Data cleanup completed");
 });
 
@@ -1831,3 +2059,35 @@ exports.onMemoryDeleted = onDocumentDeleted(
     }
   }
 );
+
+// =============================================================================
+// MARK: - COUPLE PURGE FOLLOWS THE COUPLE (Firestore Trigger)
+// =============================================================================
+//
+// When a couple document is deleted (only possible once disconnected), delete
+// everything still under it: whatever an older app's purge left behind (1.1
+// never purged timeTreeMeta; 1.2 purges it best-effort), garden places and
+// notes included, and Future Letters bodies a 1.2 deletion orphans. Deleting
+// `memories` documents here also fires onMemoryDeleted, which removes their
+// photos. Garden deletions are silent (garden.classify ignores them).
+
+exports.onCouplePurged = onDocumentDeleted(
+  { document: "couples/{coupleId}", timeoutSeconds: 540, memory: "512MiB" },
+  async (event) => {
+    await db.recursiveDelete(db.collection("couples").doc(event.params.coupleId));
+    console.log(`[Purge] couple ${event.params.coupleId} subtree deleted`);
+  }
+);
+
+// =============================================================================
+// MARK: - EMULATOR TEST HOOKS
+// =============================================================================
+//
+// The garden's emulator suite (functions/test/garden.emulator.test.mjs)
+// requires this file to call the push ledger directly. Exported only when a
+// Firestore emulator is configured; it is not a function, so deploys and the
+// Functions emulator ignore it either way.
+
+if (process.env.FIRESTORE_EMULATOR_HOST) {
+  exports.gardenEmulatorHooks = Object.freeze({ claimOnce, takeGardenSlot });
+}

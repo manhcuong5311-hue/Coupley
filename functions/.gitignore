@@ -1,0 +1,5 @@
+# Local-only secrets and env for the Functions emulator (never committed, never
+# deployed: firebase.json ignores *.local). The garden emulator suite needs a
+# dummy OPENAI_API_KEY in .secret.local so the existing functions load.
+.secret.local
+.env.local

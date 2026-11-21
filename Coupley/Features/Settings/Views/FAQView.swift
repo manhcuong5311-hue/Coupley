@@ -71,8 +71,11 @@ struct FAQView: View {
 
         FAQItem(
             question: "What is Journey?",
-            answer: "Journey is your story together. Your tree grows with every day since the start date you set, and the countdowns show your next anniversary and milestone. Memories you add appear on the timeline and as stars around the tree. Future letters between you show up there too: sealed ones hang from the branches until they open, then they bloom."
+            answer: GardenFeature.isEnabled
+                ? "Journey is your story together. Your tree grows with every day since your start date, and the countdowns show your next anniversary and milestone. Your tree lives in a garden: give it a place, plant more trees together for the places that matter, and water them every couple of days. Memories you add appear on the timeline and as stars around the tree. Future letters between you show up there too: sealed ones hang from the branches until they open, then they bloom."
+                : "Journey is your story together. Your tree grows with every day since the start date you set, and the countdowns show your next anniversary and milestone. Memories you add appear on the timeline and as stars around the tree. Future letters between you show up there too: sealed ones hang from the branches until they open, then they bloom."
         ),
+    ] + (GardenFeature.isEnabled ? FAQView.gardenItems : []) + [
         FAQItem(
             question: "What's a Memory Capsule?",
             answer: "A memory sealed until a day you pick, for both of you. Until then the app keeps its note, photo and feelings out of sight; only whoever sealed it can still edit it. It opens at 9:00 that morning in the time zone it was sealed in, so a partner in another time zone sees it open at a different hour, and capsules sealed with an older version of Coupley open at the time of day they were sealed. Want something only your partner can open, locked on our servers rather than just hidden in the app? Write a Future Letter instead."
@@ -83,7 +86,9 @@ struct FAQView: View {
         ),
         FAQItem(
             question: "Where do our anniversary and other special dates go?",
-            answer: "Your anniversary countdown comes from the start date you set on Journey, and milestones like 100 days, 1 year, 500 days and 1000 days are celebrated automatically. Other special days, like a first kiss or a trip, are memories: tap + on Journey to add them to your timeline."
+            answer: GardenFeature.isEnabled
+                ? "Your anniversary countdown comes from your start date in Journey, and milestones like 100 days, 1 year, 500 days and 1000 days are celebrated automatically. Other special days, like a first kiss or a trip, are memories: tap + on Journey to add them to your timeline."
+                : "Your anniversary countdown comes from the start date you set on Journey, and milestones like 100 days, 1 year, 500 days and 1000 days are celebrated automatically. Other special days, like a first kiss or a trip, are memories: tap + on Journey to add them to your timeline."
         ),
 
         // MARK: - Chat & Quizzes
@@ -135,7 +140,36 @@ struct FAQView: View {
 
         FAQItem(
             question: "Is my data private?",
-            answer: "Your moods, messages, goals, memories, and photos are visible only to you and your connected partner. We never sell your personal data. AI features send the context they need to OpenAI to write a reply, and nothing else. Ads are served by Google AdMob, which may use your device's advertising identifier only if you allow tracking; your moods, messages and memories are never shared with advertisers."
+            answer: GardenFeature.isEnabled
+                ? "Your moods, messages, goals, memories, garden, places and photos are visible only to you and your connected partner. We never sell your personal data. AI features send the context they need to OpenAI to write a reply, and nothing else. Ads are served by Google AdMob, which may use your device's advertising identifier only if you allow tracking; your moods, messages and memories are never shared with advertisers."
+                : "Your moods, messages, goals, memories, and photos are visible only to you and your connected partner. We never sell your personal data. AI features send the context they need to OpenAI to write a reply, and nothing else. Ads are served by Google AdMob, which may use your device's advertising identifier only if you allow tracking; your moods, messages and memories are never shared with advertisers."
+        ),
+    ]
+
+    /// Journey's garden questions, shown while the garden is on
+    /// (`GardenFeature`). Each one stays true for a couple whose start date
+    /// was set by one partner and for a partner on an older version.
+    private static let gardenItems: [FAQItem] = [
+        FAQItem(
+            question: "What is the garden?",
+            answer: "Your tree and up to seven more, each for a place or a moment that matters to you both, like where you first met. New trees are planted only when you both agree: one of you sends a seed, the other plants it. Water the garden every couple of days. One tap waters every tree, a little note can go with it, and your partner sees who watered and when."
+        ),
+        FAQItem(
+            question: "What if we forget to water?",
+            // Matches the tree's look (`GardenTreeLook`) and the tree guide.
+            answer: GardenTreeLook.withersWhenThirsty
+                ? LocalizedStringResource("Nothing bad happens. A tree never dies and never loses its growth. It gets a little thirsty, then it rests, and a little water wakes it up again.",
+                                          comment: "FAQ answer to 'What if we forget to water?' (Journey's garden), for the look where an unwatered tree droops and then rests. Not shown while unwatered trees keep their plain look.")
+                : LocalizedStringResource("Nothing bad happens. A tree never dies, never wilts and never loses its growth. Water just makes it greener and fuller for a day or two.",
+                                          comment: "FAQ answer to 'What if we forget to water?' (Journey's garden). Watering is only a reward: a watered tree looks greener and fuller for a day or two, and an unwatered tree never wilts.")
+        ),
+        FAQItem(
+            question: "Who can see our places?",
+            answer: "Only the two of you. You pick a place by searching or dropping a pin, and you choose whether to keep the exact spot or only the area. Coupley never reads your phone's location, and place names never appear in notifications. Place search uses Apple Maps."
+        ),
+        FAQItem(
+            question: "Why can't I change our start date on my own?",
+            answer: "Your start date belongs to you both, so changing it is a suggestion your partner agrees to. If your partner still uses an older version of Coupley, they can change it from there."
         ),
     ]
 

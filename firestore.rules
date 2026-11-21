@@ -16,7 +16,7 @@ rules_version = '2';
 //     /coupleProfile/{docId}                           — aggregated insights
 //     /anniversaries/{id}                              — anniversary events
 //     /memories/{id}                                   — Time Tree memories
-//     /timeTreeMeta/{id}                               — Time Tree config
+//     /timeTreeMeta/{id}                               — the start date (open, 1.1/1.2 write it) and the garden (trees, proposals, waterings, waterers)
 //     /pings/{pingId}                                  — presence heartbeats
 //     /nudges/{nudgeId}                                — author: fromUserId
 //     /togetherGoals/{id}                              — author: createdBy
@@ -30,14 +30,17 @@ rules_version = '2';
 //   /abuse_logs/{logId}                                — server-only abuse records
 //   /notifications/{id}                                — global push-notification log (server-write)
 //   /aiSuggestionLogs/{id}                             — server-only analytics
+//   /appConfig/{docId}                                 — read-only app switches
 //
 // Security model:
 //   * Couple membership is the primary gate on all couple sub-collections.
 //   * ai_usage_daily, abuse_logs, aiSuggestionLogs are server-admin only (deny all client).
 //   * ai_coach_sessions are owner-readable (the authenticated user whose userId matches).
+//   * A couple's userIds never change after pairing, and its status only ever moves to "disconnected".
 //   * Hard-delete of shared data is ONLY allowed when the couple doc status == "disconnected".
 //   * futureLetterBodies are never listable; the recipient's get is gated on request.time >= opensAt.
 //   * memories never change createdBy or id; while a capsule is sealed (request.time < unlockDate), only its author can move or remove its unlockDate.
+//   * timeTreeMeta: config stays open; garden trees are written only by the member who did not make the proposal (or recorded from an existing start date), one watering per member per 12 hours, all times request.time.
 
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -149,14 +152,19 @@ service cloud.firestore {
                     && incoming().userIds.size() == 2
                     && request.auth.uid in incoming().userIds;
 
+      // Pairing creates the couple with both ids; after that the ids never
+      // change, and status moves one way: once 'disconnected', a couple never
+      // becomes active again (a new pairing is a new couple). "The partner"
+      // (garden consent, places, notes) is the one other id, and every
+      // shared-data gate reads status, so neither may be rewritten. Every app
+      // version updates the couple with setData(merge: true), which keeps
+      // both: disconnect, premium, streak, chat, daily question and photo.
       allow update: if isSignedIn()
                     && request.auth.uid in resource.data.userIds
+                    && incoming().get('userIds', null) == resource.data.userIds
                     && (
-                      !('userIds' in incoming())
-                      || (
-                        incoming().userIds is list
-                        && incoming().userIds.hasAll(resource.data.userIds)
-                      )
+                      resource.data.get('status', 'active') != 'disconnected'
+                      || incoming().get('status', 'active') == 'disconnected'
                     );
 
       allow delete: if isSignedIn()
@@ -310,12 +318,366 @@ service cloud.firestore {
         allow delete: if isCoupleMember(coupleId);
       }
 
-      // ---- Time Tree metadata (relationship anchor + future tree config) ----
+      // ---- Time Tree metadata: the start date and the shared garden ----
+      //
+      // ONE flat collection, never a subcollection: every shared-data purge
+      // since 1.2 deletes this collection page by page, so the garden's
+      // places and notes leave with it.
+      //
+      //   config            The start date. Exactly as open as 1.1/1.2 need it
+      //                     (they set it directly). Every day count reads it.
+      //   tree_our          Our tree; tree_p1 … tree_p7 place trees. The slot is
+      //                     the id, so a garden holds 8 trees at most; a new
+      //                     place tree takes the lowest free slot.
+      //   seed_our          A proposal to plant Our tree (only while no config).
+      //   seed_<uid>_<n>    A proposal to plant a place tree; n is 1-3 and a
+      //                     member creates only their own ids (3 open at most).
+      //   change_<slot>     A proposed new name / place / moment / look.
+      //   rest_p1 … p7      A proposal to let a place tree go.
+      //   startdate         A proposed new start date.
+      //   water_<20>        One watering: who, server time, note, effect.
+      //   waterer_<uid>     That member's last watering (one per 12 hours).
+      //
+      // A tree is planted or changed only by the member who did NOT make the
+      // proposal's latest version, in ONE transaction that copies it exactly
+      // and deletes it. Every time a partner is shown is request.time.
       match /timeTreeMeta/{docId} {
-        allow read:   if isCoupleMember(coupleId);
-        allow create: if isCoupleMember(coupleId);
-        allow update: if isCoupleMember(coupleId);
-        allow delete: if isCoupleMember(coupleId);
+
+        function meta(id) {
+          return /databases/$(database)/documents/couples/$(coupleId)/timeTreeMeta/$(id);
+        }
+        function me() { return request.auth.uid; }
+        function active() {
+          return isCoupleMember(coupleId)
+            && coupleDoc(coupleId).get('status', 'active') != 'disconnected';
+        }
+        function changed() { return incoming().diff(resource.data).affectedKeys(); }
+
+        // Within a second: Date <-> Timestamp round trips in the iOS SDK can
+        // move an instant by a microsecond, and 1.1/1.2 store raw instants.
+        function sameInstant(a, b) {
+          return a is timestamp && b is timestamp
+            && a > b - duration.value(1, 's')
+            && a < b + duration.value(1, 's');
+        }
+        // A calendar day (JourneyCalendarDay.storedMoment, 10:00 UTC today).
+        // The hour is NEVER checked.
+        function isDay(t) {
+          return t is timestamp
+            && t > timestamp.date(1900, 1, 1)
+            && t < request.time + duration.value(2, 'd');
+        }
+        function isText(s, max) { return s is string && s.size() > 0 && s.size() <= max; }
+        function optText(m, k, max) { return !(k in m) || isText(m[k], max); }
+        function isToken(s) { return s is string && s.matches('^[a-zA-Z]{1,32}$'); }
+        function isKey(s) { return s is string && s.matches('^[A-Za-z0-9-]{8,64}$'); }
+        function isRounded(x, scale) {
+          return math.abs(x * scale - math.round(x * scale)) < 0.000001;
+        }
+
+        // A place the couple chose. "Only the area" is a promise the server keeps.
+        function isPlace(p) {
+          return p is map
+            && p.keys().hasAll(['name', 'lat', 'lng', 'precision'])
+            && p.keys().hasOnly(['name', 'locality', 'lat', 'lng', 'precision', 'poi', 'tz'])
+            && isText(p.name, 320)
+            && optText(p, 'locality', 320)
+            && optText(p, 'poi', 64)
+            && optText(p, 'tz', 64)
+            && p.lat is number && p.lat >= -90 && p.lat <= 90
+            && p.lng is number && p.lng >= -180 && p.lng <= 180
+            && ((p.precision == 'exact' && isRounded(p.lat, 10000) && isRounded(p.lng, 10000))
+                || (p.precision == 'area' && isRounded(p.lat, 100) && isRounded(p.lng, 100)));
+        }
+
+        // What a tree is. `slot`: 'our', 'new' (a place seed) or 'p1'…'p7'.
+        // Scene, species and preset are tokens, not lists: a later app may add
+        // looks without a rules deploy (unknown ones draw as Meadow / oak).
+        function isContent(m, slot) {
+          return isText(m.title, 160)
+            && isToken(m.preset) && isToken(m.scene) && isToken(m.species)
+            && (!('place' in m) || isPlace(m.place))
+            && (slot == 'our'
+                  ? (m.preset == 'ourTree' && !('momentDay' in m))
+                  : (m.preset != 'ourTree' && (!('momentDay' in m) || isDay(m.momentDay))));
+        }
+        function sameDay(a, b) {
+          return (!('momentDay' in a) && !('momentDay' in b))
+            || ('momentDay' in a && 'momentDay' in b && sameInstant(a.momentDay, b.momentDay));
+        }
+        function sameContent(a, b) {
+          return a.title == b.title && a.preset == b.preset
+            && a.scene == b.scene && a.species == b.species
+            && a.get('place', null) == b.get('place', null)
+            && sameDay(a, b);
+        }
+
+        function isTreeDoc() { return docId.matches('^tree_(our|p[1-7])$'); }
+        function isPlaceSeedDoc() { return docId.matches('^seed_[A-Za-z0-9]{1,128}_[1-3]$'); }
+        // Creating a place seed: only my own three ids (string equality, no
+        // regex built from the uid), so open seeds are bounded by construction.
+        function isMySeedDoc() {
+          return docId == 'seed_' + me() + '_1' || docId == 'seed_' + me() + '_2'
+            || docId == 'seed_' + me() + '_3';
+        }
+        function isProposalDoc() {
+          return docId == 'seed_our' || docId == 'startdate' || isPlaceSeedDoc()
+            || docId.matches('^change_(our|p[1-7])$') || docId.matches('^rest_p[1-7]$');
+        }
+        function isWaterDoc() { return docId.matches('^water_[A-Za-z0-9]{20}$'); }
+        function isWatererDoc() { return docId == 'waterer_' + me(); }
+
+        // ---------- proposals ----------
+
+        function proposalKeys() {
+          return ['docType', 'kind', 'slot', 'key', 'by', 'at', 'rev', 'note',
+                  'startDay', 'fromStartDay',
+                  'title', 'preset', 'momentDay', 'place', 'scene', 'species'];
+        }
+        function treeOf(slot) { return get(meta('tree_' + slot)).data; }
+
+        // The id says what a proposal is about, so two of a kind collide
+        // instead of piling up. Our tree's seed is void once a start date
+        // exists; a start-date suggestion is void once the date moves.
+        function proposalFits(m) {
+          return (docId == 'seed_our' && m.kind == 'plant' && m.slot == 'our'
+                    && !exists(meta('config'))
+                    && isDay(m.startDay) && !('fromStartDay' in m)
+                    && isContent(m, 'our'))
+            || (isPlaceSeedDoc() && m.kind == 'plant' && m.slot == 'new'
+                    && exists(meta('config'))
+                    && !m.keys().hasAny(['startDay', 'fromStartDay'])
+                    && isContent(m, 'new'))
+            || (docId == 'change_' + m.slot && m.kind == 'change'
+                    && exists(meta('tree_' + m.slot)) && m.key == treeOf(m.slot).key
+                    && !m.keys().hasAny(['startDay', 'fromStartDay'])
+                    && isContent(m, m.slot))
+            || (docId == 'rest_' + m.slot && m.kind == 'rest' && m.slot != 'our'
+                    && exists(meta('tree_' + m.slot)) && m.key == treeOf(m.slot).key
+                    && !m.keys().hasAny(['startDay', 'fromStartDay', 'title', 'preset',
+                                         'momentDay', 'place', 'scene', 'species']))
+            || (docId == 'startdate' && m.kind == 'startDate' && m.slot == 'our'
+                    && exists(meta('tree_our')) && m.key == treeOf('our').key
+                    && isDay(m.startDay)
+                    && sameInstant(m.fromStartDay, get(meta('config')).data.startDate)
+                    && !m.keys().hasAny(['title', 'preset', 'momentDay', 'place',
+                                         'scene', 'species']));
+        }
+
+        // Created by its proposer, or answered with a new version: whoever
+        // writes it becomes the proposer, and the OTHER member must answer.
+        function isProposal(m, previousRev) {
+          return m.keys().hasOnly(proposalKeys())
+            && m.docType == 'proposal'
+            && isKey(m.key)
+            && m.by == me()
+            && m.at == request.time
+            && m.rev == previousRev + 1
+            && optText(m, 'note', 560)
+            && proposalFits(m);
+        }
+
+        // ---------- trees ----------
+
+        function treeKeys() {
+          return ['docType', 'slot', 'key', 'title', 'preset', 'momentDay', 'place',
+                  'scene', 'species', 'origin', 'plantedAt', 'plantedBy', 'agreedStartDay',
+                  'agreementKind', 'agreementBy', 'agreementAt', 'fromProposal',
+                  'lookBy', 'lookAt', 'prevScene', 'prevSpecies', 'updatedAt'];
+        }
+        function isTree(m) {
+          return m.keys().hasOnly(treeKeys())
+            && m.docType == 'tree'
+            && docId == 'tree_' + m.slot
+            && isKey(m.key)
+            && isContent(m, m.slot)
+            && ((m.slot == 'our') == ('agreedStartDay' in m))
+            && m.updatedAt == request.time;
+        }
+
+        // A place tree takes the lowest free slot, as the app plants it
+        // (GardenTransactions.plantPlaceTree): every slot below `s` was
+        // planted BEFORE this commit (exists() reads the state before it), so
+        // one commit plants at most one place tree and one seed becomes one
+        // tree. `s` is 'p1' … 'p7' (one digit: they compare as strings).
+        // The paths share one prefix string: a planting into p7 is the
+        // garden's costliest write against the 1,000-expression budget of a
+        // request, and six meta() paths cost about 30 expressions more.
+        function lowerSlotsFilled(s) {
+          let t = '/databases/' + database + '/documents/couples/' + coupleId + '/timeTreeMeta/tree_';
+          return (s <= 'p1' || exists(path(t + 'p1')))
+            && (s <= 'p2' || exists(path(t + 'p2')))
+            && (s <= 'p3' || exists(path(t + 'p3')))
+            && (s <= 'p4' || exists(path(t + 'p4')))
+            && (s <= 'p5' || exists(path(t + 'p5')))
+            && (s <= 'p6' || exists(path(t + 'p6')));
+        }
+
+        // Planted together: the partner's seed, exactly, deleted in this same
+        // transaction, stamped with the server's time and both names. Our
+        // tree's first planting also writes the start date, in the 1.2 format.
+        function plantedFrom(m) {
+          let id = m.fromProposal;
+          let p = get(meta(id)).data;
+          return (id == 'seed_our' || id.matches('^seed_[A-Za-z0-9]{1,128}_[1-3]$'))
+            && exists(meta(id)) && !existsAfter(meta(id))
+            && p.kind == 'plant'
+            && p.by != me()
+            && p.by in coupleDoc(coupleId).userIds
+            && ((m.slot == 'our') == (p.slot == 'our'))
+            && (m.slot == 'our' || lowerSlotsFilled(m.slot))
+            && m.key == p.key
+            && sameContent(m, p)
+            && m.origin == 'together'
+            && m.plantedAt == request.time
+            && m.plantedBy == [p.by, me()]
+            && m.agreementKind == 'plant'
+            && m.agreementBy == [p.by, me()]
+            && m.agreementAt == request.time
+            && !m.keys().hasAny(['lookBy', 'lookAt', 'prevScene', 'prevSpecies'])
+            && (m.slot != 'our'
+                || (!exists(meta('config'))
+                    && sameInstant(getAfter(meta('config')).data.startDate, p.startDay)
+                    && sameInstant(m.agreedStartDay, p.startDay)));
+        }
+
+        // Our tree from a start date set before the garden (or by an older
+        // app): recorded as it is, by either partner. Never with a place.
+        function recordedLegacy(m) {
+          return m.slot == 'our'
+            && exists(meta('config'))
+            && m.origin == 'legacy'
+            && !m.keys().hasAny(['momentDay', 'place', 'plantedAt', 'plantedBy', 'fromProposal',
+                                 'lookBy', 'lookAt', 'prevScene', 'prevSpecies'])
+            && sameInstant(m.agreedStartDay, get(meta('config')).data.startDate)
+            && m.agreementKind == 'recorded'
+            && m.agreementBy == [me()]
+            && m.agreementAt == request.time;
+        }
+
+        function keepsIdentity() {
+          return incoming().slot == resource.data.slot
+            && incoming().key == resource.data.key
+            && incoming().origin == resource.data.origin
+            && incoming().get('plantedAt', null) == resource.data.get('plantedAt', null)
+            && incoming().get('plantedBy', null) == resource.data.get('plantedBy', null);
+        }
+        // A new look, by either of you, at any time: only the look changes.
+        function looksChanged() {
+          return changed().hasOnly(['scene', 'species', 'prevScene', 'prevSpecies',
+                                    'lookBy', 'lookAt', 'updatedAt'])
+            && isToken(incoming().prevScene) && isToken(incoming().prevSpecies)
+            && incoming().lookBy == me()
+            && incoming().lookAt == request.time;
+        }
+        // A change the partner proposed: exactly its content, deleted with it.
+        function changedFrom(m) {
+          let id = 'change_' + m.slot;
+          let p = get(meta(id)).data;
+          return m.fromProposal == id
+            && exists(meta(id)) && !existsAfter(meta(id))
+            && p.by != me() && p.by in coupleDoc(coupleId).userIds
+            && p.key == m.key
+            && sameContent(m, p)
+            && m.agreementKind == 'change'
+            && m.agreementBy == [p.by, me()]
+            && m.agreementAt == request.time
+            && changed().hasOnly(['title', 'preset', 'momentDay', 'place', 'scene', 'species',
+                                  'fromProposal', 'agreementKind', 'agreementBy',
+                                  'agreementAt', 'updatedAt']);
+        }
+        // A start date the partner proposed against the date as it STILL is,
+        // written to config in the same transaction.
+        function startDateFrom(m) {
+          let p = get(meta('startdate')).data;
+          return m.slot == 'our'
+            && m.fromProposal == 'startdate'
+            && exists(meta('startdate')) && !existsAfter(meta('startdate'))
+            && p.by != me() && p.by in coupleDoc(coupleId).userIds
+            && p.key == m.key
+            && sameInstant(get(meta('config')).data.startDate, p.fromStartDay)
+            && sameInstant(getAfter(meta('config')).data.startDate, p.startDay)
+            && sameInstant(m.agreedStartDay, p.startDay)
+            && m.agreementKind == 'startDate'
+            && m.agreementBy == [p.by, me()]
+            && m.agreementAt == request.time
+            && changed().hasOnly(['agreedStartDay', 'fromProposal', 'agreementKind',
+                                  'agreementBy', 'agreementAt', 'updatedAt']);
+        }
+        // An older app changed config directly: recorded as it now is.
+        function reRecorded(m) {
+          return m.slot == 'our'
+            && sameInstant(m.agreedStartDay, get(meta('config')).data.startDate)
+            && m.agreementKind == 'recorded'
+            && m.agreementBy == [me()]
+            && m.agreementAt == request.time
+            && changed().hasOnly(['agreedStartDay', 'agreementKind', 'agreementBy',
+                                  'agreementAt', 'updatedAt']);
+        }
+
+        // ---------- waterings ----------
+
+        // The watering and the waterer's own turn travel in one batch; the
+        // time is the server's; Our tree must exist.
+        function isWatering(m) {
+          return m.keys().hasOnly(['docType', 'by', 'wateredAt', 'note', 'effect'])
+            && m.docType == 'water'
+            && m.by == me()
+            && m.wateredAt == request.time
+            && optText(m, 'note', 400)
+            && isToken(m.effect)
+            && exists(meta('config'))
+            && getAfter(meta('waterer_' + me())).data.lastWateringId == docId
+            && getAfter(meta('waterer_' + me())).data.lastWateredAt == request.time;
+        }
+        function isTurn(m) {
+          return m.keys().hasOnly(['docType', 'lastWateredAt', 'lastWateringId'])
+            && m.docType == 'waterer'
+            && m.lastWateredAt == request.time
+            && m.lastWateringId is string
+            && m.lastWateringId.matches('^water_[A-Za-z0-9]{20}$')
+            && !exists(meta(m.lastWateringId))
+            && existsAfter(meta(m.lastWateringId));
+        }
+
+        // ---------- access ----------
+
+        allow read: if isCoupleMember(coupleId);
+
+        allow create: if (docId == 'config' && isCoupleMember(coupleId))   // unchanged since 1.2
+          || (isProposalDoc() && active() && isProposal(incoming(), 0)
+              && (!isPlaceSeedDoc() || isMySeedDoc()))
+          || (isTreeDoc() && active() && isTree(incoming())
+              && (plantedFrom(incoming()) || recordedLegacy(incoming())))
+          || (isWaterDoc() && active() && isWatering(incoming()))
+          || (isWatererDoc() && active() && isTurn(incoming()));
+
+        allow update: if (docId == 'config' && isCoupleMember(coupleId))   // unchanged since 1.2
+          || (isProposalDoc() && active()
+              && isProposal(incoming(), resource.data.rev)
+              && incoming().kind == resource.data.kind
+              && incoming().slot == resource.data.slot
+              && incoming().key == resource.data.key)
+          || (isTreeDoc() && active() && isTree(incoming()) && keepsIdentity()
+              && (looksChanged() || changedFrom(incoming())
+                  || startDateFrom(incoming()) || reRecorded(incoming())))
+          // Once per 12 hours per person (11 h 50 min of grace).
+          || (isWatererDoc() && active() && isTurn(incoming())
+              && request.time > resource.data.lastWateredAt + duration.value(710, 'm'));
+
+        // The purge (any app version) right after config, so a 300-document
+        // batch costs one couple read; then the garden's own deletes: any
+        // member may delete a proposal (taken back, let go, kept, carried
+        // out: the tree rules check that write); a place tree goes only with
+        // the partner's rest request, in the same transaction.
+        allow delete: if (docId == 'config' && isCoupleMember(coupleId))   // unchanged since 1.2
+          || isDisconnectedCouple(coupleId)
+          || (isProposalDoc() && isCoupleMember(coupleId))
+          || (docId.matches('^tree_p[1-7]$') && active()
+              && exists(meta('rest_' + docId.split('_')[1]))
+              && !existsAfter(meta('rest_' + docId.split('_')[1]))
+              && get(meta('rest_' + docId.split('_')[1])).data.by != me()
+              && get(meta('rest_' + docId.split('_')[1])).data.key == resource.data.key);
       }
 
       // ---- Presence / ping firehose ----
@@ -521,6 +883,16 @@ service cloud.firestore {
 
     match /notifications/{notifId} {
       allow read, write: if false;
+    }
+
+    // ------------------------------------------------------------------
+    // /appConfig/{docId}
+    // ------------------------------------------------------------------
+    // Read-only app switches. appConfig/garden doubles as the probe that
+    // tells the app the garden rules are deployed (they ship together).
+    match /appConfig/{docId} {
+      allow get: if isSignedIn();
+      allow list, write: if false;
     }
 
     // ------------------------------------------------------------------

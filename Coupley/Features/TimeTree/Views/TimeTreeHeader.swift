@@ -15,6 +15,10 @@
 //  Without a start date the hero is a "Plant your tree" card whose CTA opens
 //  the start-date sheet, and there is no countdown block.
 //
+//  In garden mode the garden hero (GardenHero, above this in TimeTreeView)
+//  shows the tree and the day count, and this renders only the countdown
+//  block (`showsHero: false`).
+//
 //  Everything here is a value: TimeTreeView passes the view model's numbers,
 //  the letters feed and the callbacks, so this view never observes anything.
 //
@@ -48,6 +52,9 @@ struct TimeTreeHeader: View {
     /// whether one exists (offline, or still loading). The view model
     /// refuses a first start date then, so "Plant your tree" isn't offered.
     var isStartDateKnown: Bool = true
+    /// False in garden mode: the garden hero (above, in TimeTreeView) shows
+    /// the tree and the day count, so this renders only the countdown block.
+    var showsHero: Bool = true
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @ScaledMetric(relativeTo: .footnote) private var rowGlyphWidth: CGFloat = 18
@@ -55,10 +62,16 @@ struct TimeTreeHeader: View {
     var body: some View {
         VStack(spacing: 14) {
             if let anchor {
-                hero(anchor)
-                    .padding(.horizontal, SurfaceTier.hero.gutter)
+                if showsHero {
+                    hero(anchor)
+                        .padding(.horizontal, SurfaceTier.hero.gutter)
+                }
                 countdownBlock(anchor)
                     .padding(.horizontal, Brand.Space.gutter)
+            } else if !showsHero {
+                // No start date: no countdown, and the garden hero shows the
+                // planting state.
+                EmptyView()
             } else if isStartDateKnown {
                 plantHero
                     .padding(.horizontal, SurfaceTier.hero.gutter)
@@ -239,17 +252,25 @@ struct TimeTreeHeader: View {
 
     /// "Your tree. 3 memories shine around it. 1 letter for you is ready to
     /// open. 2 sealed letters wait on it. 1 opened letter is in bloom."
-    /// A ready envelope is either the partner's letter for this user or this
-    /// user's letter the partner hasn't opened; neither is "sealed". Small
-    /// trees rest envelopes on the ground, so nothing says "branches".
     private func treeSummary(_ ornaments: [JourneyTreeOrnament]) -> String {
+        let first = String(localized: "Your tree.", comment: "VoiceOver: first sentence describing the Journey tree picture")
+        return ([first] + Self.treeSentences(ornaments: ornaments, memoryCount: memoryCount,
+                                             partnerName: letters.partnerName))
+            .joined(separator: " ")
+    }
+
+    /// What hangs on and around the tree, as whole sentences (each its own
+    /// key) read one after another: its memory stars and its letters. A
+    /// ready envelope is either the partner's letter for this user or this
+    /// user's letter the partner hasn't opened; neither is "sealed". Small
+    /// trees rest envelopes on the ground, so nothing says "branches". The
+    /// garden hero reads the same sentences after its own.
+    static func treeSentences(ornaments: [JourneyTreeOrnament], memoryCount: Int, partnerName partner: String) -> [String] {
         let readyForMe = ornaments.filter { $0.kind == .readyEnvelope && $0.direction == .toMe }.count
         let waiting = ornaments.filter { $0.kind == .readyEnvelope && $0.direction == .fromMe }.count
         let sealed = ornaments.filter { $0.kind == .sealedEnvelope }.count
         let blossoms = ornaments.filter { $0.kind == .blossom }.count
-        let partner = letters.partnerName
-        // Whole sentences, each its own key, read one after another.
-        var parts = [String(localized: "Your tree.", comment: "VoiceOver: first sentence describing the Journey tree picture")]
+        var parts: [String] = []
         if memoryCount > 0 {
             parts.append(memoryCount == 1
                          ? String(localized: "1 memory shines around it.",
@@ -285,7 +306,7 @@ struct TimeTreeHeader: View {
                          : String(localized: "\(blossoms) opened letters are in bloom.",
                                   comment: "VoiceOver, Journey tree: opened letters are drawn as blossoms"))
         }
-        return parts.joined(separator: " ")
+        return parts
     }
 
     // MARK: - No start date yet

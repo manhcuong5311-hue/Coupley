@@ -376,6 +376,10 @@ struct TierContainer: ViewModifier {
     /// It also carries its own 16pt, so a zone spacer in front of a ruled
     /// block must be budgeted as `Brand.Space.zone - 16`.
     var showsRule: Bool = true
+    /// Filled tiers only. `false` drops the tier's padding so the content
+    /// can run edge to edge (the garden hero's full-bleed scene band, which
+    /// pads its own caption). The fill, wash, border and shadow are unchanged.
+    var insetsContent: Bool = true
 
     private var tint: Color { accent ?? Brand.accentStart }
 
@@ -394,7 +398,7 @@ struct TierContainer: ViewModifier {
                 }
         } else {
             content
-                .padding(tier.padding)
+                .padding(insetsContent ? tier.padding : 0)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .frame(minHeight: tier.minHeight, alignment: .topLeading)
                 .background(filledBackground)
@@ -455,10 +459,13 @@ struct BrandCard<Content: View>: View {
     var accent: Color? = nil
     /// `.quiet` only — one ruled block per zone. See `TierContainer`.
     var showsRule: Bool = true
+    /// Filled tiers only — `false` lets the content run edge to edge. See `TierContainer`.
+    var insetsContent: Bool = true
     @ViewBuilder var content: () -> Content
 
     var body: some View {
-        content().modifier(TierContainer(tier: tier, accent: accent, showsRule: showsRule))
+        content().modifier(TierContainer(tier: tier, accent: accent, showsRule: showsRule,
+                                         insetsContent: insetsContent))
     }
 }
 

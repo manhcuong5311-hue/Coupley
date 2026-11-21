@@ -63,6 +63,8 @@ InfoPlist catalog, and write its glossary first so the terms stay consistent.
 
 - `-coupleyStartTab home|mood|together|journey|chat` opens on that tab.
 - `-coupleyOpen coach|letters|compose` opens that screen from Home.
+  `-coupleyOpen gardenLab` opens the Garden lab and `gardenJourney` its
+  Journey page: an in-memory garden that never writes Firestore.
 - `-coupleyNoAds` hides ads and skips the consent and tracking prompts, for
   clean screenshots.
 - `-coupleyDemoData` draws a localized demo couple instead of the signed-in

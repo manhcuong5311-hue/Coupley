@@ -30,6 +30,10 @@ struct DebugMenuView: View {
     @State private var apnsToken: String? = NotificationService.shared.latestAPNsToken
     @State private var partnerTokenStatus: String = "Checking…"
     @State private var actionToast: String?
+    #if DEBUG
+    /// The garden lab (DEBUG only; spec K6).
+    @State private var showGardenLab = false
+    #endif
 
     var body: some View {
         NavigationStack {
@@ -43,6 +47,11 @@ struct DebugMenuView: View {
                 }
                 .scrollContentBackground(.hidden)
                 .listRowSpacing(8)
+                #if DEBUG
+                .navigationDestination(isPresented: $showGardenLab) {
+                    GardenLabView()
+                }
+                #endif
 
                 if let toast = actionToast {
                     VStack {
@@ -139,6 +148,17 @@ struct DebugMenuView: View {
                     }
                 }
             }
+
+            #if DEBUG
+            actionRow(
+                icon: "leaf.fill",
+                tint: Color.green,
+                title: "Garden Lab",
+                subtitle: "Every garden flow on an in-memory garden, plus reminders and backdrops"
+            ) {
+                showGardenLab = true
+            }
+            #endif
         } header: {
             Text("Actions")
         }
@@ -163,6 +183,11 @@ struct DebugMenuView: View {
                       value: Bundle.main.bundleIdentifier ?? "—")
             statusRow(label: "Build", value: buildLabel)
             statusRow(label: "Mode", value: buildMode)
+            #if DEBUG
+            if FirebaseEmulatorSwitch.isActive {
+                statusRow(label: "Firebase", value: "emulator (\(FirebaseEmulatorSwitch.host))")
+            }
+            #endif
         } header: {
             HStack {
                 Text("Status")

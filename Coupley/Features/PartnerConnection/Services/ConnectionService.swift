@@ -162,6 +162,12 @@ final class FirestoreConnectionService: ConnectionService {
         // see the bodies and would orphan every one of them.
         try await deleteFutureLetters(coupleRef: coupleRef)
 
+        // The start date and the garden. Holds the garden's places and notes.
+        // Keep it flat: a flat purge cannot see subcollections. Required,
+        // unlike the best-effort list below: a failure surfaces instead of
+        // leaving places and notes behind.
+        try await deleteCollection(coupleRef.collection("timeTreeMeta"))
+
         for name in simpleSubcollections {
             try await deleteCollection(coupleRef.collection(name))
         }
@@ -176,7 +182,6 @@ final class FirestoreConnectionService: ConnectionService {
             "togetherGoals",
             "coupleChallenges",
             "dreams",
-            "timeTreeMeta",
             "nudges",
             "pings",
             "chat"

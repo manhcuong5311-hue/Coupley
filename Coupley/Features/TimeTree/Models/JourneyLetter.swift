@@ -417,11 +417,20 @@ nonisolated enum JourneyFocus: Equatable {
     case capsule(memoryId: String)
     /// Replay this crown's celebration.
     case crown(milestoneId: String)
+    /// The garden: a tree, a watering (and its note), a request, or the
+    /// garden as a whole. From a garden push, a garden reminder or Home's
+    /// garden row.
+    case garden(GardenFocus)
 
     /// Reads a reminder's own userInfo (not NotificationService's wrapper,
     /// which nests it under "userInfo"). Nil for anything that is not a
-    /// Journey reminder.
+    /// Journey reminder or a garden push or reminder.
     init?(notificationUserInfo info: [AnyHashable: Any]) {
+        // Garden types first: they share the "type" key with Journey's own.
+        if let garden = GardenFocus(notificationUserInfo: info) {
+            self = .garden(garden)
+            return
+        }
         guard let type = info[JourneyNotification.typeKey] as? String else { return nil }
         switch type {
         case JourneyNotification.capsuleType:

@@ -18,12 +18,27 @@
 //  is scheduled even if Journey is never opened on this phone. Leaving a
 //  session takes its reminders with it.
 //
+//  The garden's two reminders are planned here too (spec H): a listener on
+//  the newest waterings plans from the newest CONFIRMED one, and garden,
+//  capsule and crown work share one serial chain, so they never interleave
+//  and a sign-out cancels all of it. A watering push that wakes the app
+//  joins the same chain while this service is bound to that couple.
+//
 
 import Foundation
 import FirebaseFirestore
 import FirebaseStorage
 import UIKit
 import WidgetKit
+
+// MARK: - Reminder Schedulers
+
+/// What each step of the reminder chain is handed: Journey's capsules and
+/// crowns, and the garden's two reminders.
+@MainActor struct JourneyReminderSchedulers {
+    let journey: TimeTreeNotificationScheduling
+    let garden: GardenReminderScheduling
+}
 
 // MARK: - Service
 
@@ -41,9 +56,13 @@ final class WidgetSyncService {
     private let anchorService: TimeTreeAnchorService = FirestoreTimeTreeAnchorService()
     private let memoryService: TimeTreeMemoryService = FirestoreTimeTreeMemoryService()
 
-    /// Capsule and crown reminders. Only this service schedules them; the
-    /// Journey view model schedules nothing.
-    private let journeyReminders: TimeTreeNotificationScheduling = TimeTreeNotificationScheduler()
+    /// Capsule, crown and garden reminders. Only this service schedules
+    /// them (and the garden's push wake, through this service's chain while
+    /// it is bound); the Journey and garden view models schedule nothing.
+    private let reminderSchedulers = JourneyReminderSchedulers(
+        journey: TimeTreeNotificationScheduler(),
+        garden: GardenReminderScheduler()
+    )
     /// The newest step of the reminder work chain. Each step waits for the
     /// one before it, so a crown reschedule, a capsule reconcile and the
     /// cleanup after a session never interleave.
@@ -52,6 +71,17 @@ final class WidgetSyncService {
     /// is queued behind can leave the work to it.
     private var crownReminderRevision = 0
     private var capsuleReminderRevision = 0
+    private var gardenReminderRevision = 0
+
+    /// The garden's view of the bound couple, for its reminder plan.
+    /// Whether Our tree exists (a start date is set); nil until the anchor
+    /// listener has answered (it never reports "no start date" from an
+    /// empty cache).
+    private var ourTreeExists: Bool?
+    /// The newest confirmed watering; nil until the latest-watering
+    /// listener's first snapshot, `.some(nil)` for a garden never watered.
+    private var newestConfirmedWatering: ConfirmedWatering??
+    private var foregroundObserver: NSObjectProtocol?
 
     private var session: UserSession?
     private var partnerDisplayName: String?
@@ -63,6 +93,7 @@ final class WidgetSyncService {
     nonisolated(unsafe) private var nudgeListener: ListenerRegistration?
     nonisolated(unsafe) private var partnerProfileListener: ListenerRegistration?
     nonisolated(unsafe) private var coupleDocListener: ListenerRegistration?
+    nonisolated(unsafe) private var wateringListener: ListenerRegistration?
 
     // In-memory bits of the snapshot we'll merge on every write. Holding
     // them here lets a single listener fire without losing the data the
@@ -105,6 +136,10 @@ final class WidgetSyncService {
         tearDownListeners()
         self.session = session
         self.partnerDisplayName = partnerDisplayName
+        if GardenFeature.isEnabled {
+            // A watering push re-plans reminders only for this couple.
+            UserDefaults.standard.set(session.coupleId, forKey: GardenDefaultsKey.activeCoupleId)
+        }
 
         startListening(session: session)
 
@@ -121,6 +156,7 @@ final class WidgetSyncService {
     /// disconnect.
     func unbind() {
         tearDownListeners()
+        UserDefaults.standard.removeObject(forKey: GardenDefaultsKey.activeCoupleId)
 
         let empty = WidgetSnapshot.placeholder
         WidgetSnapshotStore.write(empty)
@@ -144,6 +180,11 @@ final class WidgetSyncService {
         nudgeListener?.remove();          nudgeListener = nil
         partnerProfileListener?.remove(); partnerProfileListener = nil
         coupleDocListener?.remove();      coupleDocListener = nil
+        wateringListener?.remove();       wateringListener = nil
+        if let foregroundObserver {
+            NotificationCenter.default.removeObserver(foregroundObserver)
+            self.foregroundObserver = nil
+        }
 
         session = nil
         partnerDisplayName = nil
@@ -153,6 +194,8 @@ final class WidgetSyncService {
         pendingAnniversary = nil
         pendingAnchor = nil
         pendingMemories = []
+        ourTreeExists = nil
+        newestConfirmedWatering = nil
     }
 
     // MARK: - Listeners
@@ -164,6 +207,10 @@ final class WidgetSyncService {
         observeNudges(coupleId: session.coupleId, userId: session.userId)
         observePartnerProfile(partnerId: session.partnerId)
         observeCoupleDocument(coupleId: session.coupleId)
+        if GardenFeature.isEnabled {
+            observeLatestWaterings(coupleId: session.coupleId)
+            observeForeground()
+        }
     }
 
     // MARK: - TimeTree (Anchor + Memories)
@@ -180,6 +227,12 @@ final class WidgetSyncService {
                     self.rebuildAnniversarySnapshot()
                     self.scheduleWrite()
                     self.queueCrownReminders(for: anchor)
+                    // The start date appearing or going decides whether
+                    // there is a garden to remind about.
+                    if self.ourTreeExists != (anchor != nil) {
+                        self.ourTreeExists = anchor != nil
+                        self.queueGardenReminders()
+                    }
                 }
             },
             onError: { _ in }
@@ -208,13 +261,13 @@ final class WidgetSyncService {
     private func queueCrownReminders(for anchor: RelationshipAnchor?) {
         crownReminderRevision &+= 1
         let revision = crownReminderRevision
-        enqueueReminderWork { [weak self] scheduler in
+        enqueueReminderWork { [weak self] s in
             // A newer start date is queued behind this one: it does the work.
             guard self?.crownReminderRevision == revision else { return }
             if let anchor {
-                await scheduler.rescheduleCrowns(anchor: anchor)
+                await s.journey.rescheduleCrowns(anchor: anchor)
             } else {
-                await scheduler.cancelAllCrowns()
+                await s.journey.cancelAllCrowns()
             }
         }
     }
@@ -223,24 +276,24 @@ final class WidgetSyncService {
     private func queueCapsuleReminders(_ memories: [TimeMemory]) {
         capsuleReminderRevision &+= 1
         let revision = capsuleReminderRevision
-        enqueueReminderWork { [weak self] scheduler in
+        enqueueReminderWork { [weak self] s in
             // A newer list is queued behind this one: it does the work.
             guard self?.capsuleReminderRevision == revision else { return }
-            await scheduler.reconcileCapsules(memories)
+            await s.journey.reconcileCapsules(memories)
         }
     }
 
     /// Runs `work` once everything queued before it has finished. Each step
     /// re-checks that the session it was queued for is still the bound one,
-    /// and a teardown cancels the whole chain mid-way: the scheduler checks
-    /// for cancellation before every request it adds, so nothing is
+    /// and a teardown cancels the whole chain mid-way: the schedulers check
+    /// for cancellation before every request they add, so nothing is
     /// scheduled after sign-out or disconnect.
-    private func enqueueReminderWork(_ work: @escaping (TimeTreeNotificationScheduling) async -> Void) {
+    private func enqueueReminderWork(_ work: @escaping (JourneyReminderSchedulers) async -> Void) {
         guard let session else { return }
         let coupleId = session.coupleId
         let userId = session.userId
         let previous = reminderTask
-        let scheduler = journeyReminders
+        let scheduler = reminderSchedulers
         reminderTask = Task { [weak self] in
             // Cancelling the newest step cancels every step queued before it.
             await withTaskCancellationHandler {
@@ -257,17 +310,135 @@ final class WidgetSyncService {
     }
 
     /// Cancels the queued reminder work and then, once it has stopped (so a
-    /// request it was adding at that moment goes too), removes every capsule
-    /// and crown reminder, pending and delivered. The next session's work
-    /// queues behind this cleanup, so it can never remove what that session
-    /// schedules.
+    /// request it was adding at that moment goes too), removes every capsule,
+    /// crown and garden reminder, pending and delivered. The next session's
+    /// work queues behind this cleanup, so it can never remove what that
+    /// session schedules.
     private func stopJourneyReminders() {
         let previous = reminderTask
         previous?.cancel()
-        let scheduler = journeyReminders
+        let schedulers = reminderSchedulers
         reminderTask = Task {
             await previous?.value
-            await scheduler.cancelAll()
+            await schedulers.journey.cancelAll()
+            await schedulers.garden.cancelAll()
+        }
+    }
+
+    /// Returns once every reminder step queued so far has finished (the
+    /// garden's push wake waits for its plan before the app is suspended).
+    func reminderWorkSettled() async {
+        await reminderTask?.value
+    }
+
+    // MARK: - Garden Reminders
+
+    /// The newest watering the server has confirmed.
+    nonisolated private struct ConfirmedWatering: Equatable, Sendable {
+        let id: String
+        let wateredAt: Date
+    }
+
+    /// Whether this service is bound to `coupleId` (the push wake then joins
+    /// the serial chain instead of scheduling on its own).
+    func isBound(toCouple coupleId: String) -> Bool {
+        session?.coupleId == coupleId
+    }
+
+    /// The Garden notification toggle (or its mirror) changed, or the garden
+    /// was switched off or back on remotely: re-plan the garden's reminders
+    /// on the serial chain (cancelled at once while they are not allowed).
+    func gardenRemindersPreferenceChanged() {
+        queueGardenReminders()
+    }
+
+    /// A watering push woke the app while this service is bound to the
+    /// push's couple: plan from the push's confirmed server time on the
+    /// serial chain (the scheduler's monotonic guard drops anything older
+    /// than what is already planned). Never superseded by a listener step:
+    /// in a short background wake the server snapshot may never arrive.
+    func queueGardenReplan(fromPushWateredAtMs ms: Int64, wateringId: String) {
+        guard GardenFeature.isEnabled, let session, ms > 0, !wateringId.isEmpty else { return }
+        // A watering needs the start date, so Our tree exists.
+        let plan = GardenReminderPlan(coupleId: session.coupleId,
+                                      lastWateredAt: Date(timeIntervalSince1970: TimeInterval(ms) / 1000),
+                                      lastWateringId: wateringId,
+                                      hasOurTree: true,
+                                      isEnabled: GardenReminderScheduler.remindersAllowed())
+        enqueueReminderWork { s in
+            await s.garden.reschedule(plan)
+        }
+    }
+
+    /// Plans from what this service knows now: the anchor and the newest
+    /// confirmed watering. Waits for both listeners to have answered, except
+    /// that a start date that is gone, the Garden toggle off or the garden
+    /// switched off remotely cancels at once. A newer step queued behind
+    /// this one does the work instead.
+    private func queueGardenReminders() {
+        guard GardenFeature.isEnabled, let session else { return }
+        let plan: GardenReminderPlan
+        if GardenReminderScheduler.remindersAllowed() {
+            guard let hasOurTree = ourTreeExists, !hasOurTree || newestConfirmedWatering != nil else { return }
+            let watering = newestConfirmedWatering ?? nil
+            plan = GardenReminderPlan(coupleId: session.coupleId,
+                                      lastWateredAt: watering?.wateredAt,
+                                      lastWateringId: watering?.id,
+                                      hasOurTree: hasOurTree,
+                                      isEnabled: true)
+        } else {
+            // Nothing to wait for: a plan that may not remind only cancels.
+            plan = GardenReminderPlan(coupleId: session.coupleId, lastWateredAt: nil, lastWateringId: nil,
+                                      hasOurTree: ourTreeExists ?? false, isEnabled: false)
+        }
+        gardenReminderRevision &+= 1
+        let revision = gardenReminderRevision
+        enqueueReminderWork { [weak self] s in
+            guard self?.gardenReminderRevision == revision else { return }
+            await s.garden.reschedule(plan)
+        }
+    }
+
+    /// The three newest waterings (only waterings carry `wateredAt`, so the
+    /// query needs no index), with metadata changes so the server's
+    /// confirmation of my own pending watering arrives as a snapshot. Plans
+    /// from the newest one WITHOUT pending writes: my own watering re-plans
+    /// once the server has given it its time.
+    private func observeLatestWaterings(coupleId: String) {
+        wateringListener = db.collection(FirestorePath.timeTreeMeta(coupleId: coupleId))
+            .order(by: GardenField.wateredAt, descending: true)
+            .limit(to: 3)
+            .addSnapshotListener(includeMetadataChanges: true) { [weak self] snapshot, _ in
+                guard let snapshot else { return }
+                let newest = snapshot.documents
+                    .filter { !$0.metadata.hasPendingWrites }
+                    .compactMap { doc -> ConfirmedWatering? in
+                        guard let time = doc.data()[GardenField.wateredAt] as? Timestamp else { return nil }
+                        return ConfirmedWatering(id: doc.documentID, wateredAt: time.dateValue())
+                    }
+                    .max { $0.wateredAt < $1.wateredAt }
+                Task { @MainActor [weak self] in
+                    guard let self, self.session?.coupleId == coupleId else { return }
+                    // Only a change re-plans: a pending write, or the
+                    // server confirming what the cache already said, does not.
+                    if let known = self.newestConfirmedWatering, known == newest { return }
+                    self.newestConfirmedWatering = .some(newest)
+                    self.queueGardenReminders()
+                }
+            }
+    }
+
+    /// Coming back to the foreground re-plans: the permission may have
+    /// changed in Settings, and the plan's reminders may have fired.
+    private func observeForeground() {
+        foregroundObserver = NotificationCenter.default.addObserver(
+            forName: UIApplication.didBecomeActiveNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                self?.queueGardenReminders()
+            }
         }
     }
 

@@ -22,7 +22,14 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         ContentL10nCatalogDump.printIfRequested()
         #endif
 
+        // DEBUG `-useFirestoreEmulator` points Auth and Firestore at the
+        // local emulators (FirebaseEmulatorSwitch). It must run before
+        // NotificationService.shared or anything else touches Firebase.
+        #if DEBUG
+        if FirebaseEmulatorSwitch.isRequested { FirebaseEmulatorSwitch.configureFirebase() } else { FirebaseApp.configure() }
+        #else
         FirebaseApp.configure()
+        #endif
 
         // The two delegate hooks the rest of the notification stack relies
         // on. Wired here (rather than later) so the very first FCM token
@@ -56,8 +63,8 @@ class AppDelegate: NSObject, UIApplicationDelegate {
     //
     // `nonisolated` matches the protocol requirement (which is not main-actor
     // isolated) so the non-Sendable `userInfo` dictionary doesn't have to
-    // cross an actor boundary on entry. We extract the only field we need
-    // (a Sendable String) before hopping to the main actor for logging.
+    // cross an actor boundary on entry. We extract the fields we need
+    // (Sendable Strings) before hopping to the main actor.
     nonisolated func application(_ application: UIApplication,
                                  didReceiveRemoteNotification userInfo: [AnyHashable: Any]) async -> UIBackgroundFetchResult {
         let type = (userInfo["type"] as? String) ?? "unknown"
@@ -65,7 +72,30 @@ class AppDelegate: NSObject, UIApplicationDelegate {
             NotificationLogger.shared.recordReceived()
             NotificationLogger.shared.info("Background", "Silent push received (type=\(type))")
         }
+
+        // A partner's watering: move the garden's reminders to it, so none
+        // fires about a garden that was just watered. Waits for the re-plan,
+        // so iOS does not suspend the app half-way through it. A build
+        // without the garden plans nothing (replanFromPush checks it too).
+        if GardenFeature.isEnabled, type == GardenNotification.wateredType,
+           let coupleId = Self.payloadString(userInfo[GardenNotification.coupleIdKey]),
+           let wateredAtMs = Self.payloadString(userInfo[GardenNotification.wateredAtMsKey]),
+           let wateringId = Self.payloadString(userInfo[GardenNotification.wateringIdKey]) {
+            await GardenReminderScheduler.replanFromPush(coupleId: coupleId,
+                                                         wateredAtMs: wateredAtMs,
+                                                         wateringId: wateringId)
+        }
         return .newData
+    }
+
+    /// A push data value as text: FCM delivers data values as strings; a
+    /// hand-written APNs payload (`simctl push`) may carry a number.
+    nonisolated private static func payloadString(_ value: Any?) -> String? {
+        switch value {
+        case let text as String: return text
+        case let number as NSNumber: return number.stringValue
+        default: return nil
+        }
     }
 }
 
@@ -198,6 +228,13 @@ struct RootView: View {
         sessionStore.registerTeardown { [weak notificationViewModel] in
             notificationViewModel?.tearDownForSignOut()
         }
+        // The garden's listeners go while the auth context is still valid
+        // (ContentView owns the models; this reaches every live one).
+        if GardenFeature.isEnabled {
+            sessionStore.registerTeardown {
+                GardenViewModel.stopAll()
+            }
+        }
     }
 
     private func syncPremiumBinding() {
@@ -227,14 +264,26 @@ struct RootView: View {
         // letters listener reconciles the letter reminders, WidgetSyncService
         // reschedules the Journey reminders and the listeners refill the
         // caches.
+        //
+        // The garden's reminders and caches go the same way: its device
+        // cache (trees, places, recent waterings), the map snapshots and
+        // recent place picks, and the rendered scene art held in memory.
+        // A build without the garden still removes what an earlier garden
+        // build may have left (places, notes, reminders), but never creates
+        // the scene-art cache (its folder and memory-warning observer) just
+        // to empty a memory tier only a garden build fills.
         switch sessionStore.appState {
         case .unauthenticated, .needsPairing:
             Task {
                 await FutureLetterNotificationScheduler().cancelAll()
                 await TimeTreeNotificationScheduler().cancelAll()
                 await AnniversaryNotificationScheduler().cancelAll()
+                await GardenReminderScheduler().cancelAll()
             }
             TimeTreeViewModel.purgeLocalCaches()
+            GardenViewModel.purgeLocalCaches()
+            if GardenFeature.isEnabled { GardenBackdropCache.shared.removeAll() }
+            GardenMapSnapshotter.shared.purge()
         case .loading, .ready:
             break
         }

@@ -43,6 +43,9 @@ struct ContentView: View {
     /// Owned here rather than by the dashboard: the Home tab badge counts the
     /// letters that are ready to open.
     @StateObject private var lettersViewModel: FutureLetterViewModel
+    /// Owned here rather than by Journey: Home's garden row and push routing
+    /// read it too.
+    @StateObject private var gardenViewModel: GardenViewModel
 
     init(session: UserSession, displayName: String?) {
         self.session = session
@@ -71,6 +74,7 @@ struct ContentView: View {
         _profileViewModel = StateObject(wrappedValue: CouplePersonProfileViewModel(session: session))
         _microActionViewModel = StateObject(wrappedValue: MicroActionViewModel(session: session))
         _lettersViewModel = StateObject(wrappedValue: FutureLetterViewModel(session: session))
+        _gardenViewModel = StateObject(wrappedValue: GardenViewModel(session: session))
 
         #if DEBUG
         // Only the first value is used: @State keeps its storage for the
@@ -111,7 +115,12 @@ struct ContentView: View {
                     lettersViewModel: lettersViewModel,
                     showPairingSheet: $showPairingSheet,
                     showStatsSheet: $showStatsSheet,
-                    selectedTab: $selectedTab
+                    selectedTab: $selectedTab,
+                    gardenLine: GardenFeature.isEnabled ? gardenViewModel.homeLine : nil,
+                    onOpenGarden: { focus in
+                        journeyFocus = .garden(focus)
+                        selectedTab = .anniversary
+                    }
                 )
                 .adBannerInset()
                 .tabItem {
@@ -156,7 +165,12 @@ struct ContentView: View {
                     focus: $journeyFocus,
                     onOpenLetter: { lettersViewModel.show($0) },
                     onOpenAllLetters: { lettersViewModel.openHub() },
-                    onWriteLetter: { writeLetter(seed: $0, opensAt: $1) }
+                    onWriteLetter: { writeLetter(seed: $0, opensAt: $1) },
+                    // The letters sheet below covers Journey's garden hero
+                    // (presenting it fires no onDisappear there).
+                    isLettersSheetPresented: lettersViewModel.route != nil,
+                    garden: gardenViewModel,
+                    onOpenChat: { selectedTab = .chat }
                 )
                     .adBannerInset()
                     .tabItem {
@@ -286,6 +300,7 @@ struct ContentView: View {
                 AdsManager.shared.activate()
                 if let live = sessionStore.session { lettersViewModel.rebind(session: live) }
                 lettersViewModel.start()
+                startGarden()
             }
             .onChange(of: notificationViewModel.navigateToMood, initial: true) { _, navigate in
                 if navigate { selectedTab = .mood; notificationViewModel.navigateToMood = false }
@@ -340,15 +355,18 @@ struct ContentView: View {
                 if sessionStore.isPaired { statsViewModel.loadStats() }
                 // Idempotent; ends by moving the letters' clock to now.
                 lettersViewModel.start()
+                if GardenFeature.isEnabled { gardenViewModel.start() }
             }
             .onReceive(NotificationCenter.default.publisher(for: UIApplication.significantTimeChangeNotification)) { _ in
                 // Midnight, a time-zone change, DST, or a manual clock change.
                 lettersViewModel.refreshClock()
+                if GardenFeature.isEnabled { gardenViewModel.refreshClock() }
             }
             .onChange(of: sessionStore.session?.coupleId) { _, _ in
                 // Pairing, unpairing, and a switch from one couple to another
                 // that keeps this view (and so its StateObjects) alive.
                 if let live = sessionStore.session { lettersViewModel.rebind(session: live) }
+                startGarden()
             }
             .onChange(of: sessionStore.isPaired) { _, paired in
                 if paired {
@@ -381,6 +399,16 @@ struct ContentView: View {
         }
         lettersViewModel.compose(seed: seed, opensAt: opensAt)
         return true
+    }
+
+    // MARK: - Garden
+
+    /// Binds the garden to the live session and starts it (idempotent).
+    /// Release builds keep the pre-garden app until the garden ships.
+    private func startGarden() {
+        guard GardenFeature.isEnabled else { return }
+        if let live = sessionStore.session { gardenViewModel.rebind(session: live) }
+        gardenViewModel.start()
     }
 
     // MARK: - Journey reminders

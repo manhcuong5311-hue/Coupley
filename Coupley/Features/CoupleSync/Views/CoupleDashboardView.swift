@@ -18,6 +18,11 @@ struct CoupleDashboardView: View {
     @Binding var showPairingSheet: Bool
     @Binding var showStatsSheet: Bool
     @Binding var selectedTab: AppTab
+    /// Home's one quiet garden row (a request waiting for me, or the
+    /// partner's recent watering). Nil shows nothing.
+    var gardenLine: GardenHomeLine? = nil
+    /// Opens Journey at the garden row's focus.
+    var onOpenGarden: ((GardenFocus) -> Void)? = nil
 
     @EnvironmentObject private var sessionStore: SessionStore
     @EnvironmentObject private var themeManager: ThemeManager
@@ -33,6 +38,9 @@ struct CoupleDashboardView: View {
     @State private var showProfileHub = false
     @State private var limitReached: PremiumFeature?
     @State private var showAICoach = false
+    #if DEBUG
+    @State private var showsLaunchGardenLab = false
+    #endif
     @State private var sentReaction: ReactionKind? = nil
     @State private var sentLiveReaction: ReactionKind? = nil
     @State private var showTouchTogether = false
@@ -242,6 +250,20 @@ struct CoupleDashboardView: View {
                    value: viewModel.partnerIsOnline)
         #if DEBUG
         .task { await openLaunchArgumentScreen() }
+        .fullScreenCover(isPresented: $showsLaunchGardenLab) {
+            NavigationStack {
+                GardenLabView(opensJourney: Self.launchArgumentScreen == "gardenJourney")
+                    .toolbar {
+                        ToolbarItem(placement: .topBarLeading) {
+                            Button {
+                                showsLaunchGardenLab = false
+                            } label: {
+                                Text(verbatim: "Close")
+                            }
+                        }
+                    }
+            }
+        }
         #endif
         // `onAppear` does not fire when a suspended app comes back, so an app
         // left open overnight kept showing yesterday's finished question until
@@ -625,10 +647,16 @@ struct CoupleDashboardView: View {
 
     /// Ambient readouts: true, but not a job. No containers at all — contrast
     /// is a ratio, and deleting the denominator is what lets the hero read.
+    /// The garden's one quiet row (B7) sits here too, under the zone's rule:
+    /// never thirst, never a badge.
     @ViewBuilder
     private var ambientZone: some View {
         VStack(spacing: Brand.Space.sibling) {
             BrandCard(tier: .quiet) { coupleAvatarsAndStats }
+            if let gardenLine, let onOpenGarden {
+                GardenHomeRow(line: gardenLine, onOpen: onOpenGarden)
+                    .transition(.opacity)
+            }
             if homeHero != .togetherNow {
                 BrandCard(tier: .quiet) { presenceRow }
             }
@@ -1558,7 +1586,9 @@ struct CoupleDashboardView: View {
 extension CoupleDashboardView {
 
     /// DEBUG only, for automated localization screenshots: the screen named
-    /// by the `-coupleyOpen coach|letters|compose` launch argument. Read once.
+    /// by the `-coupleyOpen coach|letters|compose|gardenLab|gardenJourney`
+    /// launch argument. Read once. The two garden screens are the Garden lab
+    /// (in-memory, never writes Firestore) and its Journey page.
     private static let launchArgumentScreen: String? = {
         let arguments = ProcessInfo.processInfo.arguments
         guard let flag = arguments.firstIndex(of: "-coupleyOpen"),
@@ -1577,6 +1607,7 @@ extension CoupleDashboardView {
         case "coach":   openAICoach()
         case "letters": lettersViewModel.openHub()
         case "compose": lettersViewModel.compose()
+        case "gardenLab", "gardenJourney": showsLaunchGardenLab = true
         default:        break
         }
     }

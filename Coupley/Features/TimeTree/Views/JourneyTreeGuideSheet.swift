@@ -5,6 +5,9 @@
 //  "How your tree grows": the growth stages with where the couple is now,
 //  and what the tree carries (memories as stars, sealed letters as
 //  envelopes, opened letters as blossoms, crowns, the season's colours).
+//  In the garden it also explains watering and places (B6), and a place
+//  tree's guide counts from its planting day and shows only what a place
+//  tree carries (B3 row 1).
 //  Opened from the stage name in Journey's hero.
 //
 
@@ -17,15 +20,26 @@ import UIKit
 struct JourneyTreeGuideSheet: View {
 
     let stage: TreeGrowthStage
+    /// Days since the tree's growth start: the start date for Our tree, the
+    /// planting day for a place tree (`growsFromPlanting`).
     let daysTogether: Int
     let partnerName: String
+    /// Garden mode: adds the Watering and Your places sections.
+    let showsGarden: Bool
+    /// A place tree's guide: it grows from the day it was planted (owner
+    /// decision 3), and it never carries memory stars, letters, blossoms or
+    /// crowns (spec C5), so only the colours row stays.
+    let growsFromPlanting: Bool
 
     @Environment(\.dismiss) private var dismiss
 
-    init(stage: TreeGrowthStage, daysTogether: Int, partnerName: String) {
+    init(stage: TreeGrowthStage, daysTogether: Int, partnerName: String,
+         showsGarden: Bool = GardenFeature.isEnabled, growsFromPlanting: Bool = false) {
         self.stage = stage
         self.daysTogether = daysTogether
         self.partnerName = partnerName
+        self.showsGarden = showsGarden
+        self.growsFromPlanting = growsFromPlanting
     }
 
     /// The first stage still ahead, if any.
@@ -38,6 +52,10 @@ struct JourneyTreeGuideSheet: View {
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: Brand.Space.zone) {
                     stagesSection
+                    if showsGarden {
+                        wateringSection
+                        placesSection
+                    }
                     growsSection
                 }
                 .padding(.horizontal, Brand.Space.gutter)
@@ -67,7 +85,15 @@ struct JourneyTreeGuideSheet: View {
             sectionTitle(LocalizedStringResource("Stages", comment: "Tree guide section title: the tree's growth stages"))
 
             Group {
-                if daysTogether > 0 {
+                if growsFromPlanting {
+                    if daysTogether > 0 {
+                        Text("This tree grows from the day you planted it. Today is day \(daysTogether).",
+                             comment: "Tree guide for a place tree (a tree the couple planted together for a place or a moment). The number is how many days ago they planted it; the planting day is day 0.")
+                    } else {
+                        Text("This tree grows from the day you planted it, starting today.",
+                             comment: "Tree guide for a place tree (a tree the couple planted together for a place or a moment), on the day they planted it")
+                    }
+                } else if daysTogether > 0 {
                     Text("It grows from the day your story began. Today is day \(daysTogether).",
                          comment: "Tree guide. The number is how many days the couple has been together.")
                 } else {
@@ -155,6 +181,40 @@ struct JourneyTreeGuideSheet: View {
                      comment: "Tree guide, the next growth stage: the day number it starts on, then the days left until then")
     }
 
+    // MARK: - Garden
+
+    private var wateringSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            sectionTitle(LocalizedStringResource("Watering", comment: "Tree guide section title: watering the garden"))
+            BrandCard(tier: .card) {
+                growsRow(symbol: "drop.fill",
+                         tint: FutureLetterStyle.accent,
+                         text: wateringText)
+            }
+        }
+    }
+
+    /// Matches the tree's look (`GardenTreeLook`) and the FAQ's answer.
+    private var wateringText: LocalizedStringResource {
+        GardenTreeLook.withersWhenThirsty
+            ? LocalizedStringResource("Water your garden every couple of days. One tap waters every tree, and a note can go with it. A tree never dies and never loses its growth: when it's thirsty it droops a little, and after a week it rests until the next drop.",
+                                      comment: "Tree guide: how watering works, for the look where an unwatered tree droops and then rests. Not shown while unwatered trees keep their plain look.")
+            : LocalizedStringResource("Water your garden every couple of days. One tap waters every tree, and a note can go with it. A tree never dies, never wilts and never loses its growth: water makes it greener and fuller for a day or two.",
+                                      comment: "Tree guide: how watering works. Watering is only a reward: a watered tree looks greener and fuller for a day or two, and an unwatered tree never wilts.")
+    }
+
+    private var placesSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            sectionTitle(LocalizedStringResource("Your places", comment: "Tree guide section title: trees for places and moments"))
+            BrandCard(tier: .card) {
+                growsRow(symbol: "mappin.and.ellipse",
+                         tint: FutureLetterStyle.opened,
+                         text: LocalizedStringResource("Each tree can stand for a place and a moment. You plant it together: one of you sends a seed, the other plants it.",
+                                                       comment: "Tree guide: what place trees are"))
+            }
+        }
+    }
+
     // MARK: - What grows on it
 
     private var growsSection: some View {
@@ -163,23 +223,26 @@ struct JourneyTreeGuideSheet: View {
 
             BrandCard(tier: .card) {
                 VStack(alignment: .leading, spacing: 0) {
-                    growsRow(symbol: "sparkles",
-                             tint: FutureLetterStyle.gold,
-                             text: "Your memories shine as stars around it.")
-                    rule
-                    growsRow(symbol: "envelope.fill",
-                             tint: FutureLetterStyle.accent,
-                             text: LocalizedStringResource("Sealed letters hang from the branches: \(partnerName)'s on the left, yours on the right. Tap one to open it.",
-                                                           comment: "Tree guide. %@ is the partner's name; their letters hang on the left of the tree, the user's on the right."))
-                    rule
-                    growsRow(symbol: "camera.macro",
-                             tint: FutureLetterStyle.gold,
-                             text: "Once a letter is opened, it blooms.")
-                    rule
-                    growsRow(symbol: "crown.fill",
-                             tint: FutureLetterStyle.gold,
-                             text: "Crowns mark 100 days, 1 year, 500 days, 2 years, 1000 days and beyond.")
-                    rule
+                    // Stars, letters, blossoms and crowns are Our tree's (C5).
+                    if !growsFromPlanting {
+                        growsRow(symbol: "sparkles",
+                                 tint: FutureLetterStyle.gold,
+                                 text: "Your memories shine as stars around it.")
+                        rule
+                        growsRow(symbol: "envelope.fill",
+                                 tint: FutureLetterStyle.accent,
+                                 text: LocalizedStringResource("Sealed letters hang from the branches: \(partnerName)'s on the left, yours on the right. Tap one to open it.",
+                                                               comment: "Tree guide. %@ is the partner's name; their letters hang on the left of the tree, the user's on the right."))
+                        rule
+                        growsRow(symbol: "camera.macro",
+                                 tint: FutureLetterStyle.gold,
+                                 text: "Once a letter is opened, it blooms.")
+                        rule
+                        growsRow(symbol: "crown.fill",
+                                 tint: FutureLetterStyle.gold,
+                                 text: "Crowns mark 100 days, 1 year, 500 days, 2 years, 1000 days and beyond.")
+                        rule
+                    }
                     growsRow(symbol: "leaf.fill",
                              tint: FutureLetterStyle.opened,
                              text: "Its colours change through the year.")

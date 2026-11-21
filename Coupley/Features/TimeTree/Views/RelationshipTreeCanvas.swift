@@ -34,6 +34,13 @@
 //   - VoiceOver skips the canvas and the tap targets. Journey labels the
 //     tree, and every letter is reachable in the Letters section and the
 //     Timeline.
+//   - Our Garden (spec C5, C6, I5) draws through the same painter: a
+//     `TreeCanvasStyle` picks the species (TreeCanvasSpecies.swift), the
+//     sky-aware bark, the ground patch, the glow and the topology seed; a
+//     `TreeVitality` droops, dries, wets and refreshes the tree
+//     (TreeCanvasVitality.swift); `.external` clocks let a scene page's one
+//     TimelineView drive the tree. The defaults (`.hero`, `.healthy`,
+//     `.own`, no note tag) draw today's tree exactly.
 //
 
 import Combine
@@ -57,6 +64,19 @@ struct RelationshipTreeCanvas: View {
     /// Called with a letter's id when its envelope or blossom is tapped.
     /// Nil leaves the tree purely decorative.
     let onSelectOrnament: ((String) -> Void)?
+    /// Species, sky-aware bark, ground patch, glow and topology seed.
+    /// `.hero` is today's tree, unchanged.
+    let style: TreeCanvasStyle
+    /// Thirst, wetness, dew, lushness and revival (C6). `.healthy` draws
+    /// today's tree.
+    let vitality: TreeVitality
+    /// `.own` keeps today's TimelineView and pause rules; `.external` draws
+    /// one frame for the time and pose a scene page hands in.
+    let clock: TreeCanvasClock
+    /// The watering note's tag on the lowest right limb, until it is read.
+    let noteTag: TreeNoteTag?
+    /// Called when the note tag is tapped.
+    let onSelectNoteTag: (() -> Void)?
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.scenePhase) private var scenePhase
@@ -73,7 +93,12 @@ struct RelationshipTreeCanvas: View {
          memoryCount: Int,
          crownActive: Bool,
          ornaments: [JourneyTreeOrnament] = [],
-         onSelectOrnament: ((String) -> Void)? = nil) {
+         onSelectOrnament: ((String) -> Void)? = nil,
+         style: TreeCanvasStyle = .hero,
+         vitality: TreeVitality = .healthy,
+         clock: TreeCanvasClock = .own,
+         noteTag: TreeNoteTag? = nil,
+         onSelectNoteTag: (() -> Void)? = nil) {
         self.stage = stage
         self.season = season
         self.daysTogether = daysTogether
@@ -81,6 +106,11 @@ struct RelationshipTreeCanvas: View {
         self.crownActive = crownActive
         self.ornaments = ornaments
         self.onSelectOrnament = onSelectOrnament
+        self.style = style
+        self.vitality = vitality
+        self.clock = clock
+        self.noteTag = noteTag
+        self.onSelectNoteTag = onSelectNoteTag
     }
 
     private var pose: TreeCanvasPose {
@@ -96,11 +126,30 @@ struct RelationshipTreeCanvas: View {
             daysTogether: daysTogether,
             memoryCount: memoryCount,
             crownActive: crownActive,
-            ornaments: ornaments
+            ornaments: ornaments,
+            style: style,
+            vitality: vitality,
+            showsNoteTag: noteTag != nil
         )
+        switch clock {
+        case .own:
+            ownClockTree(painter)
+        case .external(let time, let externalPose):
+            let motion = TreeCanvasMotion(pose: TreeCanvasPose(externalPose), time: time)
+            Canvas(rendersAsynchronously: true) { context, size in
+                painter.draw(in: context, size: size, motion: motion)
+            }
+            .accessibilityHidden(true)
+            .overlay { tapTargets(droop: vitality.droop(at: time)) }
+            .sensoryFeedback(.impact(weight: .light), trigger: selectionCount)
+        }
+    }
+
+    /// Today's tree: its own TimelineView, paused by its own rules.
+    private func ownClockTree(_ painter: TreeCanvasPainter) -> some View {
         let currentPose = pose
         // A paused TimelineView still renders one frame.
-        TimelineView(.animation(minimumInterval: 1.0 / 30.0, paused: currentPose != .live)) { timeline in
+        return TimelineView(.animation(minimumInterval: 1.0 / 30.0, paused: currentPose != .live)) { timeline in
             let motion = TreeCanvasMotion(pose: currentPose,
                                           time: timeline.date.timeIntervalSinceReferenceDate)
             Canvas(rendersAsynchronously: true) { context, size in
@@ -108,7 +157,7 @@ struct RelationshipTreeCanvas: View {
             }
         }
         .accessibilityHidden(true)
-        .overlay { ornamentTargets }
+        .overlay { tapTargets(droop: vitality.droop(at: Date().timeIntervalSinceReferenceDate)) }
         .onAppear {
             isShown = true
             isLowPower = ProcessInfo.processInfo.isLowPowerModeEnabled
@@ -129,34 +178,67 @@ struct RelationshipTreeCanvas: View {
 
     // MARK: - Tap targets
 
+    /// The letters' targets, with the note tag's above them. `droop` is the
+    /// thirst drawn right now, so a target sits on a drooped envelope or tag.
+    private func tapTargets(droop: Double) -> some View {
+        ZStack {
+            ornamentTargets(droop: droop)
+            noteTagTarget(droop: droop)
+        }
+    }
+
     /// One invisible hit layer over the letters, at the spots where they
-    /// rest when nothing sways (the same layout the drawing uses). A tap
-    /// within 22pt of a letter opens the letter whose centre is NEAREST the
-    /// finger. Letters sit 10-16pt apart, so per-letter squares overlapped,
-    /// and the one in front could open (and mark opened) a neighbour.
-    /// Hidden from VoiceOver, which reaches letters in the Letters section
-    /// and the Timeline instead.
+    /// rest when nothing sways (the same layout the drawing uses, with the
+    /// limbs drooped as drawn). A tap within 22pt of a letter opens the
+    /// letter whose centre is NEAREST the finger. Letters sit 10-16pt apart,
+    /// so per-letter squares overlapped, and the one in front could open
+    /// (and mark opened) a neighbour. Hidden from VoiceOver, which reaches
+    /// letters in the Letters section and the Timeline instead.
     @ViewBuilder
-    private var ornamentTargets: some View {
+    private func ornamentTargets(droop: Double) -> some View {
         if let onSelectOrnament, !ornaments.isEmpty {
             GeometryReader { proxy in
-                let placements = TreeCanvasLayout(size: proxy.size, stage: stage).place(ornaments)
+                let layout = TreeCanvasLayout(size: proxy.size, stage: stage)
+                let centers = layout.place(ornaments).map { (id: $0.id, center: layout.restingCenter(of: $0, droop: droop)) }
                 Color.clear
                     .contentShape(Path { path in
-                        for placement in placements {
-                            path.addEllipse(in: CGRect(x: placement.center.x - 22,
-                                                       y: placement.center.y - 22,
+                        for target in centers {
+                            path.addEllipse(in: CGRect(x: target.center.x - 22,
+                                                       y: target.center.y - 22,
                                                        width: 44, height: 44))
                         }
                     })
                     .onTapGesture { location in
-                        guard let nearest = placements.min(by: {
+                        guard let nearest = centers.min(by: {
                             hypot($0.center.x - location.x, $0.center.y - location.y)
                                 < hypot($1.center.x - location.x, $1.center.y - location.y)
                         }) else { return }
                         selectionCount += 1
                         onSelectOrnament(nearest.id)
                     }
+            }
+            .accessibilityHidden(true)
+        }
+    }
+
+    /// A 36×36pt target on the watering note's tag, where the drawing hangs
+    /// it. Hidden from VoiceOver: the hero's status well reads the note.
+    @ViewBuilder
+    private func noteTagTarget(droop: Double) -> some View {
+        if noteTag != nil, let onSelectNoteTag {
+            GeometryReader { proxy in
+                let layout = TreeCanvasLayout(size: proxy.size, stage: stage)
+                let hang = layout.noteTagHangPoint(stage: stage, species: style.species,
+                                                   motion: .rest, droop: droop)
+                let center = layout.noteTagCenter(hangingFrom: hang)
+                Color.clear
+                    .frame(width: 36, height: 36)
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        selectionCount += 1
+                        onSelectNoteTag()
+                    }
+                    .position(center)
             }
             .accessibilityHidden(true)
         }
@@ -170,12 +252,42 @@ extension RelationshipTreeCanvas {
     static func blossomCapacity(at stage: TreeGrowthStage) -> Int {
         TreeCanvasLayout(size: CGSize(width: 200, height: 200), stage: stage).blossomCapacity
     }
+
+    /// The points effects and overlays anchor to, in canvas-local
+    /// coordinates for a canvas of `size`, from the same `TreeCanvasLayout`
+    /// the drawing uses, at rest (no sway, no droop). Every species keeps
+    /// the layout's trunk and canopy; a palm's limb tips are its fronds'
+    /// tips. Main-actor (it reads `TreeGrowthStage` members).
+    static func anchors(in size: CGSize, stage: TreeGrowthStage,
+                        species: GardenSpecies = .oak) -> TreeCanvasAnchors {
+        let layout = TreeCanvasLayout(size: size, stage: stage)
+        let unit = layout.unit
+        let base = layout.trunkBase
+        let canOffset = unit * 0.09
+        let limbTips = species == .palm
+            ? layout.palmFronds(motion: .rest, droop: 0).map(\.end)
+            : layout.branches.map(\.end)
+        let tagHang = layout.noteTagHangPoint(stage: stage, species: species, motion: .rest, droop: 0)
+        return TreeCanvasAnchors(
+            unit: unit,
+            trunkBase: base,
+            trunkTop: layout.trunkTop,
+            canopyCenter: layout.canopyCenter,
+            canopyRadius: layout.canopyRadius,
+            groundY: layout.groundY,
+            soilRect: layout.soilBedRect,
+            noteTagPoint: layout.noteTagCenter(hangingFrom: tagHang),
+            leftCanPoint: CGPoint(x: base.x - canOffset, y: base.y),
+            rightCanPoint: CGPoint(x: base.x + canOffset, y: base.y),
+            limbTips: limbTips
+        )
+    }
 }
 
 // MARK: - Motion
 
 /// How the tree moves right now.
-private enum TreeCanvasPose {
+enum TreeCanvasPose {
     /// Animating, at up to 30 fps.
     case live
     /// Paused while off screen, in the background, or in Low Power Mode:
@@ -184,11 +296,23 @@ private enum TreeCanvasPose {
     case frozen
     /// Reduce Motion: one frame in the rest pose, the same every time.
     case still
+
+    /// A scene page's pose for an `.external` clock.
+    init(_ pose: TreeMotionPose) {
+        switch pose {
+        case .live:   self = .live
+        case .frozen: self = .frozen
+        case .still:  self = .still
+        }
+    }
 }
 
-private struct TreeCanvasMotion {
+struct TreeCanvasMotion {
     let pose: TreeCanvasPose
     let time: TimeInterval
+
+    /// The rest pose: where tap targets and anchors are measured.
+    static let rest = TreeCanvasMotion(pose: .still, time: 0)
 
     var isLive: Bool { pose == .live }
 
@@ -214,7 +338,7 @@ private struct TreeCanvasMotion {
 /// deep brown bark measured about 1.2–1.5:1 and the trunk all but vanished,
 /// so there it is lit a little; cream starlight vanished on a light hero,
 /// so there the stars are amber. Everything else reads on both.
-private struct TreeCanvasPalette {
+struct TreeCanvasPalette {
     let trunkBase: Color
     let trunkTop: Color
     let limb: Color
@@ -239,6 +363,17 @@ private struct TreeCanvasPalette {
             starGlow = Color(red: 1.0, green: 0.74, blue: 0.38)
         }
     }
+
+    /// The palette for what is behind the tree: the app's colour scheme
+    /// (`.automatic`, today), or a scene's sky, whose night lights the bark
+    /// and turns the stars cream even in the app's Light mode.
+    init(_ backdrop: TreeBackdrop, scheme: ColorScheme) {
+        switch backdrop {
+        case .automatic: self.init(scheme)
+        case .light:     self.init(.light)
+        case .dark:      self.init(.dark)
+        }
+    }
 }
 
 // MARK: - Layout
@@ -246,7 +381,7 @@ private struct TreeCanvasPalette {
 /// The tree's geometry for one frame size and stage. Everything is
 /// measured in `unit` inside a unit × unit box that sits on the bottom edge,
 /// centred horizontally.
-private struct TreeCanvasLayout {
+struct TreeCanvasLayout {
 
     struct Branch {
         let index: Int
@@ -396,6 +531,16 @@ private struct TreeCanvasLayout {
 
     var trunkBase: CGPoint { CGPoint(x: midX, y: groundY) }
     var trunkTop: CGPoint { CGPoint(x: midX, y: groundY - trunkHeight) }
+
+    /// How far a limb's tip has moved: its sway, plus `0.12 × reach × droop`
+    /// down while the tree is thirsty (spec C6). Envelopes, the note tag and
+    /// a banyan's roots on the limb ride along.
+    func tipOffset(of branch: Branch, motion: TreeCanvasMotion, droop: Double) -> CGSize {
+        let phase = Double(branch.index)
+        return CGSize(width: CGFloat(motion.wave(0.4, phase)) * unit * 0.007,
+                      height: CGFloat(motion.wave(0.45, phase + .pi / 2)) * unit * 0.0055
+                        + branch.reach * 0.12 * CGFloat(droop))
+    }
 
     /// A height inside the unit box, as a fraction of `unit` from its top.
     func y(_ fraction: CGFloat) -> CGFloat { top + unit * fraction }
@@ -580,7 +725,7 @@ private struct TreeCanvasLayout {
 
 /// Draws one frame of the tree from plain values, so the canvas closure
 /// captures nothing that can change under it.
-private struct TreeCanvasPainter {
+struct TreeCanvasPainter {
 
     let stage: TreeGrowthStage
     let season: TreeSeason
@@ -588,33 +733,81 @@ private struct TreeCanvasPainter {
     let memoryCount: Int
     let crownActive: Bool
     let ornaments: [JourneyTreeOrnament]
+    let style: TreeCanvasStyle
+    let vitality: TreeVitality
+    let showsNoteTag: Bool
 
-    private static let paper = Color(red: 0.98, green: 0.95, blue: 0.88)
+    static let paper = Color(red: 0.98, green: 0.95, blue: 0.88)
     private static let crownGold = Color(red: 1.0, green: 0.85, blue: 0.45)
+
+    /// Leaves, blossoms and fruit are seeded from this: the style's seed
+    /// (a place tree's key) or, for Our tree, the days together (today's
+    /// silhouette).
+    var topologySeed: UInt64 {
+        style.topologySeed ?? UInt64(truncatingIfNeeded: daysTogether)
+    }
 
     func draw(in context: GraphicsContext, size: CGSize, motion: TreeCanvasMotion) {
         guard size.width >= 1, size.height >= 1 else { return }
         let layout = TreeCanvasLayout(size: size, stage: stage)
-        let palette = TreeCanvasPalette(context.environment.colorScheme)
+        let palette = TreeCanvasPalette(style.backdrop, scheme: context.environment.colorScheme)
+        let care = TreeCanvasCare(vitality, at: motion.time)
 
         drawAmbientGlow(context, layout, motion)
         if crownActive {
             drawCrownRing(context, layout, motion)
         }
-        drawGround(context, layout, palette)
-        drawTrunkAndBranches(context, layout, palette, motion)
-        drawCanopy(context, layout, motion)
-        drawBlossoms(context, layout, motion)
-        drawFruits(context, layout, motion)
+        if style.drawsGround {
+            drawGround(context, layout, palette)
+        }
+        // Inside a scene the bed replaces the ground patch; on today's hero
+        // it appears only once the tree is cared for (never by default).
+        if !style.drawsGround || !care.isPlain {
+            drawSoilBed(context, layout, care)
+        }
+        switch style.species {
+        case .oak, .cherry, .banyan:
+            drawTrunkAndBranches(context, layout, palette, motion, care)
+            if style.species == .cherry && season == .winter {
+                drawBareTwigs(context, layout, palette, motion, care)
+            }
+            if style.species == .banyan {
+                drawAerialRoots(context, layout, palette, motion, care)
+            }
+            drawCanopy(context, layout, motion, care)
+            drawBlossoms(context, layout, motion, care)
+            drawFruits(context, layout, motion)
+        case .pine:
+            // The tiers stand where the limbs are (the layout keeps them for
+            // anchors and the note tag); drawn, they poked out past the tiers.
+            drawTrunkAndBranches(context, layout, palette, motion, care, drawsLimbs: false)
+            drawPine(context, layout, motion, care)
+        case .palm:
+            drawPalm(context, layout, palette, motion, care)
+        }
+        drawFallenLeaves(context, layout, care)
+        drawDew(context, layout, motion, care)
         drawMemoryStars(context, layout, palette, motion)
-        drawLetters(context, layout, motion)
+        drawLetters(context, layout, motion, care)
+        if showsNoteTag {
+            drawNoteTag(context, layout, motion, care)
+        }
     }
 
     // MARK: Ambient glow
 
+    /// Today's warm glow behind the canopy. Inside a scene it appears only
+    /// as light falls (`.dusk`, scaled by the sky's darkness).
     private func drawAmbientGlow(_ context: GraphicsContext, _ layout: TreeCanvasLayout, _ motion: TreeCanvasMotion) {
+        let strength: Double
+        switch style.glow {
+        case .always:              strength = 1
+        case .dusk(let intensity): strength = min(1, max(0, intensity))
+        case .none:                strength = 0
+        }
+        guard strength > 0 else { return }
         let unit = layout.unit
-        let alpha = 0.10 + motion.pulse(0.6) * 0.08
+        let alpha = (0.10 + motion.pulse(0.6) * 0.08) * strength
         let rect = CGRect(x: layout.midX - unit * 0.30, y: layout.y(0.18),
                           width: unit * 0.60, height: unit * 0.64)
         // The blur goes on a copy: a filter added to `context` itself would
@@ -710,15 +903,11 @@ private struct TreeCanvasPainter {
 
     // MARK: Trunk + branches
 
-    /// How far a limb's tip has swayed. Envelopes on the limb ride along.
-    private func tipSway(_ branch: TreeCanvasLayout.Branch, _ unit: CGFloat, _ motion: TreeCanvasMotion) -> CGSize {
-        let phase = Double(branch.index)
-        return CGSize(width: CGFloat(motion.wave(0.4, phase)) * unit * 0.007,
-                      height: CGFloat(motion.wave(0.45, phase + .pi / 2)) * unit * 0.0055)
-    }
-
-    private func drawTrunkAndBranches(_ context: GraphicsContext, _ layout: TreeCanvasLayout,
-                                      _ palette: TreeCanvasPalette, _ motion: TreeCanvasMotion) {
+    /// The trunk, then (unless `drawsLimbs` is false) the limbs and their
+    /// twigs, each limb swaying and drooping with `care`.
+    func drawTrunkAndBranches(_ context: GraphicsContext, _ layout: TreeCanvasLayout,
+                              _ palette: TreeCanvasPalette, _ motion: TreeCanvasMotion,
+                              _ care: TreeCanvasCare, drawsLimbs: Bool = true) {
         let unit = layout.unit
         let base = layout.trunkBase
         let top = layout.trunkTop
@@ -751,8 +940,9 @@ private struct TreeCanvasPainter {
                                control: CGPoint(x: base.x + width * 0.6, y: base.y - height * 0.5))
         context.stroke(highlight, with: .color(Color.white.opacity(0.10)), lineWidth: max(1, unit * 0.008))
 
+        guard drawsLimbs else { return }
         for branch in layout.branches {
-            let sway = tipSway(branch, unit, motion)
+            let sway = layout.tipOffset(of: branch, motion: motion, droop: care.droop)
             // Tapered: the whole limb thin, its inner part thicker, the
             // part nearest the trunk at full width. Round caps blend the steps.
             for (extent, share) in [(CGFloat(1), CGFloat(0.45)), (0.62, 0.72), (0.3, 1)] {
@@ -779,65 +969,127 @@ private struct TreeCanvasPainter {
 
     // MARK: Canopy (leaves)
 
-    private func drawCanopy(_ context: GraphicsContext, _ layout: TreeCanvasLayout, _ motion: TreeCanvasMotion) {
-        let fullness = stage.canopyFullness
+    /// The leafy canopy of an oak, a blossom (cherry) or a banyan: the
+    /// species sets the ellipse's proportions, colours and fullness
+    /// (TreeCanvasSpecies), the care droops, dries or refreshes the leaves
+    /// (TreeCanvasVitality). Oak with no care is today's canopy exactly.
+    private func drawCanopy(_ context: GraphicsContext, _ layout: TreeCanvasLayout,
+                            _ motion: TreeCanvasMotion, _ care: TreeCanvasCare) {
+        let species = style.species
+        let fullnessFactor = TreeCanvasSpecies.fullnessFactor(for: species, season: season)
+        let fullness = stage.canopyFullness * fullnessFactor
         guard fullness > 0 else { return }
         let unit = layout.unit
         let center = layout.canopyCenter
         let radius = layout.canopyRadius
-        let colors = season.canopyColors
+        let scale = TreeCanvasSpecies.canopyScale(for: species)
+        let tint = care.leafTint(TreeCanvasSpecies.canopyColors(for: species, season: season, snows: style.snows),
+                                 in: context.environment)
+        // A cherry in spring and summer mixes blossom-pink leaves in with
+        // the green: every other leaf.
+        let pinkTint = TreeCanvasSpecies.blossomLeafColors(for: species, season: season)
+            .map { care.leafTint($0, in: context.environment) }
+        func leafTint(_ index: Int) -> TreeLeafTint {
+            if let pinkTint, index % 2 == 1 { return pinkTint }
+            return tint
+        }
+        let silhouetteTop = pinkTint.map { tint.top.mix(with: $0.top, by: 0.5, in: .device) } ?? tint.top
+        let silhouetteBottom = pinkTint.map { tint.bottom.mix(with: $0.bottom, by: 0.5, in: .device) } ?? tint.bottom
 
         // Soft silhouette: one blurred ellipse, on a copy of the context.
-        let baseRect = CGRect(x: center.x - radius, y: center.y - radius * 0.85,
-                              width: radius * 2, height: radius * 1.7)
+        let baseRect = CGRect(x: center.x - radius * scale.width, y: center.y - radius * 0.85 * scale.height,
+                              width: radius * 2 * scale.width, height: radius * 1.7 * scale.height)
         var blurred = context
         blurred.addFilter(.blur(radius: unit * 0.05))
         blurred.fill(
             Path(ellipseIn: baseRect),
             with: .linearGradient(
-                Gradient(colors: [colors.top.opacity(0.55), colors.bottom.opacity(0.45)]),
+                Gradient(colors: [silhouetteTop.opacity(0.55 * fullnessFactor),
+                                  silhouetteBottom.opacity(0.45 * fullnessFactor)]),
                 startPoint: CGPoint(x: baseRect.midX, y: baseRect.minY),
                 endPoint: CGPoint(x: baseRect.midX, y: baseRect.maxY)
             )
         )
 
-        // Both stops resolved once per frame; each leaf blends plain numbers.
-        let top = colors.top.resolve(in: context.environment)
-        let bottom = colors.bottom.resolve(in: context.environment)
-
-        // Crisp leaf clusters, seeded from the days together so the tree
+        // Crisp leaf clusters, seeded from the topology seed so the tree
         // looks the same on every frame.
         let leafCount = Int(80 * fullness) + 6
-        var rng = SeededRNG(seed: UInt64(truncatingIfNeeded: daysTogether) &* 17 &+ 11)
+        var rng = TreeCanvasRNG(seed: topologySeed &* 17 &+ 11)
         for i in 0..<leafCount {
             let angle = rng.nextDouble() * .pi * 2
             let distance = CGFloat(rng.nextDouble()) * radius * 0.95
-            let x = center.x + CGFloat(cos(angle)) * distance
-            let y = center.y + CGFloat(sin(angle)) * distance * 0.85
-            let flutter = CGFloat(motion.wave(0.6 + rng.nextDouble() * 0.4, Double(i))) * unit * 0.006
+            let flutterRate = 0.6 + rng.nextDouble() * 0.4
             let leafSize = unit * CGFloat(0.012 + rng.nextDouble() * 0.018)
-            let leafRect = CGRect(x: x - leafSize / 2, y: y - leafSize / 2 + flutter,
-                                  width: leafSize, height: leafSize * 1.4)
             let mix = Float(rng.nextDouble())
-            context.fill(
-                Path(ellipseIn: leafRect),
-                with: .color(
-                    red: Double(top.red + (bottom.red - top.red) * mix),
-                    green: Double(top.green + (bottom.green - top.green) * mix),
-                    blue: Double(top.blue + (bottom.blue - top.blue) * mix),
-                    opacity: Double(top.opacity + (bottom.opacity - top.opacity) * mix) * 0.85
-                )
-            )
+            drawLeaf(context, layout, motion, care, leafTint(i), scale: scale, angle: angle, distance: distance,
+                     flutter: motion.wave(flutterRate, Double(i)), size: leafSize, mix: mix)
         }
+
+        // A freshly watered tree is fuller: extra leaves round the edge,
+        // from their own seed so the baseline leaves never move.
+        let extra = care.extraLeafCount
+        guard extra > 0 else { return }
+        var edge = TreeCanvasRNG(seed: topologySeed &* 59 &+ 23)
+        for i in 0..<extra {
+            let angle = edge.nextDouble() * .pi * 2
+            let distance = CGFloat(0.82 + edge.nextDouble() * 0.16) * radius
+            let flutterRate = 0.6 + edge.nextDouble() * 0.4
+            let leafSize = unit * CGFloat(0.014 + edge.nextDouble() * 0.014)
+            let mix = Float(edge.nextDouble())
+            drawLeaf(context, layout, motion, care, leafTint(i), scale: scale, angle: angle, distance: distance,
+                     flutter: motion.wave(flutterRate, Double(i) + 0.5), size: leafSize, mix: mix)
+        }
+    }
+
+    /// One leaf of the canopy, `distance` from its centre at `angle` (the
+    /// ellipse is stretched by the species' `scale`). Thirst lowers it (the
+    /// outer leaves most), stretches it and calms its flutter; lushness
+    /// adds a sheen on the upper leaves.
+    private func drawLeaf(_ context: GraphicsContext, _ layout: TreeCanvasLayout, _ motion: TreeCanvasMotion,
+                          _ care: TreeCanvasCare, _ tint: TreeLeafTint, scale: CGSize,
+                          angle: Double, distance: CGFloat, flutter wave: Double, size leafSize: CGFloat, mix: Float) {
+        let unit = layout.unit
+        let center = layout.canopyCenter
+        let radius = layout.canopyRadius
+        let x = center.x + CGFloat(cos(angle)) * distance * scale.width
+        let y = center.y + CGFloat(sin(angle)) * distance * 0.85 * scale.height
+        let flutter = CGFloat(wave) * unit * 0.006 * care.flutterScale
+        let drop = care.leafDrop(distance: distance, radius: radius, unit: unit)
+        let leafRect = CGRect(x: x - leafSize / 2, y: y - leafSize / 2 + flutter + drop,
+                              width: leafSize, height: leafSize * 1.4 * care.leafStretch)
+        let top = tint.topResolved
+        let bottom = tint.bottomResolved
+        var red = Double(top.red + (bottom.red - top.red) * mix)
+        var green = Double(top.green + (bottom.green - top.green) * mix)
+        var blue = Double(top.blue + (bottom.blue - top.blue) * mix)
+        let sheen = care.sheen(atHeight: center.y - y, radius: radius)
+        if sheen > 0 {
+            red += (1 - red) * sheen
+            green += (1 - green) * sheen
+            blue += (1 - blue) * sheen
+        }
+        context.fill(
+            Path(ellipseIn: leafRect),
+            with: .color(
+                red: red,
+                green: green,
+                blue: blue,
+                opacity: Double(top.opacity + (bottom.opacity - top.opacity) * mix) * 0.85
+            )
+        )
     }
 
     // MARK: Blossoms
 
-    private func drawBlossoms(_ context: GraphicsContext, _ layout: TreeCanvasLayout, _ motion: TreeCanvasMotion) {
-        let count = stage.blossomCount
+    /// The stage's decorative blossoms. Thirst shrinks them and, when the
+    /// tree rests, closes them into buds; lushness opens them wider.
+    private func drawBlossoms(_ context: GraphicsContext, _ layout: TreeCanvasLayout,
+                              _ motion: TreeCanvasMotion, _ care: TreeCanvasCare) {
+        let count = TreeCanvasSpecies.blossomCount(for: style.species, stage: stage)
         guard count > 0 else { return }
         let center = layout.canopyCenter
         let radius = layout.canopyRadius
+        let scale = TreeCanvasSpecies.canopyScale(for: style.species)
         let spin = motion.turn(0.12)
 
         // 5-petal blossom: soft pink for spring/summer, warmer for autumn.
@@ -851,15 +1103,19 @@ private struct TreeCanvasPainter {
         }()
         let coreColor = Color(red: 1.0, green: 0.85, blue: 0.30)
 
-        var rng = SeededRNG(seed: UInt64(truncatingIfNeeded: daysTogether) &* 31 &+ 7)
+        var rng = TreeCanvasRNG(seed: topologySeed &* 31 &+ 7)
         for i in 0..<count {
             let angle = rng.nextDouble() * .pi * 2
             let distance = CGFloat(0.4 + rng.nextDouble() * 0.55) * radius
-            let x = center.x + CGFloat(cos(angle)) * distance
-            let y = center.y + CGFloat(sin(angle)) * distance * 0.9
+            let x = center.x + CGFloat(cos(angle)) * distance * scale.width
+            let y = center.y + CGFloat(sin(angle)) * distance * 0.9 * scale.height
             let pulse = CGFloat(motion.pulse(0.9, Double(i) * 1.3))
-            let r = layout.blossomRadius * (0.87 + 0.26 * pulse)
+            let r = layout.blossomRadius * (0.87 + 0.26 * pulse) * care.blossomScale
 
+            if care.closesBlossoms {
+                drawBud(context, at: CGPoint(x: x, y: y), radius: r, color: petalColor)
+                continue
+            }
             for p in 0..<5 {
                 let petalAngle = Double(p) * (.pi * 2 / 5) + spin
                 let px = x + CGFloat(cos(petalAngle)) * r * 0.9
@@ -884,13 +1140,14 @@ private struct TreeCanvasPainter {
         let unit = layout.unit
         let center = layout.canopyCenter
         let radius = layout.canopyRadius
+        let scale = TreeCanvasSpecies.canopyScale(for: style.species)
 
-        var rng = SeededRNG(seed: UInt64(truncatingIfNeeded: daysTogether) &* 53 &+ 41)
+        var rng = TreeCanvasRNG(seed: topologySeed &* 53 &+ 41)
         for i in 0..<count {
             let angle = rng.nextDouble() * .pi * 2
             let distance = CGFloat(0.5 + rng.nextDouble() * 0.4) * radius
-            let baseX = center.x + CGFloat(cos(angle)) * distance
-            let baseY = center.y + CGFloat(sin(angle)) * distance * 0.9
+            let baseX = center.x + CGFloat(cos(angle)) * distance * scale.width
+            let baseY = center.y + CGFloat(sin(angle)) * distance * 0.9 * scale.height
 
             // Gentle hang sway
             let swayY = CGFloat(motion.wave(0.4, Double(i))) * unit * 0.0036
@@ -940,7 +1197,7 @@ private struct TreeCanvasPainter {
 
         for i in 0..<count {
             // Seeded by its own index: a new memory adds a star, moves none.
-            var rng = SeededRNG(seed: UInt64(i) &* 977 &+ 13)
+            var rng = TreeCanvasRNG(seed: UInt64(i) &* 977 &+ 13)
             let baseAngle = rng.nextDouble() * .pi * 2
             let speed = 0.10 + rng.nextDouble() * 0.18
             let radiusX = unit * CGFloat(0.30 + rng.nextDouble() * 0.15)
@@ -969,14 +1226,15 @@ private struct TreeCanvasPainter {
 
     // MARK: Letters
 
-    private func drawLetters(_ context: GraphicsContext, _ layout: TreeCanvasLayout, _ motion: TreeCanvasMotion) {
+    private func drawLetters(_ context: GraphicsContext, _ layout: TreeCanvasLayout,
+                             _ motion: TreeCanvasMotion, _ care: TreeCanvasCare) {
         guard !ornaments.isEmpty else { return }
         let placements = layout.place(ornaments)
         for placement in placements where placement.ornament.kind == .blossom {
             drawLetterBlossom(context, layout, placement, motion)
         }
         for placement in placements where placement.ornament.kind != .blossom {
-            drawEnvelope(context, layout, placement, motion)
+            drawEnvelope(context, layout, placement, motion, care)
         }
     }
 
@@ -986,7 +1244,8 @@ private struct TreeCanvasPainter {
     }
 
     private func drawEnvelope(_ context: GraphicsContext, _ layout: TreeCanvasLayout,
-                              _ placement: TreeCanvasLayout.Placement, _ motion: TreeCanvasMotion) {
+                              _ placement: TreeCanvasLayout.Placement, _ motion: TreeCanvasMotion,
+                              _ care: TreeCanvasCare) {
         let unit = layout.unit
         let size = layout.envelopeSize
         let isReady = placement.ornament.kind == .readyEnvelope
@@ -998,7 +1257,7 @@ private struct TreeCanvasPainter {
         switch placement.mount {
         case .hanging(let branchIndex, let along):
             let branch = layout.branches[branchIndex]
-            let hang = branch.point(at: along, tipOffset: tipSway(branch, unit, motion))
+            let hang = branch.point(at: along, tipOffset: layout.tipOffset(of: branch, motion: motion, droop: care.droop))
             // A gentle pendulum, ±3°, only while the tree moves.
             let swing = motion.isLive ? motion.wave(1.1, phase) * 3 : 0
             local.translateBy(x: hang.x, y: hang.y)
@@ -1105,7 +1364,7 @@ private struct TreeCanvasPainter {
 /// Tiny seeded RNG so the tree topology is deterministic per couple.
 /// xorshift64, with the seed scrambled by splitmix64 first: xorshift's
 /// first draws from a small seed (a star's index) are all near zero.
-private struct SeededRNG {
+struct TreeCanvasRNG {
     private var state: UInt64
 
     init(seed: UInt64) {
@@ -1131,7 +1390,7 @@ private struct SeededRNG {
 
 // MARK: - Previews
 
-private enum TreeCanvasPreviewSamples {
+enum TreeCanvasPreviewSamples {
     static func ornament(_ id: String, _ kind: JourneyTreeOrnament.Kind,
                          _ direction: JourneyLetterDirection) -> JourneyTreeOrnament {
         JourneyTreeOrnament(id: id, kind: kind, direction: direction, seed: JourneyTreeOrnament.stableSeed(id))
@@ -1160,7 +1419,7 @@ private enum TreeCanvasPreviewSamples {
 }
 
 /// The frame's edge, so clipping would show.
-private struct TreeCanvasPreviewFrame: ViewModifier {
+struct TreeCanvasPreviewFrame: ViewModifier {
     let width: CGFloat
     let height: CGFloat
 

@@ -22,8 +22,8 @@ final class NotificationViewModel: ObservableObject {
     @Published var selectedNudge: NudgeRecord?
     @Published var navigateToMood: Bool = false
     @Published var navigateToDashboard: Bool = false
-    /// Set when a capsule or crown reminder is tapped. ContentView selects
-    /// Journey, hands it on and sets this back to nil.
+    /// Set when a capsule, crown or garden notification is tapped.
+    /// ContentView selects Journey, hands it on and sets this back to nil.
     @Published var journeyFocus: JourneyFocus?
 
     // MARK: - Dependencies
@@ -32,6 +32,9 @@ final class NotificationViewModel: ObservableObject {
     private(set) var session: UserSession = UserSession(userId: "", coupleId: "", partnerId: "")
     private var cancellables = Set<AnyCancellable>()
     private var heartbeatTask: Task<Void, Never>?
+    /// A garden notification tapped before any session was set up (a cold
+    /// launch from it): which couple it is about is checked in `setup`.
+    private var heldGardenTap: (focus: GardenFocus, coupleId: String?)?
 
     // MARK: - Init
 
@@ -54,6 +57,11 @@ final class NotificationViewModel: ObservableObject {
         }
 
         self.session = session
+
+        if let held = heldGardenTap {
+            heldGardenTap = nil
+            journeyFocus = .garden(gardenFocus(held.focus, payloadCoupleId: held.coupleId))
+        }
 
         // Bind first — so that any FCM token already in the cache is
         // flushed to this user's Firestore row before we do anything else.
@@ -91,6 +99,7 @@ final class NotificationViewModel: ObservableObject {
         // A tapped reminder for the couple just left must not open Journey
         // for whoever signs in next.
         journeyFocus = nil
+        heldGardenTap = nil
         session = UserSession(userId: "", coupleId: "", partnerId: "")
         NotificationService.shared.unbind()
     }
@@ -121,6 +130,8 @@ final class NotificationViewModel: ObservableObject {
         // the user's real document. Block until a load has actually succeeded.
         guard preferencesLoaded else { return }
         let prefs = preferences
+        // The garden's local reminders follow the toggle at once.
+        mirrorGardenPreference(prefs.garden)
         Task {
             do {
                 try await notificationService.savePreferences(prefs, userId: userId)
@@ -144,8 +155,23 @@ final class NotificationViewModel: ObservableObject {
             preferences = try await notificationService.loadPreferences(userId: session.userId)
             preferencesLoaded = true
             preferencesError = nil
+            mirrorGardenPreference(preferences.garden)
         } catch {
             preferencesError = error.localizedDescription
+        }
+    }
+
+    /// The garden's reminders are planned on this device from a UserDefaults
+    /// mirror of `notificationPreferences.garden` (a background push wake
+    /// cannot wait for Firestore). A change re-plans them. A build without
+    /// the garden keeps no mirror.
+    private func mirrorGardenPreference(_ isOn: Bool) {
+        guard GardenFeature.isEnabled else { return }
+        let defaults = UserDefaults.standard
+        let previous = defaults.object(forKey: GardenDefaultsKey.notificationsEnabled) as? Bool
+        defaults.set(isOn, forKey: GardenDefaultsKey.notificationsEnabled)
+        if previous != isOn {
+            WidgetSyncService.shared.gardenRemindersPreferenceChanged()
         }
     }
 
@@ -208,12 +234,24 @@ final class NotificationViewModel: ObservableObject {
         case .dailySync, .inactivity:
             navigateToMood = true
         case .none:
-            // Capsule and crown reminders are not nudges. A row in the
-            // in-app list keeps only the type, so it opens Journey itself.
+            // Capsule, crown and garden notifications are not nudges. A row
+            // in the in-app list keeps only the type, so it opens Journey
+            // (or its garden) itself.
             if nudge.type == JourneyNotification.capsuleType || nudge.type == JourneyNotification.crownType {
                 journeyFocus = .overview
+            } else if GardenNotification.allTypes.contains(nudge.type) {
+                journeyFocus = .garden(.overview)
             }
         }
+    }
+
+    /// A garden notification opens what it is about only for the couple it
+    /// was sent for; one about another couple (sent before a disconnect,
+    /// delivered late) opens the garden as a whole.
+    private func gardenFocus(_ focus: GardenFocus, payloadCoupleId: String?) -> GardenFocus {
+        guard let payloadCoupleId, !payloadCoupleId.isEmpty,
+              payloadCoupleId == session.coupleId else { return .overview }
+        return focus
     }
 
     // MARK: - Activity Tracking
@@ -308,9 +346,20 @@ final class NotificationViewModel: ObservableObject {
               let typeString = info["type"] as? String else { return }
         // NotificationService nests the reminder's own userInfo under
         // "userInfo". A capsule or crown reminder opens Journey at the
-        // capsule or crown it is about.
+        // capsule or crown it is about; a garden push or reminder at its
+        // tree, watering or request.
         if let payload = info["userInfo"] as? [AnyHashable: Any],
            let focus = JourneyFocus(notificationUserInfo: payload) {
+            if case .garden(let garden) = focus {
+                let coupleId = payload[GardenNotification.coupleIdKey] as? String
+                if session.userId.isEmpty {
+                    // Cold launch: no session yet to check the couple against.
+                    heldGardenTap = (garden, coupleId)
+                } else {
+                    journeyFocus = .garden(gardenFocus(garden, payloadCoupleId: coupleId))
+                }
+                return
+            }
             journeyFocus = focus
             return
         }

@@ -24,6 +24,14 @@
 //  opens its detail sheet once the memories have loaded, a crown replays its
 //  celebration.
 //
+//  Garden mode (GardenFeature.isEnabled, and the garden not switched off
+//  remotely): the garden hero replaces TimeTreeHeader's hero, the requests
+//  waiting for this user sit under it, and TimeTreeHeader renders only its
+//  countdown block. Every garden sheet goes through the one `gardenSheet`
+//  route, one at a time like Journey's own; a garden push, reminder or
+//  Home's row arrives as `.garden(...)` focus. Otherwise the layout is
+//  exactly the pre-garden Journey.
+//
 
 import Foundation
 import SwiftUI
@@ -48,6 +56,14 @@ struct TimeTreeView: View {
     private let onOpenLetter: (FutureLetter) -> Void
     private let onOpenAllLetters: () -> Void
     private let onWriteLetter: (_ seed: String?, _ opensAt: Date?) -> Void
+    /// ContentView's letters sheet is up (it presents the reader, the writer
+    /// and the hub over every tab). Garden mode only: it covers the hero.
+    private let isLettersSheetPresented: Bool
+    /// The couple's garden. ContentView owns it (Home's row and push routing
+    /// read it too).
+    @ObservedObject private var garden: GardenViewModel
+    /// "Reply in Chat": switches to the Chat tab.
+    private let onOpenChat: () -> Void
 
     // Sheets: one at a time, all on this NavigationStack.
     @State private var showMilestonePicker = false
@@ -61,6 +77,26 @@ struct TimeTreeView: View {
     @State private var editingMemory: TimeMemory?
     @State private var showAnchorSheet = false
     @State private var showTreeGuide = false
+    /// The stage the tree guide opens on when a garden page asked for it
+    /// (a place tree has its own); nil shows Our tree's.
+    @State private var treeGuideOverride: TreeGuideTarget?
+
+    // Garden sheets: one route, one at a time, like Journey's own.
+    @State private var gardenSheet: GardenSheetRoute?
+    /// The next garden sheet, shown once the current one is gone.
+    @State private var stagedGardenRoute: GardenSheetRoute?
+    /// "Plant a tree" picked in the + picker, opened once it is gone.
+    @State private var stagedPlantTree = false
+    /// The water note being written; kept when its sheet is swiped away.
+    /// Journey reads only whether it holds a note, never its text, so
+    /// typing re-renders the sheet alone.
+    @State private var noteDraft = GardenNoteDraft()
+    /// The note chosen in the water-note sheet: watered once it is gone.
+    @State private var pendingWaterNote: String?
+    /// "Tell Sam": the confirmation before the chat line is sent.
+    @State private var showTellPartner = false
+    /// Tell Sam asked for from the start-date sheet: confirmed once it is gone.
+    @State private var pendingTellPartner = false
 
     /// The scroll view's visible height, which sets the tree's height.
     @State private var viewportHeight: CGFloat = 0
@@ -71,7 +107,10 @@ struct TimeTreeView: View {
          focus: Binding<JourneyFocus?> = .constant(nil),
          onOpenLetter: @escaping (FutureLetter) -> Void = { _ in },
          onOpenAllLetters: @escaping () -> Void = {},
-         onWriteLetter: @escaping (_ seed: String?, _ opensAt: Date?) -> Void = { _, _ in }) {
+         onWriteLetter: @escaping (_ seed: String?, _ opensAt: Date?) -> Void = { _, _ in },
+         isLettersSheetPresented: Bool = false,
+         garden: GardenViewModel,
+         onOpenChat: @escaping () -> Void = {}) {
         self.session = session
         self.letters = letters
         self.myName = myName
@@ -79,6 +118,9 @@ struct TimeTreeView: View {
         self.onOpenLetter = onOpenLetter
         self.onOpenAllLetters = onOpenAllLetters
         self.onWriteLetter = onWriteLetter
+        self.isLettersSheetPresented = isLettersSheetPresented
+        self.garden = garden
+        self.onOpenChat = onOpenChat
         _viewModel = StateObject(wrappedValue: TimeTreeViewModel(session: session))
     }
 
@@ -97,7 +139,19 @@ struct TimeTreeView: View {
                         // photo upload or a failed save must not look like
                         // success.
                         if let error = viewModel.errorMessage {
-                            errorStrip(error)
+                            errorStrip(error, isRetryable: viewModel.errorIsRetryable) {
+                                if viewModel.errorIsRetryable {
+                                    viewModel.retryAfterError()
+                                } else {
+                                    viewModel.dismissError()
+                                }
+                            }
+                            .padding(.horizontal, Brand.Space.gutter)
+                            .padding(.top, Brand.Space.sibling)
+                        }
+                        // Garden actions use the same strip.
+                        if isGardenMode, let error = garden.errorMessage {
+                            errorStrip(error, isRetryable: false) { garden.dismissError() }
                                 .padding(.horizontal, Brand.Space.gutter)
                                 .padding(.top, Brand.Space.sibling)
                         }
@@ -126,11 +180,27 @@ struct TimeTreeView: View {
                     .transition(.opacity)
                     .zIndex(900)
                 }
+
+                // The planting ceremony, after any crown.
+                if isGardenMode, let ceremony = garden.ceremony, viewModel.pendingCrownCelebration == nil {
+                    PlantingCeremonyOverlay(
+                        ceremony: ceremony,
+                        partnerName: garden.partnerName,
+                        myName: myName,
+                        onDone: { garden.acknowledgeCeremony() }
+                    )
+                    .transition(.opacity)
+                    .zIndex(901)
+                }
             }
             .animation(reduceMotion
                        ? .easeInOut(duration: 0.2)
                        : .spring(response: 0.5, dampingFraction: 0.85),
                        value: viewModel.pendingCrownCelebration?.id)
+            .animation(reduceMotion
+                       ? .easeInOut(duration: 0.2)
+                       : .spring(response: 0.5, dampingFraction: 0.85),
+                       value: garden.ceremony?.id)
             .toolbar(.hidden, for: .navigationBar)
             .onAppear {
                 viewModel.startListening()
@@ -156,6 +226,17 @@ struct TimeTreeView: View {
             .onChange(of: viewModel.errorMessage) { _, _ in
                 handleFocus(focus)
             }
+            // A garden focus waits for the garden's first answer.
+            .onChange(of: garden.availability) { _, _ in
+                handleFocus(focus)
+            }
+            // A garden failure lands in the strip above the hero, away from
+            // VoiceOver's focus (a refused watering leaves it on the water
+            // control): say it.
+            .onChange(of: garden.errorMessage) { _, message in
+                guard isGardenMode, let message else { return }
+                AccessibilityNotification.Announcement(message).post()
+            }
             // Deleted on the other phone while 'Add photo' is open: close the
             // editor (the view model also refuses to write it back).
             .onChange(of: viewModel.memories.map(\.id)) { _, ids in
@@ -176,7 +257,16 @@ struct TimeTreeView: View {
                     onWriteLetter: letters.isAvailable
                         ? {
                             stagedKind = nil
+                            stagedPlantTree = false
                             stagedLetter = StagedLetter(seed: nil, opensAt: nil)
+                        }
+                        : nil,
+                    // Its "Plant a tree" row, while the garden can take one.
+                    onPlantTree: isGardenMode && garden.canPlantMore
+                        ? {
+                            stagedKind = nil
+                            stagedLetter = nil
+                            stagedPlantTree = true
                         }
                         : nil
                 )
@@ -218,26 +308,176 @@ struct TimeTreeView: View {
                     .presentationDetents([.large])
                     .presentationDragIndicator(.visible)
             }
-            .sheet(isPresented: $showAnchorSheet, onDismiss: { handleFocus(focus) }) {
+            .sheet(isPresented: $showAnchorSheet, onDismiss: { anchorSheetDidDismiss() }) {
                 AnchorSetupSheet(
                     viewModel: viewModel,
                     existing: viewModel.anchor,
                     myName: myName,
-                    partnerName: letters.partnerName
+                    partnerName: letters.partnerName,
+                    mode: anchorSheetMode
                 )
                 .presentationDetents([.large])
                 .presentationDragIndicator(.visible)
             }
-            .sheet(isPresented: $showTreeGuide) {
+            .sheet(isPresented: $showTreeGuide, onDismiss: { treeGuideOverride = nil }) {
                 JourneyTreeGuideSheet(
-                    stage: viewModel.growthStage,
-                    daysTogether: viewModel.daysTogether ?? 0,
-                    partnerName: letters.partnerName
+                    stage: treeGuideOverride?.stage ?? viewModel.growthStage,
+                    daysTogether: treeGuideOverride?.days ?? viewModel.daysTogether ?? 0,
+                    partnerName: letters.partnerName,
+                    showsGarden: isGardenMode,
+                    growsFromPlanting: treeGuideOverride?.isPlaceTree ?? false
                 )
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
             }
+            .sheet(item: $gardenSheet, onDismiss: { gardenSheetDidDismiss() }) { route in
+                GardenRouteSheet(
+                    route: route,
+                    garden: garden,
+                    noteDraft: noteDraft,
+                    timelineDays: viewModel.firstDateByKind,
+                    handOver: { next in
+                        stagedGardenRoute = next
+                        gardenSheet = nil
+                    },
+                    onWater: { pendingWaterNote = $0 },
+                    onClose: { gardenSheet = nil }
+                )
+            }
+            .alert(Text("Send this to \(garden.partnerName) in Chat?",
+                        comment: "Garden: confirmation before sending the partner a chat message about updating Coupley. %@ is the partner's name."),
+                   isPresented: $showTellPartner) {
+                Button {
+                    Task { _ = await garden.tellPartnerToUpdate() }
+                } label: {
+                    Text("Send", comment: "Garden: sends the update message to the partner in Chat")
+                }
+                Button(role: .cancel) {} label: {
+                    Text("Cancel", comment: "Button: close the menu without doing anything")
+                }
+            } message: {
+                Text(GardenCopy.tellPartnerMessage)
+            }
         }
+    }
+
+    // MARK: - Garden
+
+    /// The garden replaces the pre-garden hero (I5). Off in Release until
+    /// the garden ships, and when the garden is switched off remotely.
+    private var isGardenMode: Bool {
+        GardenFeature.isEnabled && session.isPaired && garden.availability != .disabledRemotely
+    }
+
+    /// The tree guide for a garden page's own tree: its stage, its days, and
+    /// whether it is a place tree (it grows from its planting day).
+    private struct TreeGuideTarget {
+        let stage: TreeGrowthStage
+        let days: Int
+        let isPlaceTree: Bool
+    }
+
+    private var gardenHeroJourney: GardenHeroJourney {
+        GardenHeroJourney(
+            startDate: viewModel.anchor?.startDate,
+            daysTogether: viewModel.anchor != nil ? viewModel.daysTogether : nil,
+            stage: viewModel.anchor != nil ? viewModel.growthStage : nil,
+            memoryCount: viewModel.visibleMemories.count,
+            letters: letters,
+            isCompact: viewportHeight > 0 && viewportHeight < 700,
+            noteDrafted: noteDraft.isDrafted
+        )
+    }
+
+    /// The garden hero is out of sight under something that fires no
+    /// onDisappear: one of Journey's sheets, ContentView's letters sheet, or
+    /// a full-screen overlay (the crown celebration, the planting ceremony).
+    /// It then stops animating, and the garden holds a partner's replay and
+    /// a due ceremony until the hero can be seen again.
+    private var isGardenHeroCovered: Bool {
+        isJourneySheetPresented || isLettersSheetPresented
+            || viewModel.pendingCrownCelebration != nil || garden.ceremony != nil
+    }
+
+    private var gardenHeroActions: GardenHeroActions {
+        GardenHeroActions(
+            onOpenSheet: { openGardenSheet($0) },
+            onWater: { waterGarden() },
+            onEditStartDate: { showAnchorSheet = true },
+            onShowTreeGuide: { stage, days, isPlaceTree in
+                treeGuideOverride = TreeGuideTarget(stage: stage, days: days, isPlaceTree: isPlaceTree)
+                showTreeGuide = true
+            },
+            onOpenLetter: onOpenLetter,
+            onReplyInChat: onOpenChat,
+            onTellPartner: { showTellPartner = true }
+        )
+    }
+
+    /// One sheet at a time: a garden sheet asked for while another Journey
+    /// sheet is up is dropped (the user is in that sheet).
+    private func openGardenSheet(_ route: GardenSheetRoute) {
+        guard !isJourneySheetPresented else { return }
+        gardenSheet = route
+    }
+
+    /// The hero's water control: one tap waters every tree, with the note
+    /// drafted in the water-note sheet if one waits.
+    private func waterGarden() {
+        let note = GardenLimits.wateringNote.clean(noteDraft.text)
+        noteDraft.text = ""
+        garden.water(note: note)
+    }
+
+    /// A garden sheet is gone: the next one it handed over, else the
+    /// watering its note asked for, else a reminder that waited for it.
+    private func gardenSheetDidDismiss() {
+        if let next = stagedGardenRoute {
+            stagedGardenRoute = nil
+            gardenSheet = next
+            return
+        }
+        if let note = pendingWaterNote {
+            pendingWaterNote = nil
+            noteDraft.text = ""
+            garden.water(note: GardenLimits.wateringNote.clean(note))
+        }
+        handleFocus(focus)
+    }
+
+    /// The start date in garden mode is suggested to the partner and
+    /// changes when they agree (B5.7); otherwise today's direct save.
+    private var anchorSheetMode: AnchorSetupSheet.Mode {
+        guard isGardenMode, let anchor = viewModel.anchor else { return .directSave }
+        let ourTree = garden.tree(.our)
+        let agreedOn = ourTree.flatMap { tree in
+            tree.agreementKind == .startDate || tree.agreementKind == .plant ? tree.agreementAt : nil
+        }
+        return .suggest(currentStored: anchor.startDate,
+                        partnerCanAnswer: garden.partner.canGarden,
+                        agreedOn: agreedOn,
+                        onSuggest: { day, note in
+                            if await garden.suggestStartDate(day: day, note: note) { return nil }
+                            let reason = garden.errorMessage
+                                ?? GardenError.other.message(partnerName: garden.partnerName, now: garden.now)
+                            // The open sheet says why, so Journey's strip
+                            // behind it does not repeat it (as the plant
+                            // sheet); a sheet already swiped away leaves it.
+                            if showAnchorSheet { garden.dismissError() }
+                            return reason
+                        },
+                        onTellPartner: {
+                            pendingTellPartner = true
+                            showAnchorSheet = false
+                        })
+    }
+
+    private func anchorSheetDidDismiss() {
+        if pendingTellPartner {
+            pendingTellPartner = false
+            showTellPartner = true
+        }
+        handleFocus(focus)
     }
 
     // MARK: - Content
@@ -268,6 +508,44 @@ struct TimeTreeView: View {
         } else if isFirstLoad {
             loadingState
                 .padding(.horizontal, Brand.Space.gutter)
+        } else if isGardenMode {
+            // The garden hero, what waits for this user, then the countdown
+            // block alone (TimeTreeHeader without its hero).
+            GardenHero(garden: garden,
+                       isCovered: isGardenHeroCovered,
+                       journey: gardenHeroJourney,
+                       actions: gardenHeroActions)
+                .padding(.horizontal, SurfaceTier.hero.gutter)
+                .padding(.top, Brand.Space.sibling)
+
+            GardenRequestsSection(garden: garden,
+                                  onOpenRequest: { openGardenSheet(.seed(id: $0)) },
+                                  onOpenGarden: { openGardenSheet(.garden) },
+                                  onChoosePlace: { openGardenSheet(.plant(.changeTree(.our))) },
+                                  onTellPartner: { showTellPartner = true })
+                .padding(.horizontal, Brand.Space.gutter)
+
+            if viewModel.anchor != nil {
+                TimeTreeHeader(
+                    anchor: viewModel.anchor,
+                    now: viewModel.now,
+                    daysTogether: viewModel.daysTogether,
+                    stage: viewModel.growthStage,
+                    season: viewModel.currentSeason,
+                    memoryCount: viewModel.visibleMemories.count,
+                    letters: letters,
+                    treeHeight: treeHeight,
+                    onEditStartDate: { showAnchorSheet = true },
+                    onShowTreeGuide: { showTreeGuide = true },
+                    onOpenLetter: onOpenLetter,
+                    onWriteLetter: { opensAt in onWriteLetter(nil, opensAt) },
+                    isStartDateKnown: isStartDateKnown,
+                    showsHero: false
+                )
+                .padding(.top, Brand.Space.sibling)
+            }
+
+            journeyLists
         } else {
             // Hero (12pt gutter), then the countdown block (20pt) 14pt
             // under it; the header pads each itself.
@@ -288,31 +566,37 @@ struct TimeTreeView: View {
             )
             .padding(.top, Brand.Space.sibling)
 
-            if letters.isAvailable && letters.hasLoaded {
-                JourneyLettersSection(
-                    letters: letters,
-                    onOpenLetter: onOpenLetter,
-                    onOpenAll: onOpenAllLetters,
-                    onWrite: { onWriteLetter(nil, nil) }
-                )
-                .padding(.horizontal, Brand.Space.gutter)
-                .padding(.top, 32)
-            }
+            journeyLists
+        }
+    }
 
-            MemoryTimelineSection(
-                memories: viewModel.visibleMemories,
-                lockedCapsules: viewModel.lockedCapsules,
+    /// The letters and the Timeline, under the hero in both layouts.
+    @ViewBuilder
+    private var journeyLists: some View {
+        if letters.isAvailable && letters.hasLoaded {
+            JourneyLettersSection(
                 letters: letters,
-                now: viewModel.now,
-                onSelectMemory: { selectedMemory = $0 },
-                onSelectLetter: { onOpenLetter($0.envelope) },
-                onAddMemory: { showMilestonePicker = true },
-                onAddPhoto: { editingMemory = $0 },
-                canAddPhoto: { viewModel.canEdit($0) }
+                onOpenLetter: onOpenLetter,
+                onOpenAll: onOpenAllLetters,
+                onWrite: { onWriteLetter(nil, nil) }
             )
             .padding(.horizontal, Brand.Space.gutter)
             .padding(.top, 32)
         }
+
+        MemoryTimelineSection(
+            memories: viewModel.visibleMemories,
+            lockedCapsules: viewModel.lockedCapsules,
+            letters: letters,
+            now: viewModel.now,
+            onSelectMemory: { selectedMemory = $0 },
+            onSelectLetter: { onOpenLetter($0.envelope) },
+            onAddMemory: { showMilestonePicker = true },
+            onAddPhoto: { editingMemory = $0 },
+            canAddPhoto: { viewModel.canEdit($0) }
+        )
+        .padding(.horizontal, Brand.Space.gutter)
+        .padding(.top, 32)
     }
 
     /// 196pt, or 160pt when the visible scroll area is under 700pt tall, so
@@ -343,7 +627,11 @@ struct TimeTreeView: View {
             // Always there once loaded, so a couple without a start date can
             // still add a memory after the Timeline's empty state is gone.
             if session.isPaired && !isFirstLoad {
-                addButton(filled: viewModel.anchor != nil)
+                // Garden mode: one filled control per screen (B2); the hero's
+                // CTA takes the fill when planting or watering is the job.
+                addButton(filled: isGardenMode
+                          ? garden.primaryAction.isMastheadPlusFilled
+                          : viewModel.anchor != nil)
             }
         }
     }
@@ -355,6 +643,9 @@ struct TimeTreeView: View {
             return String(localized: "Pair up to start your tree", comment: "Journey masthead subtitle before pairing")
         }
         if isFirstLoad { return nil }
+        if isGardenMode, let empty = garden.hero.empty {
+            return gardenPlantingSubtitle(empty)
+        }
         if viewModel.anchor == nil && viewModel.hasResolvedAnchor {
             return String(localized: "Set the day it started", comment: "Journey masthead subtitle: no relationship start date yet")
         }
@@ -362,9 +653,14 @@ struct TimeTreeView: View {
         let memories = viewModel.visibleMemories.count
         let letterCount = letters.isAvailable ? letters.letters.count : 0
         let capsules = viewModel.lockedCapsules.count
+        let trees = isGardenMode ? garden.treeCount : 0
 
         // A tally: each count is its own whole phrase, separated by " · ".
         var parts: [String] = []
+        // Trees lead the tally, from the second tree on.
+        if trees > 1 {
+            parts.append(String(localized: "\(trees) trees", comment: "Journey masthead tally: trees in the couple's garden (2 or more)"))
+        }
         if memories > 0 {
             parts.append(memories == 1
                          ? String(localized: "1 memory", comment: "Journey masthead tally")
@@ -386,6 +682,16 @@ struct TimeTreeView: View {
         return parts.isEmpty
             ? String(localized: "Add your first memory", comment: "Journey masthead subtitle: nothing added yet")
             : parts.joined(separator: " · ")
+    }
+
+    /// Before the start date in garden mode (B1).
+    private func gardenPlantingSubtitle(_ empty: GardenEmptyHero) -> String {
+        let partner = garden.partnerName
+        switch empty {
+        case .plantSeed:     return GardenCopy.plantFirstTreeTitle
+        case .mySeedWaiting: return GardenCopy.waitingToPlant(partnerName: partner)
+        case .partnersSeed:  return GardenCopy.partnerSentSeed(partnerName: partner)
+        }
     }
 
     /// Opens the picker, which also offers a letter when letters are
@@ -415,13 +721,29 @@ struct TimeTreeView: View {
                 .contentShape(Rectangle())
         }
         .buttonStyle(BouncyButtonStyle(scale: 0.92))
-        // The picker only offers a letter while letters are available.
-        .accessibilityLabel(letters.isAvailable ? "Add a memory or a letter" : "Add a memory")
+        // The picker offers a letter while letters are available, and a tree
+        // while the garden can take one.
+        .accessibilityLabel(addButtonLabel)
+    }
+
+    private var addButtonLabel: Text {
+        let tree = isGardenMode && garden.canPlantMore
+        switch (letters.isAvailable, tree) {
+        case (true, true):
+            return Text("Add a memory, a letter or a tree", comment: "VoiceOver: Journey's + button when it can add a memory, a letter or a garden tree")
+        case (false, true):
+            return Text("Add a memory or a tree", comment: "VoiceOver: Journey's + button when it can add a memory or a garden tree")
+        case (true, false):
+            return Text("Add a memory or a letter")
+        case (false, false):
+            return Text("Add a memory")
+        }
     }
 
     // MARK: - Error strip
 
-    private func errorStrip(_ message: String) -> some View {
+    /// `isRetryable` shows "Try again" (it reloads), else "OK" (it dismisses).
+    private func errorStrip(_ message: String, isRetryable: Bool, action: @escaping () -> Void) -> some View {
         BrandCard(tier: .card) {
             HStack(alignment: .top, spacing: 10) {
                 Image(systemName: "exclamationmark.triangle.fill")
@@ -435,15 +757,9 @@ struct TimeTreeView: View {
                         .foregroundStyle(Brand.textPrimary)
                         .fixedSize(horizontal: false, vertical: true)
 
-                    Button {
-                        if viewModel.errorIsRetryable {
-                            viewModel.retryAfterError()
-                        } else {
-                            viewModel.dismissError()
-                        }
-                    } label: {
+                    Button(action: action) {
                         Group {
-                            if viewModel.errorIsRetryable {
+                            if isRetryable {
                                 Text("Try again", comment: "Journey error strip: retry loading")
                             } else {
                                 Text("OK", comment: "Journey error strip: dismiss the message")
@@ -520,6 +836,9 @@ struct TimeTreeView: View {
         if let kind = stagedKind {
             stagedKind = nil
             pendingNewKind = kind
+        } else if stagedPlantTree {
+            stagedPlantTree = false
+            gardenSheet = .plant(.newPlaceTree)
         } else {
             handOffStagedLetter()
         }
@@ -547,6 +866,7 @@ struct TimeTreeView: View {
     /// Closing it would silently throw the typing away.
     private var isEditingSomething: Bool {
         pendingNewKind != nil || editingMemory != nil || showAnchorSheet || detailEditorUp
+            || gardenSheet?.isEditing == true
     }
 
     private var isJourneySheetPresented: Bool {
@@ -556,6 +876,7 @@ struct TimeTreeView: View {
             || editingMemory != nil
             || showAnchorSheet
             || showTreeGuide
+            || gardenSheet != nil
     }
 
     private func closeJourneySheets() {
@@ -568,6 +889,9 @@ struct TimeTreeView: View {
         editingMemory = nil
         showAnchorSheet = false
         showTreeGuide = false
+        stagedPlantTree = false
+        stagedGardenRoute = nil
+        gardenSheet = nil
     }
 
     // MARK: - Reminder focus
@@ -588,6 +912,9 @@ struct TimeTreeView: View {
             viewModel.presentCrown(milestoneId: milestoneId)
             focus = nil
 
+        case .garden(let target):
+            handleGardenFocus(target)
+
         case .capsule(let memoryId):
             // A memory or start date is being written: open the capsule once
             // that sheet has closed (its onDismiss calls back here).
@@ -606,6 +933,34 @@ struct TimeTreeView: View {
         }
     }
 
+    /// A garden push, reminder or Home's row (I5): waits for the garden's
+    /// first answer and for anything being written, closes Journey's sheets,
+    /// then selects the tree (and queues a watering's replay). A request
+    /// opens its seed sheet once the closing sheets are gone.
+    private func handleGardenFocus(_ target: GardenFocus) {
+        guard isGardenMode else {
+            focus = nil
+            return
+        }
+        guard garden.availability != .loading else { return }
+        guard garden.availability == .ready else {
+            // Unavailable: showing Journey is all it can do.
+            focus = nil
+            return
+        }
+        guard !isEditingSomething else { return }
+        focus = nil
+        closeJourneySheets()
+        garden.reveal(target)
+        guard case .proposal(let id) = target, garden.proposal(id: id) != nil else { return }
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(450))
+            // The user may have opened something else in the meantime.
+            guard !isJourneySheetPresented else { return }
+            gardenSheet = .seed(id: id)
+        }
+    }
+
     /// Opens a capsule's detail from a reminder, closing whatever Journey
     /// sheet is up first (the picker, the tree guide or another memory's
     /// detail: nothing being written, see `isEditingSomething`) and giving it
@@ -616,6 +971,7 @@ struct TimeTreeView: View {
             || editingMemory != nil
             || showAnchorSheet
             || showTreeGuide
+            || gardenSheet != nil
         if selectedMemory?.id == memory.id && !otherSheetUp { return }
 
         closeJourneySheets()
@@ -630,6 +986,9 @@ struct TimeTreeView: View {
 
 // MARK: - Preview
 
+// Builds a GardenViewModel, so DEBUG only (spec K7).
+#if DEBUG
 #Preview {
-    TimeTreeView(session: .demo)
+    TimeTreeView(session: .demo, garden: GardenViewModel(session: .demo))
 }
+#endif

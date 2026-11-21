@@ -110,6 +110,10 @@ struct NotificationPreferences: Equatable {
     var inactivityReminder: Bool = true
     var partnerPing:        Bool = true
     var partnerReaction:    Bool = true
+    /// Garden pushes (waterings, seeds, agreements) and the garden's two
+    /// local reminders. The push function reads it; the reminders read its
+    /// UserDefaults mirror (`GardenDefaultsKey.notificationsEnabled`).
+    var garden:             Bool = true
     var reminderHour:       Int  = 20
 
     init() {}
@@ -120,16 +124,24 @@ struct NotificationPreferences: Equatable {
         self.inactivityReminder = dict["inactivityReminder"] as? Bool ?? true
         self.partnerPing        = dict["partnerPing"]        as? Bool ?? true
         self.partnerReaction    = dict["partnerReaction"]    as? Bool ?? true
+        self.garden             = dict[GardenField.preferenceGarden] as? Bool ?? true
         self.reminderHour       = reminderHour
     }
 
+    /// Saved with a merge, key by key. A build without the garden sends
+    /// exactly the pre-garden keys, so it never writes the Garden toggle it
+    /// does not show and leaves the value a garden build saved alone.
     var firestorePrefsDict: [String: Any] {
-        [
+        var dict: [String: Any] = [
             "partnerMoodAlert":   partnerMoodAlert,
             "dailySyncReminder":  dailySyncReminder,
             "inactivityReminder": inactivityReminder,
             "partnerPing":        partnerPing,
             "partnerReaction":    partnerReaction,
         ]
+        if GardenFeature.isEnabled {
+            dict[GardenField.preferenceGarden] = garden
+        }
+        return dict
     }
 }
