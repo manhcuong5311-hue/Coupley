@@ -47,32 +47,27 @@ import CoreGraphics
 
 nonisolated enum GardenFeature {
     /// Compile-time switch. `false` keeps the pre-garden Journey (old hero,
-    /// direct start date, no gardenPushToken). Until Gate 3 it is on in DEBUG
-    /// (every package can exercise the garden) and off in Release (a release
-    /// cut from the branch stays pre-garden). At Gate 3 the lead replaces
-    /// this with `static let isEnabled = true` for every configuration.
+    /// direct start date, no gardenPushToken). It was on in DEBUG only while
+    /// the garden was built; since Gate 3 (21 November 2026) it is on for
+    /// every configuration.
     ///
-    /// Gate 3 checklist (spec L4). The garden build is submitted only once
-    /// every item is done, and each deploy or publication needs the owner's
-    /// approval first (spec L2):
-    /// - Set `isEnabled = true` for every configuration (drop the `#if DEBUG`).
-    /// - Re-add Precise Location and Coarse Location to
-    ///   `Coupley/PrivacyInfo.xcprivacy` (`NSPrivacyCollectedDataTypes`,
-    ///   each linked, purpose App Functionality, not tracking), beside Other
-    ///   User Content. They stay out until then: a Release build before
-    ///   Gate 3 stores no place (spec D6, L2 #5).
-    /// - Publish the privacy page (`index.html`: the Places section, the
-    ///   Couple data line, the Apple Maps bullet) with a new "Last updated"
-    ///   date (spec D6, L2 #3).
-    /// - Update the App Store privacy answers: Precise and Coarse Location,
-    ///   Other User Content (spec D6, L2 #4).
-    /// - Deploy `firestore.rules`, then the functions (spec D20, L2 #1–#2),
-    ///   before the build reaches anyone.
-    #if DEBUG
+    /// What Gate 3 was (spec L2, L4), each step approved by the owner:
+    /// - `firestore.rules` deployed, then the functions, before the build
+    ///   reached anyone (spec D20).
+    /// - Precise Location and Coarse Location declared in
+    ///   `Coupley/PrivacyInfo.xcprivacy` beside Other User Content (linked,
+    ///   App Functionality, not tracking): a tree's place is exact or an
+    ///   area, as the couple chooses (spec D6).
+    /// - The privacy page published (`index.html`: the Places section, the
+    ///   Couple data line, the Apple Maps bullet) with a new date.
+    /// - The App Store privacy answers are the owner's to update in App
+    ///   Store Connect before submitting: Precise and Coarse Location, Other
+    ///   User Content.
+    ///
+    /// To switch the garden off for everyone after release, create
+    /// `appConfig/garden {enabled: false}` in the console (spec L2 #6);
+    /// this constant is not the tool for that.
     static let isEnabled = true
-    #else
-    static let isEnabled = false
-    #endif
     /// Written to users/{uid}.capabilities.garden by every garden build.
     /// A partner without it is on a legacy build (1.1, 1.2, or any 1.3 cut
     /// without the garden). Version strings are never compared.

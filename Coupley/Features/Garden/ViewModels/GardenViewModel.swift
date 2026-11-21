@@ -66,6 +66,9 @@ final class GardenViewModel: ObservableObject {
     /// healthy snapshot. Foreground retries too.
     private var listenRetries = 0
     private var listenRetryTask: Task<Void, Never>?
+    /// Asks the server again while a garden that was never verified waits
+    /// for its first answer (`scheduleProbeRetry`).
+    private var probeRetryTask: Task<Void, Never>?
     private var hasLoadedCache = false
     /// The capability is announced once per launch per user, and only after
     /// a probe found the garden rules deployed.
@@ -176,6 +179,7 @@ final class GardenViewModel: ObservableObject {
         // the probe and the timers end here.
         probeTask?.cancel()
         listenRetryTask?.cancel()
+        probeRetryTask?.cancel()
         boundaryTask?.cancel()
         tickTask?.cancel()
         afterWateringTask?.cancel()
@@ -253,6 +257,8 @@ final class GardenViewModel: ObservableObject {
         detachGardenListeners()
         listenRetryTask?.cancel()
         listenRetryTask = nil
+        probeRetryTask?.cancel()
+        probeRetryTask = nil
         boundaryTask?.cancel()
         boundaryTask = nil
         tickTask?.cancel()
@@ -335,6 +341,7 @@ final class GardenViewModel: ObservableObject {
                 attachGardenListeners()
             } else if gardenSubscription == nil {
                 availability = .unavailable(.neverOnline)
+                scheduleProbeRetry()
             }
         case .rulesMissing:
             rememberProbe(rulesVerified: false, switchedOff: isSwitchedOff)
@@ -452,6 +459,23 @@ final class GardenViewModel: ObservableObject {
             guard !Task.isCancelled, let self else { return }
             self.listenRetryTask = nil
             if self.availability == .unavailable(.listenerFailed) { self.start() }
+        }
+    }
+
+    /// Never verified and the server did not answer in time: ask again while
+    /// the garden waits, or a first launch on a slow connection would sit on
+    /// "Connect once to start your garden." until the app next comes to the
+    /// foreground. Its own task: the listener retry is guarded by
+    /// `listenRetryTask == nil` and must not be held up by this one. The loop
+    /// lives only while the state is `.neverOnline`; an offline probe returns
+    /// at once, so waiting without a connection costs no request.
+    private func scheduleProbeRetry() {
+        guard probeRetryTask == nil else { return }
+        probeRetryTask = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(5))
+            guard !Task.isCancelled, let self else { return }
+            self.probeRetryTask = nil
+            if self.availability == .unavailable(.neverOnline) { self.start() }
         }
     }
 
