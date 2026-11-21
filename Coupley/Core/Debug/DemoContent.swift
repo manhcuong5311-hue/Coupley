@@ -99,6 +99,26 @@ struct DemoContent {
             goals: ["رحلة إلى باريس", "صندوق بيت العمر"],
             challenges: ["30 يومًا بلا خلاف", "موعد غرامي كل أسبوع"]
         ),
+        "bn": DemoContent(
+            me: "রাফি", partner: "নুসরাত",
+            chat: [
+                .init(fromMe: true, text: "আজ রাতে বিরিয়ানি খেতে যাবে? 🍛"),
+                .init(fromMe: false, text: "হ্যাঁ! 8টায়, আমি বুক করে রাখছি ❤️"),
+                .init(fromMe: true, text: "দারুণ 😍")
+            ],
+            goals: ["কক্সবাজার ট্রিপ", "আমাদের প্রথম বাসা"],
+            challenges: ["ঝগড়া ছাড়া 30 দিন", "প্রতি সপ্তাহে ডেট নাইট"]
+        ),
+        "ca": DemoContent(
+            me: "Marc", partner: "Laia",
+            chat: [
+                .init(fromMe: true, text: "Sopem sushi aquesta nit? 🍣"),
+                .init(fromMe: false, text: "Sí! A les 8? Ja reservo jo ❤️"),
+                .init(fromMe: true, text: "Perfecte 😍")
+            ],
+            goals: ["Viatge a Itàlia", "El nostre primer pis"],
+            challenges: ["30 dies sense discutir", "Una cita cada setmana"]
+        ),
         "cs": DemoContent(
             me: "Jakub", partner: "Tereza",
             chat: [
@@ -189,6 +209,16 @@ struct DemoContent {
             goals: ["Voyage au Japon", "Notre mariage"],
             challenges: ["30 jours sans dispute", "Un date par semaine"]
         ),
+        "gu": DemoContent(
+            me: "આરવ", partner: "દિયા",
+            chat: [
+                .init(fromMe: true, text: "આજે રાત્રે પિઝા ખાવા જઈએ? 🍕"),
+                .init(fromMe: false, text: "હા! 8 વાગ્યે, હું બુક કરી દઉં છું ❤️"),
+                .init(fromMe: true, text: "મસ્ત 😍")
+            ],
+            goals: ["ગોવા ટ્રિપ ફંડ", "આપણું પહેલું ઘર"],
+            challenges: ["ઝઘડા વગરના 30 દિવસ", "દર અઠવાડિયે ડેટ નાઇટ"]
+        ),
         "he": DemoContent(
             me: "איתי", partner: "נועה",
             chat: [
@@ -208,6 +238,16 @@ struct DemoContent {
             ],
             goals: ["गोवा ट्रिप फंड", "शादी का फंड"],
             challenges: ["30 दिन बिना झगड़े", "हर हफ़्ते डेट नाइट"]
+        ),
+        "hr": DemoContent(
+            me: "Luka", partner: "Ana",
+            chat: [
+                .init(fromMe: true, text: "Može sushi večeras? 🍣"),
+                .init(fromMe: false, text: "Može! U 8? Ja ću rezervirati ❤️"),
+                .init(fromMe: true, text: "Super, jedva čekam 😍")
+            ],
+            goals: ["Putovanje u Italiju", "Naš prvi stan"],
+            challenges: ["30 dana bez svađe", "Spoj svaki tjedan"]
         ),
         "hu": DemoContent(
             me: "Bence", partner: "Réka",
@@ -249,6 +289,16 @@ struct DemoContent {
             goals: ["ハワイ旅行の貯金", "結婚式資金"],
             challenges: ["30日ケンカしない", "毎週デートの日"]
         ),
+        "kn": DemoContent(
+            me: "ಅರ್ಜುನ್", partner: "ದಿವ್ಯಾ",
+            chat: [
+                .init(fromMe: true, text: "ಇವತ್ತು ರಾತ್ರಿ ಪಿಜ್ಜಾ ತಿನ್ನೋಣವಾ? 🍕"),
+                .init(fromMe: false, text: "ಸರಿ! 8 ಗಂಟೆಗೆ, ನಾನು ಬುಕ್ ಮಾಡ್ತೀನಿ ❤️"),
+                .init(fromMe: true, text: "ಸೂಪರ್ 😍")
+            ],
+            goals: ["ಗೋವಾ ಪ್ರವಾಸ", "ನಮ್ಮ ಮೊದಲ ಮನೆ"],
+            challenges: ["ಜಗಳವಿಲ್ಲದ 30 ದಿನಗಳು", "ಪ್ರತಿ ವಾರ ಡೇಟ್ ನೈಟ್"]
+        ),
         "ko": DemoContent(
             me: "민준", partner: "서연",
             chat: [
@@ -258,6 +308,26 @@ struct DemoContent {
             ],
             goals: ["제주도 여행 자금", "신혼집 마련"],
             challenges: ["30일 동안 싸우지 않기", "매주 데이트하기"]
+        ),
+        "ml": DemoContent(
+            me: "അർജുൻ", partner: "അനു",
+            chat: [
+                .init(fromMe: true, text: "ഇന്ന് രാത്രി ബിരിയാണി കഴിക്കാൻ പോയാലോ? 🍛"),
+                .init(fromMe: false, text: "പോകാം! 8 മണിക്ക്, ഞാൻ ബുക്ക് ചെയ്യാം ❤️"),
+                .init(fromMe: true, text: "സൂപ്പർ 😍")
+            ],
+            goals: ["ഗോവ ട്രിപ്പ്", "നമ്മുടെ ആദ്യ വീട്"],
+            challenges: ["വഴക്കില്ലാത്ത 30 ദിവസം", "എല്ലാ ആഴ്ചയും ഡേറ്റ് നൈറ്റ്"]
+        ),
+        "mr": DemoContent(
+            me: "आरव", partner: "सई",
+            chat: [
+                .init(fromMe: true, text: "आज रात्री पिझ्झा खायला जाऊया का? 🍕"),
+                .init(fromMe: false, text: "हो! 8 वाजता, मी बुक करते ❤️"),
+                .init(fromMe: true, text: "मस्त 😍")
+            ],
+            goals: ["गोवा ट्रिप फंड", "आपलं पहिलं घर"],
+            challenges: ["भांडणाशिवाय 30 दिवस", "दर आठवड्याला डेट नाईट"]
         ),
         "ms": DemoContent(
             me: "Aiman", partner: "Nurul",
@@ -289,6 +359,26 @@ struct DemoContent {
             goals: ["Reis naar Bali", "Ons eigen huis"],
             challenges: ["30 dagen geen ruzie", "Wekelijkse date"]
         ),
+        "or": DemoContent(
+            me: "ଆର୍ଯ୍ୟନ", partner: "ଅନନ୍ୟା",
+            chat: [
+                .init(fromMe: true, text: "ଆଜି ରାତିରେ ପିଜା ଖାଇବାକୁ ଯିବା କି? 🍕"),
+                .init(fromMe: false, text: "ହଁ! 8ଟାରେ, ମୁଁ ବୁକ୍ କରିଦେବି ❤️"),
+                .init(fromMe: true, text: "ବଢ଼ିଆ 😍")
+            ],
+            goals: ["ଗୋଆ ଟ୍ରିପ୍ ଫଣ୍ଡ", "ଆମର ପ୍ରଥମ ଘର"],
+            challenges: ["ଝଗଡ଼ା ବିନା 30 ଦିନ", "ପ୍ରତି ସପ୍ତାହରେ ଡେଟ୍ ନାଇଟ୍"]
+        ),
+        "pa": DemoContent(
+            me: "ਅਰਜਨ", partner: "ਸਿਮਰਨ",
+            chat: [
+                .init(fromMe: true, text: "ਅੱਜ ਰਾਤ ਪੀਜ਼ਾ ਖਾਣ ਚੱਲੀਏ? 🍕"),
+                .init(fromMe: false, text: "ਹਾਂ! 8 ਵਜੇ, ਮੈਂ ਬੁੱਕ ਕਰ ਦਿੰਦੀ ਹਾਂ ❤️"),
+                .init(fromMe: true, text: "ਵਧੀਆ 😍")
+            ],
+            goals: ["ਗੋਆ ਟ੍ਰਿਪ ਫੰਡ", "ਸਾਡਾ ਪਹਿਲਾ ਘਰ"],
+            challenges: ["ਬਿਨਾਂ ਲੜਾਈ ਦੇ 30 ਦਿਨ", "ਹਰ ਹਫ਼ਤੇ ਡੇਟ ਨਾਈਟ"]
+        ),
         "pl": DemoContent(
             me: "Kuba", partner: "Zuzia",
             chat: [
@@ -308,6 +398,16 @@ struct DemoContent {
             ],
             goals: ["Viagem pra Europa", "Nosso apê"],
             challenges: ["30 dias sem brigar", "Encontro toda semana"]
+        ),
+        "pt-PT": DemoContent(
+            me: "Tiago", partner: "Inês",
+            chat: [
+                .init(fromMe: true, text: "Vamos jantar sushi hoje? 🍣"),
+                .init(fromMe: false, text: "Sim! Às 20h? Eu reservo ❤️"),
+                .init(fromMe: true, text: "Perfeito 😍")
+            ],
+            goals: ["Viagem a Itália", "A nossa primeira casa"],
+            challenges: ["30 dias sem discutir", "Noite a dois todas as semanas"]
         ),
         "ro": DemoContent(
             me: "Andrei", partner: "Ioana",
@@ -329,6 +429,26 @@ struct DemoContent {
             goals: ["Поездка в Италию", "На нашу свадьбу"],
             challenges: ["30 дней без ссор", "Свидание каждую неделю"]
         ),
+        "sk": DemoContent(
+            me: "Jakub", partner: "Nina",
+            chat: [
+                .init(fromMe: true, text: "Dáme si dnes večer sushi? 🍣"),
+                .init(fromMe: false, text: "Jasné! O 7, zarezervujem ❤️"),
+                .init(fromMe: true, text: "Super, už sa teším 😍")
+            ],
+            goals: ["Dovolenka v Chorvátsku", "Na našu svadbu"],
+            challenges: ["30 dní bez hádok", "Rande každý týždeň"]
+        ),
+        "sl": DemoContent(
+            me: "Luka", partner: "Nika",
+            chat: [
+                .init(fromMe: true, text: "Greva danes zvečer na suši? 🍣"),
+                .init(fromMe: false, text: "Ja! Ob sedmih? Bom rezervirala ❤️"),
+                .init(fromMe: true, text: "Super, komaj čakam 😍")
+            ],
+            goals: ["Potovanje v Italijo", "Najin prvi dom"],
+            challenges: ["30 dni brez prepirov", "Zmenek vsak teden"]
+        ),
         "sv": DemoContent(
             me: "Oscar", partner: "Elin",
             chat: [
@@ -338,6 +458,26 @@ struct DemoContent {
             ],
             goals: ["Resa till Thailand", "Vårt bröllop"],
             challenges: ["30 dagar utan bråk", "Dejtkväll varje vecka"]
+        ),
+        "ta": DemoContent(
+            me: "அருண்", partner: "பிரியா",
+            chat: [
+                .init(fromMe: true, text: "இன்னிக்கு ராத்திரி பிரியாணி சாப்பிட போலாமா? 🍛"),
+                .init(fromMe: false, text: "சரி! 8 மணிக்கு, நான் புக் பண்றேன் ❤️"),
+                .init(fromMe: true, text: "சூப்பர் 😍")
+            ],
+            goals: ["கோவா பயணம்", "நம் முதல் வீடு"],
+            challenges: ["சண்டை இல்லாத 30 நாட்கள்", "வாரம் ஒரு டேட் நைட்"]
+        ),
+        "te": DemoContent(
+            me: "అర్జున్", partner: "శ్రావ్య",
+            chat: [
+                .init(fromMe: true, text: "ఈ రాత్రి బిర్యానీ తిందామా? 🍛"),
+                .init(fromMe: false, text: "సరే! 8 గంటలకి, నేను బుక్ చేస్తాను ❤️"),
+                .init(fromMe: true, text: "సూపర్ 😍")
+            ],
+            goals: ["గోవా ట్రిప్", "మన మొదటి ఇల్లు"],
+            challenges: ["గొడవలు లేని 30 రోజులు", "ప్రతి వారం డేట్ నైట్"]
         ),
         "th": DemoContent(
             me: "ภูมิ", partner: "มายด์",
@@ -368,6 +508,16 @@ struct DemoContent {
             ],
             goals: ["Подорож до Італії", "На наше весілля"],
             challenges: ["30 днів без сварок", "Побачення щотижня"]
+        ),
+        "ur": DemoContent(
+            me: "علی", partner: "زینب",
+            chat: [
+                .init(fromMe: true, text: "آج رات بریانی کھانے چلیں؟ 🍛"),
+                .init(fromMe: false, text: "ہاں! 8 بجے، میں بکنگ کر لیتی ہوں ❤️"),
+                .init(fromMe: true, text: "زبردست 😍")
+            ],
+            goals: ["شمالی علاقوں کی سیر", "ہمارا پہلا گھر"],
+            challenges: ["30 دن بغیر جھگڑے کے", "ہر ہفتے ڈیٹ نائٹ"]
         ),
         "vi": DemoContent(
             me: "Minh", partner: "Linh",
