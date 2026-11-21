@@ -28,8 +28,9 @@ enum FormattingLocale {
     ///
     /// Only what rides on the locale as a keyword can be changed this way.
     /// iOS always puts the app's own language into the current locale, so a
-    /// language it has no calendar names for (Haitian Creole: "M11 21, Sat")
-    /// cannot borrow another language's.
+    /// language it has no calendar names for cannot borrow another one's:
+    /// Haitian Creole read "M11 21, Sat" and is not among the app's languages
+    /// for that reason.
     nonisolated static func applyOverride(defaults: UserDefaults = .standard,
                                           appLanguage: String? = Bundle.main.preferredLocalizations.first,
                                           appDomain: String? = Bundle.main.bundleIdentifier) {

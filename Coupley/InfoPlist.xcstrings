@@ -65,6 +65,12 @@
             "value" : "Les teves dades s'utilitzaran per mostrar-te anuncis més rellevants. Ho pots canviar quan vulguis a Configuració."
           }
         },
+        "ceb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gamiton ang imong data aron pakit-an ka og mas haom nga ads. Mausab nimo kini bisan kanus-a sa Settings."
+          }
+        },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
@@ -183,12 +189,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tvoji podaci koristit će se za prikaz relevantnijih oglasa. To možeš promijeniti u bilo kojem trenutku u Postavkama."
-          }
-        },
-        "ht" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Done ou yo ap sèvi pou montre ou piblisite ki pi enteresan pou ou. Ou ka chanje sa nenpòt ki lè nan Paramèt."
           }
         },
         "hu" : {

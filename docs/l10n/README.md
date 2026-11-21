@@ -9,9 +9,9 @@ Coupley ships in English plus 99 languages.
 - Middle East, Caucasus and Central Asia: fa, ur, ps, ku (Kurmanji, Latin),
   az, ka, hy, kk, uz, ky, tg, tk, mn.
 - South Asia: bn, ta, te, mr, gu, kn, ml, pa, or, as, ne, si.
-- South-East and East Asia: my, km, lo, jv, su, zh-HK.
+- South-East and East Asia: my, km, lo, jv, su, ceb, zh-HK.
 - Africa: sw, am, yo, ig, ha, zu, xh, af, so, rw, mg, om, ti, sn, ny.
-- Americas and Pacific: ht, mi.
+- Pacific: mi.
 
 Every translation was written and reviewed by AI; no native speaker has read
 them yet. Of the 69 languages added after the first 30, the smaller ones (for
@@ -66,10 +66,11 @@ into thousands of Swift symbols, and some of them collide ("Hip-hop" and
 - **Burmese numbers use Latin digits** (`FormattingLocale`, applied first
   thing at launch in the app and the widget): the rounded bold system font
   draws the Burmese digits ၂ and ၅ broken.
-- **Known limit, Haitian Creole**: iOS 26 has no month or weekday names for
-  it, so every date reads "M11 21, Sat" and the date picker's weekdays are
-  English. An app cannot lend it another language's calendar names (iOS
-  always puts the app's language into the current locale).
+- **A language needs calendar names in iOS.** Haitian Creole was translated
+  and then replaced by Cebuano: iOS 26 has no month or weekday names for it,
+  so every date read "M11 21, Sat", and an app cannot lend a language another
+  one's names (iOS always puts the app's language into the current locale).
+  Check a candidate in the simulator before translating it.
 - **Line spacing**: Khmer, Burmese and Telugu get extra room between lines
   (`ScriptSpacing.extraLineSpacing`, set on the root view), or the marks under
   one line collide with those over the next. A view that needs its own
@@ -88,7 +89,7 @@ into thousands of Swift symbols, and some of them collide ("Hip-hop" and
   language as in its `%lld%%` key.
 - **Relative times** ("5 min. ago") come from `RelativeDateTimeFormatter
   .compactString(for:)`. iOS has no relative wording for ku, su, yo, ig, xh,
-  rw, mg, sn, ny, mi and ht and answers "-3 d": `RelativeTimeWording` shows
+  rw, mg, sn, ny, mi and ceb and answers "-3 d": `RelativeTimeWording` shows
   the date there instead. Mongolian, Amharic and Zulu use the full style,
   where the short one is wrong ("1 weeks ago").
 - **Several items in one field** (the quiz's free-text answers) are split on

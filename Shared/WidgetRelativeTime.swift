@@ -34,9 +34,9 @@ enum WidgetRelativeTime {
 // MARK: - Languages without relative wording
 
 /// iOS has no relative wording ("3 days ago") for some of the app's languages
-/// (Kurdish, Yoruba, Igbo, Shona, Malagasy, Kinyarwanda, Haitian Creole and a
-/// few more): its formatters answer with the bare root form, "-3 d". Those
-/// read the day instead, or the time for a moment today.
+/// (Kurdish, Yoruba, Igbo, Shona, Malagasy, Kinyarwanda, Cebuano and a few
+/// more): its formatters answer with the bare root form, "-3 d". Those read
+/// the day instead, or the time for a moment today.
 enum RelativeTimeWording {
 
     /// True for the formatters' answer without wording: a sign, then a number.
